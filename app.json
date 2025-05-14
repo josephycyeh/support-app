@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Sushi Support App",
+    "name": "idk yet",
     "slug": "sushi-support-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -37,6 +37,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3787133c-fd8e-41bb-8ae5-aa25155a5349"
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { Card } from '@/components/ui/Card';
@@ -48,17 +48,13 @@ export const SobrietyTimer = () => {
     return () => clearInterval(interval);
   }, [startDate]);
 
-  // Use regular View for web to avoid animation issues
-  const AnimatedView = Platform.OS === 'web' ? View : Animated.View;
-  const animationStyle = Platform.OS === 'web' 
-    ? {} 
-    : {
-        opacity: fadeAnim,
-        transform: [{ scale: scaleAnim }]
-      };
+  const animationStyle = {
+    opacity: fadeAnim,
+    transform: [{ scale: scaleAnim }]
+  };
 
   return (
-    <AnimatedView style={[animationStyle, styles.container]}>
+    <Animated.View style={[animationStyle, styles.container]}>
       <Card>
         <Text style={styles.title}>You've been sober for</Text>
         <View style={styles.timerContainer}>
@@ -68,7 +64,7 @@ export const SobrietyTimer = () => {
           <TimeUnit value={timeElapsed.seconds} unit="sec" />
         </View>
       </Card>
-    </AnimatedView>
+    </Animated.View>
   );
 };
 

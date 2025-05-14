@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Check } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
-import * as Haptics from 'expo-haptics';
 import { Card } from '@/components/ui/Card';
 import { createSafeAnimation } from '@/utils/animations';
 
@@ -15,14 +14,9 @@ export const DailyChecklist = () => {
   const handleToggle = (id: string) => {
     const item = items.find(item => item.id === id);
     if (item) {
-      // If completing the item, add XP and provide haptic feedback
+      // If completing the item, add XP
       if (!item.completed) {
         addXP(item.xpReward);
-        
-        // Haptic feedback on non-web platforms
-        if (Platform.OS !== 'web') {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
       }
       // Toggle the item
       toggleItem(id);
@@ -69,24 +63,19 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
     createSafeAnimation(animation, 1, 400, undefined).start();
   }, []);
   
-  // Use regular View for web to avoid animation issues
-  const AnimatedTouchable = Platform.OS === 'web' 
-    ? TouchableOpacity 
-    : Animated.createAnimatedComponent(TouchableOpacity);
+  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
   
-  const animationStyle = Platform.OS === 'web' 
-    ? {} 
-    : {
-        opacity: animation,
-        transform: [
-          { 
-            translateY: animation.interpolate({
-              inputRange: [0, 1],
-              outputRange: [20, 0]
-            })
-          }
-        ]
-      };
+  const animationStyle = {
+    opacity: animation,
+    transform: [
+      { 
+        translateY: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [20, 0]
+        })
+      }
+    ]
+  };
   
   return (
     <AnimatedTouchable

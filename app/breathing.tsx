@@ -4,7 +4,6 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  Platform,
   BackHandler,
   StatusBar,
   Image
@@ -13,6 +12,7 @@ import { Stack, useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
+import { useActivityStore } from '@/store/activityStore';
 import * as Haptics from 'expo-haptics';
 import { Button } from '@/components/ui/Button';
 import LottieView from 'lottie-react-native';
@@ -49,6 +49,7 @@ const CHARACTER_MESSAGES = {
 export default function BreathingExerciseScreen() {
   const router = useRouter();
   const { addXP } = useSobrietyStore();
+  const { incrementBreathingExercises } = useActivityStore();
   const [currentState, setCurrentState] = useState<BreathingState>(BreathingState.READY);
   const [timer, setTimer] = useState(3); // Start with 3 second countdown
   const [cyclesCompleted, setCyclesCompleted] = useState(0);
@@ -59,9 +60,9 @@ export default function BreathingExerciseScreen() {
   const circleSize = useSharedValue(100);
   const circleOpacity = useSharedValue(0.3);
   
-  // Provide haptic feedback on state changes if not on web
+  // Provide haptic feedback on state changes
   useEffect(() => {
-    if (Platform.OS !== 'web' && currentState !== BreathingState.READY) {
+    if (currentState !== BreathingState.READY) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   }, [currentState]);
@@ -76,6 +77,14 @@ export default function BreathingExerciseScreen() {
     return () => backHandler.remove();
   }, []);
   
+  // Provide countdown haptic feedback
+  useEffect(() => {
+    if (isActive && timer > 0 && timer <= 3) {
+      // Provide light haptic feedback for countdown
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  }, [timer, isActive]);
+  
   // Main breathing cycle effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -83,6 +92,15 @@ export default function BreathingExerciseScreen() {
     if (isActive) {
       interval = setInterval(() => {
         setTimer(prevTimer => {
+          // Provide haptic feedback for last 3 seconds of each phase
+          if (prevTimer <= 3 && prevTimer > 0) {
+            Haptics.impactAsync(
+              prevTimer === 1 
+                ? Haptics.ImpactFeedbackStyle.Medium 
+                : Haptics.ImpactFeedbackStyle.Light
+            );
+          }
+          
           if (prevTimer <= 1) {
             // Move to next state when timer reaches 0
             switch (currentState) {
@@ -103,9 +121,7 @@ export default function BreathingExerciseScreen() {
                   setIsActive(false);
                   
                   // Provide success haptic feedback on completion
-                  if (Platform.OS !== 'web') {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  }
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   
                   return 0;
                 } else {
@@ -134,13 +150,6 @@ export default function BreathingExerciseScreen() {
   
   // Animation function for the breathing circle using Reanimated
   const animateCircle = (toSize: number, duration: number) => {
-    // Skip complex animations on web to avoid potential issues
-    if (Platform.OS === 'web') {
-      circleSize.value = toSize;
-      circleOpacity.value = toSize > 150 ? 0.7 : 0.3;
-      return;
-    }
-    
     // Use withTiming for smooth animations
     circleSize.value = withTiming(toSize, {
       duration: duration,
@@ -175,10 +184,11 @@ export default function BreathingExerciseScreen() {
     // Award XP for completing the full exercise
     addXP(25);
     
+    // Increment breathing exercises count
+    incrementBreathingExercises();
+    
     // Provide success haptic feedback
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
     router.back();
   };
@@ -186,7 +196,7 @@ export default function BreathingExerciseScreen() {
   return (
     <Animated.View 
       style={styles.container}
-      entering={Platform.OS !== 'web' ? FadeIn.duration(800) : undefined}
+      entering={FadeIn.duration(800)}
     >
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       
@@ -209,27 +219,26 @@ export default function BreathingExerciseScreen() {
           <View style={styles.completeContainer}>
             <Text style={styles.completeTitle}>Great job!</Text>
             
-            <View style={styles.characterContainer}>
-              <Image 
-                source={require('@/assets/images/Character_PNG.png')}
-                style={styles.characterImage}
-                resizeMode="contain"
-              />
+            <View style={styles.completionMessageContainer}>
+              <Text style={styles.completeText}>
+                You've completed the breathing exercise.
+              </Text>
             </View>
             
-            <Text style={styles.characterMessage}>
-              {CHARACTER_MESSAGES[currentState]}
-            </Text>
+            <View style={styles.statsContainer}>
+              <Text style={styles.statsLabel}>Time</Text>
+              <Text style={styles.statsValue}>
+                {Math.floor(totalTime / 60)}:{(totalTime % 60).toString().padStart(2, '0')}
+              </Text>
+              
+              <View style={styles.statsDivider} />
+              
+              <Text style={styles.statsLabel}>Cycles</Text>
+              <Text style={styles.statsValue}>
+                {cyclesCompleted + 1}
+              </Text>
+            </View>
             
-            <Text style={styles.completeText}>
-              You've completed the breathing exercise.
-            </Text>
-            <Text style={styles.statsText}>
-              Time: {Math.floor(totalTime / 60)}:{(totalTime % 60).toString().padStart(2, '0')}
-            </Text>
-            <Text style={styles.statsText}>
-              Cycles: {cyclesCompleted + 1}
-            </Text>
             <Button
               onPress={handleComplete}
               variant="primary"
@@ -438,25 +447,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+    width: '100%',
   },
   completeTitle: {
-    fontSize: 32,
+    fontSize: 40,
     fontWeight: '700',
     color: colors.primary,
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  completionMessageContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+    width: '100%',
+    maxWidth: 300,
   },
   completeText: {
-    fontSize: 18,
+    fontSize: 20,
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 30,
   },
-  statsText: {
+  statsContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+    paddingVertical: 20,
+    paddingHorizontal: 30,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    width: '100%',
+    maxWidth: 250,
+  },
+  statsLabel: {
     fontSize: 16,
     color: colors.textLight,
+    marginBottom: 4,
+  },
+  statsValue: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.text,
     marginBottom: 8,
   },
+  statsDivider: {
+    width: '80%',
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 12,
+  },
   doneButton: {
-    marginTop: 30,
+    marginTop: 24,
+    minWidth: 220,
   },
 });

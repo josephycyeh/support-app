@@ -1,7 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
-import { Stack } from 'expo-router';
-import { Calendar, Heart, Target, BookOpen, LogOut } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert,  } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2 } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useJournalStore } from '@/store/journalStore';
@@ -9,25 +9,105 @@ import { useReasonsStore } from '@/store/reasonsStore';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
+import { AddReasonModal } from '@/components/AddReasonModal';
+import { EditReasonModal } from '@/components/EditReasonModal';
+import Modal from 'react-native-modal';
+import { BirthdayEditModal } from '@/components/BirthdayEditModal';
 
 export default function ProfileScreen() {
-  const { startDate, level, xp, xpToNextLevel, resetSobriety } = useSobrietyStore();
+  const router = useRouter();
+  const { level, xp, startDate, setBirthday, xpToNextLevel, resetSobriety } = useSobrietyStore();
   const { entries } = useJournalStore();
-  const { reasons, addReason } = useReasonsStore();
+  const { reasons, addReason, updateReason, deleteReason } = useReasonsStore();
+  
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [selectedReason, setSelectedReason] = useState<{id: string, text: string} | null>(null);
+  
+  // Get today's date for the sobriety counter
+  const today = new Date();
+  const sobrietyDate = new Date(startDate);
   
   // Calculate days sober
-  const daysSober = Math.floor((new Date().getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  const daysSober = Math.floor((today.getTime() - sobrietyDate.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Calculate progress percentage
-  const progressPercentage = Math.min((xp / xpToNextLevel) * 100, 100);
+  // Calculate XP progress
+  const progressPercentage = (xp / xpToNextLevel) * 100;
   
-  // Get recent journal entries
+  // Get user's birthday (fallback to today if not set)
+  const birthday = useSobrietyStore.getState().birthday || new Date();
+  
+  // Get recent journal entries (last 3)
   const recentEntries = entries.slice(0, 3);
   
-  const addNewReason = () => {
-    addReason({ 
-      id: Math.random().toString(36).substr(2, 9), 
-      text: 'New reason for change' 
+  const handleAddNewReason = () => {
+    setShowAddModal(true);
+  };
+  
+  const handleSaveNewReason = (text: string) => {
+    // Add the new reason
+    addReason(text);
+    
+    // Close the modal
+    setShowAddModal(false);
+  };
+  
+  const handleOpenReasonEditor = (reason: { id: string, text: string }) => {
+    setSelectedReason(reason);
+    setShowEditModal(true);
+  };
+  
+  const handleUpdateReason = (id: string, text: string) => {
+    // Update the reason
+    updateReason(id, text);
+    
+    // Close the modal
+    setShowEditModal(false);
+    setSelectedReason(null);
+  };
+  
+  const handleDeleteReason = (id: string) => {
+    // Delete the reason
+    deleteReason(id);
+    
+    // Close the modal
+    setShowEditModal(false);
+    setSelectedReason(null);
+  };
+  
+  const closeAddModal = () => {
+    setShowAddModal(false);
+  };
+  
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setSelectedReason(null);
+  };
+  
+  const handleNewJournalEntry = () => {
+    router.push('/journal-entry');
+  };
+  
+  const handleEditBirthday = () => {
+    setShowBirthdayModal(true);
+  };
+  
+  const handleSaveBirthday = (date: Date) => {
+    setBirthday(date);
+    setShowBirthdayModal(false);
+  };
+  
+  const closeBirthdayModal = () => {
+    setShowBirthdayModal(false);
+  };
+  
+  // Format birthday for display
+  const formatBirthday = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
     });
   };
   
@@ -70,8 +150,9 @@ export default function ProfileScreen() {
             <PersonalInfoItem 
               icon={<Calendar size={20} color={colors.primary} />}
               label="Birthday"
-              value="January 15, 1988"
+              value={formatBirthday(birthday)}
               isEditable
+              onEdit={handleEditBirthday}
             />
           </Card>
         </View>
@@ -80,43 +161,17 @@ export default function ProfileScreen() {
           <SectionHeader title="My Reasons for Change" />
           <Card style={styles.reasonsContainer}>
             {reasons.map((reason) => (
-              <View key={reason.id} style={styles.reasonItem}>
+              <TouchableOpacity 
+                key={reason.id} 
+                style={styles.reasonItem}
+                onPress={() => handleOpenReasonEditor(reason)}
+              >
                 <Heart size={20} color={colors.primary} />
                 <Text style={styles.reasonText}>{reason.text}</Text>
-              </View>
+              </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.addReasonButton} onPress={addNewReason}>
+            <TouchableOpacity style={styles.addReasonButton} onPress={handleAddNewReason}>
               <Text style={styles.addReasonText}>+ Add another reason</Text>
-            </TouchableOpacity>
-          </Card>
-        </View>
-        
-        <View style={styles.sectionContainer}>
-          <SectionHeader title="Recovery Goals" />
-          <Card style={styles.goalsContainer}>
-            <View style={styles.goalItem}>
-              <Target size={20} color={colors.primary} />
-              <Text style={styles.goalText}>Complete 30 days of sobriety</Text>
-              <View style={[styles.goalBadge, { backgroundColor: daysSober >= 30 ? colors.success : colors.border }]}>
-                <Text style={styles.goalBadgeText}>{daysSober >= 30 ? 'Achieved' : `${daysSober}/30`}</Text>
-              </View>
-            </View>
-            <View style={styles.goalItem}>
-              <Target size={20} color={colors.primary} />
-              <Text style={styles.goalText}>Attend 10 support group meetings</Text>
-              <View style={[styles.goalBadge, { backgroundColor: colors.border }]}>
-                <Text style={styles.goalBadgeText}>3/10</Text>
-              </View>
-            </View>
-            <View style={styles.goalItem}>
-              <Target size={20} color={colors.primary} />
-              <Text style={styles.goalText}>Journal daily for 2 weeks</Text>
-              <View style={[styles.goalBadge, { backgroundColor: colors.border }]}>
-                <Text style={styles.goalBadgeText}>5/14</Text>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.addGoalButton}>
-              <Text style={styles.addGoalText}>+ Add new goal</Text>
             </TouchableOpacity>
           </Card>
         </View>
@@ -139,7 +194,7 @@ export default function ProfileScreen() {
           </View>
           
           <Button 
-            onPress={() => {}}
+            onPress={handleNewJournalEntry}
             variant="primary"
             style={styles.newEntryButton}
           >
@@ -157,6 +212,30 @@ export default function ProfileScreen() {
           Reset Sobriety Counter
         </Button>
       </ScrollView>
+      
+      {/* Add Reason Modal */}
+      <AddReasonModal
+        visible={showAddModal}
+        onClose={closeAddModal}
+        onSave={handleSaveNewReason}
+      />
+      
+      {/* Edit Reason Modal */}
+      <EditReasonModal
+        visible={showEditModal}
+        reason={selectedReason}
+        onClose={closeEditModal}
+        onSave={handleUpdateReason}
+        onDelete={handleDeleteReason}
+      />
+      
+      {/* Birthday Edit Modal */}
+      <BirthdayEditModal
+        visible={showBirthdayModal}
+        currentDate={birthday}
+        onClose={closeBirthdayModal}
+        onSave={handleSaveBirthday}
+      />
     </View>
   );
 }
@@ -190,9 +269,10 @@ interface PersonalInfoItemProps {
   label: string;
   value: string;
   isEditable?: boolean;
+  onEdit?: () => void;
 }
 
-const PersonalInfoItem = ({ icon, label, value, isEditable = false }: PersonalInfoItemProps) => (
+const PersonalInfoItem = ({ icon, label, value, isEditable = false, onEdit }: PersonalInfoItemProps) => (
   <View style={styles.infoItem}>
     <View style={styles.infoIconContainer}>
       {icon}
@@ -202,7 +282,7 @@ const PersonalInfoItem = ({ icon, label, value, isEditable = false }: PersonalIn
       <Text style={styles.infoValue}>{value}</Text>
     </View>
     {isEditable && (
-      <TouchableOpacity style={styles.infoEditButton}>
+      <TouchableOpacity style={styles.infoEditButton} onPress={onEdit}>
         <Text style={styles.infoEditText}>Edit</Text>
       </TouchableOpacity>
     )}
@@ -443,5 +523,110 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     color: colors.danger,
+  },
+  modal: {
+    margin: 0,
+    justifyContent: 'flex-end',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  modalCloseButton: {
+    padding: 5,
+  },
+  modalInput: {
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 100,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  modalActionButton: {
+    flex: 1,
+    marginHorizontal: 6,
+  },
+  modalActionButtonFull: {
+    flex: 1,
+    marginHorizontal: 0,
+  },
+  modalDeleteButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: colors.danger,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  modalDeleteText: {
+    color: '#FFFFFF',
+    marginLeft: 8,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  modalSaveButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  modalSaveText: {
+    color: '#FFFFFF',
+    marginLeft: 8,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  datePickerContainer: {
+    marginVertical: 20,
+    alignItems: 'center',
   },
 });

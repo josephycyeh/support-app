@@ -1,47 +1,68 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Text, Dimensions } from 'react-native';
 import { TrendingUp } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { useSobrietyStore } from '@/store/sobrietyStore';
 
 const screenWidth = Dimensions.get('window').width;
 
 export const ProgressChart = () => {
-  // Mock data for XP growth over time
-  // In a real app, this would come from actual user data
-  const data = [
-    { day: 'Mon', xp: 25 },
-    { day: 'Tue', xp: 40 },
-    { day: 'Wed', xp: 30 },
-    { day: 'Thu', xp: 70 },
-    { day: 'Fri', xp: 55 },
-    { day: 'Sat', xp: 65 },
-    { day: 'Sun', xp: 85 },
-  ];
+  const { dailyXP } = useSobrietyStore();
+  
+  // Generate last 7 days of XP data
+  const weekData = useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    const result = [];
+    let totalWeekXP = 0;
+    
+    // Go back through the last 7 days
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      
+      // Format to YYYY-MM-DD for lookup in dailyXP
+      const dateStr = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+        .toISOString().split('T')[0];
+      
+      const dayOfWeek = days[date.getDay()];
+      const xp = dailyXP[dateStr] || 0;
+      totalWeekXP += xp;
+      
+      result.push({ 
+        day: dayOfWeek, 
+        xp,
+        date: dateStr
+      });
+    }
+    
+    return { data: result, totalWeekXP };
+  }, [dailyXP]);
   
   // Find max value for scaling
-  const maxXP = Math.max(...data.map(item => item.xp));
+  const maxXP = Math.max(...weekData.data.map(item => item.xp), 10); // Min of 10 to prevent empty chart
   
   // Calculate chart dimensions
   const chartWidth = screenWidth - 80; // Accounting for padding
   const chartHeight = 150;
-  const barWidth = chartWidth / data.length - 10;
+  const barWidth = chartWidth / weekData.data.length - 10;
   
   return (
     <View style={styles.container}>
       <View style={styles.chartHeader}>
         <View style={styles.chartMetric}>
           <TrendingUp size={16} color={colors.primary} />
-          <Text style={styles.chartMetricText}>+370 XP this week</Text>
+          <Text style={styles.chartMetricText}>+{weekData.totalWeekXP} XP this week</Text>
         </View>
       </View>
       
       <View style={styles.chartContainer}>
         {/* Y-axis labels */}
         <View style={styles.yAxisLabels}>
-          <Text style={styles.axisLabel}>100</Text>
-          <Text style={styles.axisLabel}>75</Text>
-          <Text style={styles.axisLabel}>50</Text>
-          <Text style={styles.axisLabel}>25</Text>
+          <Text style={styles.axisLabel}>{Math.ceil(maxXP)}</Text>
+          <Text style={styles.axisLabel}>{Math.ceil(maxXP * 0.75)}</Text>
+          <Text style={styles.axisLabel}>{Math.ceil(maxXP * 0.5)}</Text>
+          <Text style={styles.axisLabel}>{Math.ceil(maxXP * 0.25)}</Text>
           <Text style={styles.axisLabel}>0</Text>
         </View>
         
@@ -56,8 +77,11 @@ export const ProgressChart = () => {
           
           {/* Data bars */}
           <View style={styles.barsContainer}>
-            {data.map((item, index) => {
-              const barHeight = (item.xp / 100) * chartHeight;
+            {weekData.data.map((item, index) => {
+              // Prevent division by zero and ensure the bar has at least a minimal height when xp > 0
+              const barHeight = maxXP === 0 
+                ? 0 
+                : Math.max((item.xp / maxXP) * chartHeight, item.xp > 0 ? 5 : 0);
               
               return (
                 <View key={index} style={styles.barColumn}>
@@ -67,7 +91,7 @@ export const ProgressChart = () => {
                       { 
                         height: barHeight,
                         width: barWidth,
-                        backgroundColor: item.xp > 50 ? colors.primary : 'rgba(126, 174, 217, 0.5)',
+                        backgroundColor: item.xp > (maxXP * 0.5) ? colors.primary : 'rgba(126, 174, 217, 0.5)',
                       }
                     ]} 
                   />

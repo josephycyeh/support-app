@@ -28,7 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>myapp</string>
-          <string>app.rork.sushi-support-app</string>
+          <string>com.caladanapps.myro</string>
         </array>
       </dict>
     </array>

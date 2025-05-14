@@ -1,31 +1,97 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import colors from '@/constants/colors';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useSobrietyStore } from '@/store/sobrietyStore';
 
 interface HeatmapCalendarProps {
   startDate: string;
 }
 
 export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
-  // Get current date and month info
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
+  // Initialize state for current view
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  
+  // Get sobriety data from store
+  const { dailyXP, sobrietyBreaks } = useSobrietyStore();
   
   // Calculate days since sobriety start
+  const today = new Date();
   const sobrietyStart = new Date(startDate);
   const daysSinceSobrietyStart = Math.floor((today.getTime() - sobrietyStart.getTime()) / (1000 * 60 * 60 * 24));
   
   // Generate calendar data
-  const calendarData = generateCalendarData(currentYear, currentMonth, daysSinceSobrietyStart);
+  const calendarData = generateCalendarData(viewYear, viewMonth, startDate, dailyXP, sobrietyBreaks);
   
   // Get month name
-  const monthName = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long' });
+  const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long' });
+  
+  // Navigate to previous month
+  const goToPreviousMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear(viewYear - 1);
+    } else {
+      setViewMonth(viewMonth - 1);
+    }
+  };
+  
+  // Navigate to next month
+  const goToNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear(viewYear + 1);
+    } else {
+      setViewMonth(viewMonth + 1);
+    }
+  };
+  
+  // Check if previous month navigation should be disabled
+  const isPrevMonthDisabled = () => {
+    const startMonth = sobrietyStart.getMonth();
+    const startYear = sobrietyStart.getFullYear();
+    
+    return (viewYear < startYear) || (viewYear === startYear && viewMonth <= startMonth);
+  };
+  
+  // Check if next month navigation should be disabled
+  const isNextMonthDisabled = () => {
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    return (viewYear > currentYear) || (viewYear === currentYear && viewMonth >= currentMonth);
+  };
   
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.monthTitle}>{monthName} {currentYear}</Text>
+        <View style={styles.monthNavigation}>
+          <TouchableOpacity 
+            style={[
+              styles.navButton, 
+              isPrevMonthDisabled() && styles.disabledButton
+            ]} 
+            onPress={goToPreviousMonth}
+            disabled={isPrevMonthDisabled()}
+          >
+            <ChevronLeft size={20} color={isPrevMonthDisabled() ? colors.textMuted : colors.primary} />
+          </TouchableOpacity>
+          
+          <Text style={styles.monthTitle}>{monthName} {viewYear}</Text>
+          
+          <TouchableOpacity 
+            style={[
+              styles.navButton, 
+              isNextMonthDisabled() && styles.disabledButton
+            ]} 
+            onPress={goToNextMonth}
+            disabled={isNextMonthDisabled()}
+          >
+            <ChevronRight size={20} color={isNextMonthDisabled() ? colors.textMuted : colors.primary} />
+          </TouchableOpacity>
+        </View>
+        
         <View style={styles.weekdaysRow}>
           {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
             <Text key={index} style={styles.weekdayLabel}>{day}</Text>
@@ -43,6 +109,8 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
                 intensity={day.intensity}
                 isToday={day.isToday}
                 isEmpty={day.isEmpty}
+                isSobrietyBreak={day.isSobrietyBreak}
+                xpEarned={day.xpEarned}
               />
             ))}
           </View>
@@ -79,9 +147,11 @@ interface CalendarDayProps {
   intensity: number;
   isToday: boolean;
   isEmpty: boolean;
+  isSobrietyBreak: boolean;
+  xpEarned: number;
 }
 
-const CalendarDay = ({ day, intensity, isToday, isEmpty }: CalendarDayProps) => {
+const CalendarDay = ({ day, intensity, isToday, isEmpty, isSobrietyBreak, xpEarned }: CalendarDayProps) => {
   // Skip rendering for empty days
   if (isEmpty) {
     return <View style={styles.emptyDay} />;
@@ -89,7 +159,12 @@ const CalendarDay = ({ day, intensity, isToday, isEmpty }: CalendarDayProps) => 
   
   // Calculate background color based on intensity
   let backgroundColor = 'transparent';
-  if (intensity > 0) {
+  let tooltipText = `${xpEarned} XP`;
+  
+  if (isSobrietyBreak) {
+    backgroundColor = 'rgba(240, 161, 161, 0.2)'; // Light red for sobriety breaks
+    tooltipText = 'Sobriety break';
+  } else if (intensity > 0) {
     if (intensity < 0.3) {
       backgroundColor = 'rgba(126, 174, 217, 0.2)';
     } else if (intensity < 0.6) {
@@ -106,13 +181,15 @@ const CalendarDay = ({ day, intensity, isToday, isEmpty }: CalendarDayProps) => 
       style={[
         styles.dayCell,
         { backgroundColor },
-        isToday && styles.todayCell
+        isToday && styles.todayCell,
+        isSobrietyBreak && styles.sobrietyBreakCell
       ]}
     >
       <Text style={[
         styles.dayText,
         isToday && styles.todayText,
-        intensity > 0.5 && styles.highIntensityText
+        intensity > 0.5 && styles.highIntensityText,
+        isSobrietyBreak && styles.sobrietyBreakText
       ]}>
         {day}
       </Text>
@@ -120,27 +197,22 @@ const CalendarDay = ({ day, intensity, isToday, isEmpty }: CalendarDayProps) => 
   );
 };
 
+// Helper function to format date to YYYY-MM-DD
+const formatDateToYYYYMMDD = (date: Date) => {
+  return date.toISOString().split('T')[0];
+};
+
 // Helper function to generate calendar data
-const generateCalendarData = (year: number, month: number, daysSinceSobrietyStart: number) => {
+const generateCalendarData = (
+  year: number, 
+  month: number, 
+  startDate: string, 
+  dailyXP: Record<string, number> = {}, 
+  sobrietyBreaks: string[] = []
+) => {
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
-  
-  // Generate mock activity data - in a real app, this would come from actual user data
-  const activityData: { [key: number]: number } = {};
-  
-  // Fill in activity data for days since sobriety start
-  for (let i = 0; i <= daysSinceSobrietyStart; i++) {
-    const day = new Date();
-    day.setDate(today.getDate() - i);
-    
-    if (day.getMonth() === month && day.getFullYear() === year) {
-      // Generate random activity level, with more recent days having higher probability of high activity
-      const recencyFactor = 1 - (i / (daysSinceSobrietyStart + 1));
-      const randomFactor = Math.random() * 0.5;
-      activityData[day.getDate()] = Math.min(recencyFactor + randomFactor, 1);
-    }
-  }
   
   // Create calendar grid
   const calendar = [];
@@ -154,17 +226,55 @@ const generateCalendarData = (year: number, month: number, daysSinceSobrietyStar
     for (let day = 0; day < 7; day++) {
       if ((week === 0 && day < firstDayOfMonth) || dayCounter > daysInMonth) {
         // Empty cell
-        weekDays.push({ day: null, intensity: 0, isToday: false, isEmpty: true });
+        weekDays.push({ 
+          day: null, 
+          intensity: 0, 
+          isToday: false, 
+          isEmpty: true, 
+          isSobrietyBreak: false,
+          xpEarned: 0
+        });
       } else {
+        // Create date at the beginning of the day (midnight) to avoid timezone issues
+        const currentDate = new Date(Date.UTC(year, month, dayCounter, 0, 0, 0));
         const isToday = dayCounter === today.getDate() && 
                         month === today.getMonth() && 
                         year === today.getFullYear();
         
+        // Check if date is before sobriety start
+        const sobrietyStart = new Date(startDate);
+        const isBeforeSobrietyStart = currentDate < sobrietyStart;
+        
+        // Format date as ISO string for lookup
+        const dateStr = formatDateToYYYYMMDD(currentDate);
+        
+        // Check if this day had a sobriety break
+        const isSobrietyBreak = sobrietyBreaks.includes(dateStr);
+        
+        // Get XP earned for this day
+        const xpEarned = dailyXP[dateStr] || 0;
+        
+        // Calculate intensity based on XP
+        let intensity = 0;
+        if (!isBeforeSobrietyStart && !isSobrietyBreak) {
+          if (xpEarned > 0 && xpEarned <= 20) {
+            intensity = 0.2;
+          } else if (xpEarned > 20 && xpEarned <= 50) {
+            intensity = 0.5;
+          } else if (xpEarned > 50 && xpEarned <= 100) {
+            intensity = 0.8;
+          } else if (xpEarned > 100) {
+            intensity = 1.0;
+          }
+        }
+        
         weekDays.push({
           day: dayCounter,
-          intensity: activityData[dayCounter] || 0,
+          intensity,
           isToday,
-          isEmpty: false
+          isEmpty: false,
+          isSobrietyBreak,
+          xpEarned
         });
         
         dayCounter++;
@@ -199,11 +309,24 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 16,
   },
+  monthNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  navButton: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(126, 174, 217, 0.1)',
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
   monthTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
-    marginBottom: 12,
     textAlign: 'center',
   },
   weekdaysRow: {
@@ -251,6 +374,12 @@ const styles = StyleSheet.create({
   },
   highIntensityText: {
     color: '#FFFFFF',
+  },
+  sobrietyBreakCell: {
+    borderColor: colors.danger,
+  },
+  sobrietyBreakText: {
+    color: colors.danger,
   },
   legend: {
     marginTop: 8,

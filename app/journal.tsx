@@ -1,18 +1,15 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, Platform } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useJournalStore, JournalEntry } from '@/store/journalStore';
-import { JournalModal } from '@/components/JournalModal';
 import { Button } from '@/components/ui/Button';
 import { createSafeAnimation } from '@/utils/animations';
-import * as Haptics from 'expo-haptics';
 
 export default function JournalScreen() {
   const router = useRouter();
   const { entries, deleteEntry } = useJournalStore();
-  const [newEntryModalVisible, setNewEntryModalVisible] = React.useState(false);
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -55,10 +52,11 @@ export default function JournalScreen() {
   }, [entries]);
 
   const handleBackPress = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
     router.back();
+  };
+  
+  const handleNewEntry = () => {
+    router.push('/journal-entry');
   };
   
   return (
@@ -106,7 +104,7 @@ export default function JournalScreen() {
               Start recording your thoughts and reflections to track your journey.
             </Text>
             <Button
-              onPress={() => setNewEntryModalVisible(true)}
+              onPress={handleNewEntry}
               variant="primary"
               style={styles.emptyStateButton}
             >
@@ -118,15 +116,10 @@ export default function JournalScreen() {
       
       <TouchableOpacity 
         style={styles.addButton}
-        onPress={() => setNewEntryModalVisible(true)}
+        onPress={handleNewEntry}
       >
         <Plus size={24} color="#FFFFFF" />
       </TouchableOpacity>
-      
-      <JournalModal 
-        visible={newEntryModalVisible}
-        onClose={() => setNewEntryModalVisible(false)}
-      />
     </View>
   );
 }
@@ -164,24 +157,19 @@ const JournalEntryCard = ({ entry, onDelete, index }: JournalEntryCardProps) => 
     return content.substring(0, maxLength) + '...';
   };
   
-  // For web compatibility
-  const AnimatedTouchable = Platform.OS === 'web' 
-    ? TouchableOpacity 
-    : Animated.createAnimatedComponent(TouchableOpacity);
+  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
   
-  const animationStyle = Platform.OS === 'web' 
-    ? {} 
-    : {
-        opacity: animation,
-        transform: [
-          { 
-            translateY: animation.interpolate({
-              inputRange: [0, 1],
-              outputRange: [20, 0]
-            })
-          }
-        ]
-      };
+  const animationStyle = {
+    opacity: animation,
+    transform: [
+      { 
+        translateY: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [20, 0]
+        })
+      }
+    ]
+  };
   
   return (
     <AnimatedTouchable 

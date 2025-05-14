@@ -4,7 +4,6 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  Platform,
   ScrollView,
   BackHandler,
   StatusBar
@@ -22,6 +21,7 @@ import Animated, {
   Easing,
   FadeIn
 } from 'react-native-reanimated';
+import { useActivityStore } from '@/store/activityStore';
 
 // Breathing pattern for crisis moments (simplified to just inhale and exhale)
 const BREATHING_PATTERN = {
@@ -54,6 +54,7 @@ export default function SOSScreen() {
   const router = useRouter();
   const { addXP, startDate } = useSobrietyStore();
   const { reasons } = useReasonsStore();
+  const { incrementCravingsOvercome } = useActivityStore();
   const [currentState, setCurrentState] = useState<BreathingState>(BreathingState.READY);
   const [timer, setTimer] = useState(3); // Start with 3 second countdown
   const [isActive, setIsActive] = useState(true);
@@ -70,18 +71,16 @@ export default function SOSScreen() {
   // Calculate days sober for motivation
   const daysSober = Math.floor((new Date().getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
   
-  // Provide haptic feedback on state changes if not on web
+  // Provide haptic feedback on state changes
   useEffect(() => {
-    if (Platform.OS !== 'web' && currentState !== BreathingState.READY) {
+    if (currentState !== BreathingState.READY) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   }, [currentState]);
   
   // Provide emergency haptic feedback on mount
   useEffect(() => {
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   }, []);
   
   // Handle back button on Android
@@ -94,6 +93,14 @@ export default function SOSScreen() {
     return () => backHandler.remove();
   }, []);
   
+  // Provide countdown haptic feedback
+  useEffect(() => {
+    if (isActive && timer > 0 && timer <= 3) {
+      // Provide light haptic feedback for countdown
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  }, [timer, isActive]);
+  
   // Main breathing cycle effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -101,6 +108,15 @@ export default function SOSScreen() {
     if (isActive) {
       interval = setInterval(() => {
         setTimer(prevTimer => {
+          // Provide haptic feedback for last 3 seconds of each phase
+          if (prevTimer <= 3 && prevTimer > 0) {
+            Haptics.impactAsync(
+              prevTimer === 1 
+                ? Haptics.ImpactFeedbackStyle.Medium 
+                : Haptics.ImpactFeedbackStyle.Light
+            );
+          }
+          
           if (prevTimer <= 1) {
             // Move to next state when timer reaches 0
             switch (currentState) {
@@ -122,9 +138,7 @@ export default function SOSScreen() {
                   setShowMotivation(true);
                   
                   // Provide success haptic feedback
-                  if (Platform.OS !== 'web') {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  }
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   
                   return 0;
                 }
@@ -151,13 +165,6 @@ export default function SOSScreen() {
   
   // Animation function for the breathing circle using Reanimated
   const animateCircle = (toSize: number, duration: number) => {
-    // Skip complex animations on web to avoid potential issues
-    if (Platform.OS === 'web') {
-      circleSize.value = toSize;
-      circleOpacity.value = toSize > 150 ? 0.7 : 0.3;
-      return;
-    }
-    
     // Use withTiming for smooth animations
     circleSize.value = withTiming(toSize, {
       duration: duration,
@@ -192,9 +199,10 @@ export default function SOSScreen() {
     // Award XP for overcoming the crisis
     addXP(30);
     
-    if (Platform.OS !== 'web') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }
+    // Increment cravings overcome count
+    incrementCravingsOvercome();
+    
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
     router.back();
   };
@@ -212,7 +220,7 @@ export default function SOSScreen() {
   return (
     <Animated.View 
       style={styles.container}
-      entering={Platform.OS !== 'web' ? FadeIn.duration(800) : undefined}
+      entering={FadeIn.duration(800)}
     >
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       

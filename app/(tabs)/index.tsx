@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, StatusBar, SafeAreaView, Platform, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
 import { XPProgressBar } from '@/components/XPProgressBar';
@@ -14,21 +14,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const { addXP, xpToNextLevel } = useSobrietyStore();
 
-  // Provide subtle haptic feedback when the screen is focused (on non-web platforms)
-  React.useEffect(() => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    return () => {};
-  }, []);
-
-  const handleAddXP = () => {
-    // Add just enough XP to level up
-    addXP(xpToNextLevel);
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -42,14 +27,6 @@ export default function HomeScreen() {
         <XPProgressBar />
         <Companion />
         <SobrietyTimer />
-        
-        {/* Debug button for testing level up animation - remove in production */}
-        <TouchableOpacity 
-          style={styles.debugButton} 
-          onPress={handleAddXP}
-        >
-          <Text style={styles.debugButtonText}>🎮 Test Level Up</Text>
-        </TouchableOpacity>
         
         <DailyChecklist />
         
@@ -73,20 +50,5 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     paddingTop: 12,
-  },
-  debugButton: {
-    backgroundColor: colors.progressBackground,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignSelf: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  debugButtonText: {
-    color: colors.textLight,
-    fontWeight: '500',
-    fontSize: 14,
   },
 });

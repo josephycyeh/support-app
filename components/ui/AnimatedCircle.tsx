@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Platform, ViewStyle } from 'react-native';
+import { StyleSheet, Animated, ViewStyle } from 'react-native';
 import { createSafeAnimation } from '@/utils/animations';
 
 interface AnimatedCircleProps {
@@ -30,18 +30,14 @@ export const AnimatedCircle = ({
     ]).start();
   }, [targetSize, duration]);
   
-  // Use regular View for web to avoid animation issues
-  const AnimatedView = Platform.OS === 'web' ? View : Animated.View;
-  const animationStyle = Platform.OS === 'web' 
-    ? { width: targetSize, height: targetSize, opacity: targetSize > size ? 0.7 : 0.3 } 
-    : {
-        width: circleSize,
-        height: circleSize,
-        opacity: circleOpacity
-      };
+  const animationStyle = {
+    width: circleSize,
+    height: circleSize,
+    opacity: circleOpacity
+  };
   
   return (
-    <AnimatedView 
+    <Animated.View 
       style={[
         styles.circle,
         { backgroundColor: color },
@@ -50,7 +46,7 @@ export const AnimatedCircle = ({
       ]}
     >
       {children}
-    </AnimatedView>
+    </Animated.View>
   );
 };
 

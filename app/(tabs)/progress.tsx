@@ -1,20 +1,27 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Stack } from 'expo-router';
-import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp } from 'lucide-react-native';
+import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { HeatmapCalendar } from '@/components/HeatmapCalendar';
 import { ProgressChart } from '@/components/ProgressChart';
-import { ActivityBarChart } from '@/components/ActivityBarChart';
+import { useActivityStore } from '@/store/activityStore';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function ProgressScreen() {
   const { startDate, level, xp } = useSobrietyStore();
+  const { breathingExercises, journalEntries, cravingsOvercome } = useActivityStore();
   
   // Calculate days sober
   const daysSober = Math.floor((new Date().getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  
+  // Calculate badge progress
+  const earlyRiserProgress = Math.min(daysSober, 5) * 20; // 20% per day up to 5 days
+  const mindfulMasterProgress = Math.min(breathingExercises * 10, 100); // 10% per exercise up to 10
+  const journalKeeperProgress = Math.min(journalEntries * 20, 100); // 20% per entry up to 5
+  const communityHelperProgress = 30; // Fixed for now, could be dynamic in the future
   
   return (
     <View style={styles.container}>
@@ -117,11 +124,6 @@ export default function ProgressScreen() {
             <Text style={styles.chartTitle}>XP Growth Over Time</Text>
             <ProgressChart />
           </View>
-          
-          <View style={styles.chartContainer}>
-            <Text style={styles.chartTitle}>Activities Completed</Text>
-            <ActivityBarChart />
-          </View>
         </View>
         
         {/* Badges Section */}
@@ -138,32 +140,32 @@ export default function ProgressScreen() {
               description="Complete morning check-in 5 days in a row"
               icon={<Clock size={24} color="#FFFFFF" />}
               color={colors.primary}
-              progress={80}
-              earned={true}
+              progress={earlyRiserProgress}
+              earned={earlyRiserProgress >= 100}
             />
             <BadgeItem 
               title="Mindful Master" 
               description="Complete 10 breathing exercises"
               icon={<Wind size={24} color="#FFFFFF" />}
               color="#11CDEF" // Cyan
-              progress={60}
-              earned={false}
+              progress={mindfulMasterProgress}
+              earned={mindfulMasterProgress >= 100}
             />
             <BadgeItem 
               title="Journal Keeper" 
               description="Write 5 journal entries"
               icon={<BookOpen size={24} color="#FFFFFF" />}
               color="#FB6340" // Orange
-              progress={40}
-              earned={false}
+              progress={journalKeeperProgress}
+              earned={journalKeeperProgress >= 100}
             />
             <BadgeItem 
               title="Community Helper" 
               description="Support 3 community members"
               icon={<Heart size={24} color="#FFFFFF" />}
               color="#F5365C" // Pink
-              progress={30}
-              earned={false}
+              progress={communityHelperProgress}
+              earned={communityHelperProgress >= 100}
             />
           </ScrollView>
         </View>
@@ -174,17 +176,17 @@ export default function ProgressScreen() {
           <View style={styles.statsGrid}>
             <StatCard 
               title="Breathing Exercises"
-              value="8"
+              value={breathingExercises.toString()}
               icon={<Wind size={20} color={colors.primary} />}
             />
             <StatCard 
               title="Journal Entries"
-              value="5"
+              value={journalEntries.toString()}
               icon={<BookOpen size={20} color={colors.primary} />}
             />
             <StatCard 
               title="Cravings Overcome"
-              value="12"
+              value={cravingsOvercome.toString()}
               icon={<Star size={20} color={colors.primary} />}
             />
             <StatCard 
@@ -203,13 +205,13 @@ export default function ProgressScreen() {
             <ChallengeCard 
               title="Complete 3 breathing exercises"
               xpReward={30}
-              progress={1}
+              progress={Math.min(breathingExercises, 3)}
               total={3}
             />
             <ChallengeCard 
               title="Log your thoughts for 5 days"
               xpReward={50}
-              progress={2}
+              progress={Math.min(journalEntries, 5)}
               total={5}
             />
             <ChallengeCard 
@@ -284,9 +286,6 @@ const MilestoneNode = ({ title, description, icon, color, completed, current, xp
     )}
   </View>
 );
-
-// Import Check icon
-import { Check } from 'lucide-react-native';
 
 interface BadgeProps {
   title: string;

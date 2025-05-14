@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View, Platform } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
@@ -8,10 +8,8 @@ export const SOSButton = () => {
   const router = useRouter();
 
   const handleSOSPress = () => {
-    // Provide haptic feedback on non-web platforms
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    }
+    // Provide haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     
     router.push('/sos');
   };

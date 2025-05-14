@@ -1,17 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Modal } from 'react-native';
 import { MessageSquare, Wind, BookOpen } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
 import { Button } from '@/components/ui/Button';
 import * as Haptics from 'expo-haptics';
-import { JournalModal } from '@/components/JournalModal';
 import LottieView from 'lottie-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
 export const Companion = () => {
   const [optionsVisible, setOptionsVisible] = useState(false);
-  const [journalVisible, setJournalVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showLevelUpMessage, setShowLevelUpMessage] = useState(false);
   const lottieRef = useRef<LottieView>(null);
@@ -25,10 +23,8 @@ export const Companion = () => {
       // Show level up animation
       setShowLevelUpMessage(true);
       
-      // Provide haptic feedback on non-web platforms
-      if (Platform.OS !== 'web') {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      // Provide haptic feedback
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       // Play walking animation in the modal
       if (modalWalkingRef.current) {
@@ -62,24 +58,21 @@ export const Companion = () => {
         router.push('/chat');
         break;
       case 'thought':
-        setJournalVisible(true);
+        // Navigate to the journal entry screen for new entries
+        router.push('/journal-entry');
         break;
     }
     
-    // Provide haptic feedback on non-web platforms
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    // Provide haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   const handleCompanionPress = () => {
     // Don't trigger pet animation if level up modal is showing
     if (showLevelUpMessage) return;
     
-    // Provide haptic feedback on non-web platforms
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    // Provide haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
     // Play the petting animation
     setIsAnimating(true);
@@ -95,12 +88,11 @@ export const Companion = () => {
   };
 
   const handleJournalPress = () => {
-    setJournalVisible(true);
+    // Navigate to the journal screen instead of showing the modal
+    router.push('/journal');
     
-    // Provide haptic feedback on non-web platforms
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    // Provide haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
@@ -243,12 +235,6 @@ export const Companion = () => {
           </View>
         </TouchableOpacity>
       </Modal>
-
-      {/* Journal Modal */}
-      <JournalModal 
-        visible={journalVisible}
-        onClose={() => setJournalVisible(false)}
-      />
     </View>
   );
 };
