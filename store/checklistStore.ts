@@ -5,8 +5,10 @@ import { ChecklistItem } from '@/types';
 
 interface ChecklistStore {
   items: ChecklistItem[];
+  lastResetDate: string;
   toggleItem: (id: string) => void;
   resetDailyItems: () => void;
+  checkAndResetIfNewDay: () => void;
 }
 
 // Updated checklist items with more action-oriented titles
@@ -18,10 +20,17 @@ const defaultItems: ChecklistItem[] = [
   { id: '5', title: "Call a Supportive Friend", completed: false, xpReward: 20 },
 ];
 
+// Helper to get today's date as a string in YYYY-MM-DD format
+const getTodayDateString = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+};
+
 export const useChecklistStore = create<ChecklistStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: defaultItems,
+      lastResetDate: getTodayDateString(),
       
       toggleItem: (id: string) => 
         set((state) => ({
@@ -33,7 +42,18 @@ export const useChecklistStore = create<ChecklistStore>()(
       resetDailyItems: () => 
         set(() => ({
           items: defaultItems.map(item => ({ ...item, completed: false })),
+          lastResetDate: getTodayDateString(),
         })),
+        
+      checkAndResetIfNewDay: () => {
+        const { lastResetDate, resetDailyItems } = get();
+        const today = getTodayDateString();
+        
+        // If today's date is different from the last reset date, reset items
+        if (today !== lastResetDate) {
+          resetDailyItems();
+        }
+      },
     }),
     {
       name: 'checklist-storage',

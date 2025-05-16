@@ -36,6 +36,7 @@ export const AddReasonModal = ({ visible, onClose, onSave }: AddReasonModalProps
       style={styles.modal}
       animationIn="slideInUp"
       animationOut="slideOutDown"
+      avoidKeyboard={true}
     >
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
@@ -74,18 +75,18 @@ export const AddReasonModal = ({ visible, onClose, onSave }: AddReasonModalProps
 const styles = StyleSheet.create({
   modal: {
     margin: 0,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    padding: 20,
   },
   modalContent: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderRadius: 24,
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 30,
+    paddingBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 10,
   },
@@ -134,15 +135,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   modalActionButtonFull: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    padding: 16,
     flex: 1,
-    alignItems: 'center',
   },
   modalSaveButtonInner: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 16,
   },
   modalSaveText: {
     color: '#FFFFFF',

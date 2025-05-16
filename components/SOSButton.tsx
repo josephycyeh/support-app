@@ -9,10 +9,10 @@ export const SOSButton = () => {
 
   const handleSOSPress = () => {
     // Provide haptic feedback
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     
     router.push('/sos');
-  };
+      };
 
   return (
     <View style={styles.container}>

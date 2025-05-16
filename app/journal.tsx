@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
@@ -59,6 +59,36 @@ export default function JournalScreen() {
     router.push('/journal-entry');
   };
   
+  const handleEditEntry = (entry: JournalEntry) => {
+    router.push({
+      pathname: '/journal-entry',
+      params: { 
+        mode: 'edit', 
+        id: entry.id,
+        title: entry.title,
+        content: entry.content
+      }
+    });
+  };
+  
+  const handleDeleteEntry = (entryId: string) => {
+    Alert.alert(
+      "Delete Entry",
+      "Are you sure you want to delete this journal entry? This cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Delete", 
+          onPress: () => deleteEntry(entryId),
+          style: "destructive"
+        }
+      ]
+    );
+  };
+  
   return (
     <View style={styles.container}>
       <Stack.Screen 
@@ -91,7 +121,8 @@ export default function JournalScreen() {
                 <JournalEntryCard 
                   key={entry.id} 
                   entry={entry}
-                  onDelete={() => deleteEntry(entry.id)}
+                  onEdit={() => handleEditEntry(entry)}
+                  onDelete={() => handleDeleteEntry(entry.id)}
                   index={groupIndex * 10 + entryIndex}
                 />
               ))}
@@ -126,11 +157,12 @@ export default function JournalScreen() {
 
 interface JournalEntryCardProps {
   entry: JournalEntry;
+  onEdit: () => void;
   onDelete: () => void;
   index: number;
 }
 
-const JournalEntryCard = ({ entry, onDelete, index }: JournalEntryCardProps) => {
+const JournalEntryCard = ({ entry, onEdit, onDelete, index }: JournalEntryCardProps) => {
   const [animation] = React.useState(new Animated.Value(0));
   
   React.useEffect(() => {
@@ -160,21 +192,22 @@ const JournalEntryCard = ({ entry, onDelete, index }: JournalEntryCardProps) => 
   const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
   
   const animationStyle = {
-    opacity: animation,
-    transform: [
-      { 
-        translateY: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [20, 0]
-        })
-      }
-    ]
-  };
+        opacity: animation,
+        transform: [
+          { 
+            translateY: animation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [20, 0]
+            })
+          }
+        ]
+      };
   
   return (
     <AnimatedTouchable 
       style={[styles.entryCard, animationStyle]}
       activeOpacity={0.7}
+      onPress={onEdit}
     >
       <View style={styles.entryHeader}>
         <Text style={styles.entryTitle}>{entry.title}</Text>
@@ -186,7 +219,10 @@ const JournalEntryCard = ({ entry, onDelete, index }: JournalEntryCardProps) => 
       </Text>
       
       <View style={styles.entryActions}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={onEdit}
+        >
           <Edit size={18} color={colors.primary} />
           <Text style={styles.actionText}>Edit</Text>
         </TouchableOpacity>

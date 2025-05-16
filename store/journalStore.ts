@@ -13,7 +13,7 @@ interface JournalStore {
   entries: JournalEntry[];
   addEntry: (entry: JournalEntry) => void;
   deleteEntry: (id: string) => void;
-  updateEntry: (id: string, updates: Partial<Omit<JournalEntry, 'id'>>) => void;
+  updateEntry: (updatedEntry: JournalEntry) => void;
   getEntries: () => JournalEntry[];
 }
 
@@ -32,10 +32,10 @@ export const useJournalStore = create<JournalStore>()(
           entries: state.entries.filter(entry => entry.id !== id)
         })),
       
-      updateEntry: (id: string, updates: Partial<Omit<JournalEntry, 'id'>>) => 
+      updateEntry: (updatedEntry: JournalEntry) => 
         set((state) => ({
           entries: state.entries.map(entry => 
-            entry.id === id ? { ...entry, ...updates } : entry
+            entry.id === updatedEntry.id ? updatedEntry : entry
           )
         })),
       

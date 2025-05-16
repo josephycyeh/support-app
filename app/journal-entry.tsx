@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -7,49 +7,92 @@ import {
   TextInput, 
   ScrollView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Keyboard,
+  Dimensions
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { X, ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useJournalStore } from '@/store/journalStore';
 import { useActivityStore } from '@/store/activityStore';
 import * as Haptics from 'expo-haptics';
-import { Button } from '@/components/ui/Button';
 
 export default function JournalEntryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const mode = typeof params.mode === 'string' ? params.mode : 'new';
+  const entryId = typeof params.id === 'string' ? params.id : null;
   
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState(typeof params.title === 'string' ? params.title : '');
+  const [content, setContent] = useState(typeof params.content === 'string' ? params.content : '');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const contentInputRef = useRef(null);
   const { addXP } = useSobrietyStore();
-  const { addEntry } = useJournalStore();
+  const { addEntry, updateEntry } = useJournalStore();
   const { incrementJournalEntries } = useActivityStore();
   
+  // Set up keyboard listeners to track keyboard height
   useEffect(() => {
-    // Reset form when screen mounts
-    setTitle('');
-    setContent('');
-  }, []);
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    // Auto-focus the content input when component mounts
+    setTimeout(() => {
+      if (contentInputRef.current) {
+        contentInputRef.current.focus();
+      }
+    }, 100);
+
+    // Only reset the form when creating a new entry
+    // For edit mode, we already set the initial values from params
+    if (mode !== 'edit') {
+      setTitle('');
+      setContent('');
+    }
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, [mode]);
   
   const handleSave = () => {
     if (content.trim()) {
-      // Add journal entry
-      addEntry({
-        id: Date.now().toString(),
-        title: title.trim() || 'Untitled',
-        content: content.trim(),
-        date: new Date().toISOString(),
-      });
-      
-      // Award XP for journaling
-      addXP(20);
-      
-      // Increment journal entries count
-      incrementJournalEntries();
+      if (mode === 'edit' && entryId) {
+        // Update existing entry
+        updateEntry({
+          id: entryId,
+          title: title.trim() || 'Untitled',
+          content: content.trim(),
+          date: new Date().toISOString(), // You might want to keep the original date instead
+        });
+      } else {
+        // Add new journal entry
+        addEntry({
+          id: Date.now().toString(),
+          title: title.trim() || 'Untitled',
+          content: content.trim(),
+          date: new Date().toISOString(),
+        });
+        
+        // Award XP for journaling (only for new entries)
+        addXP(20);
+        
+        // Increment journal entries count (only for new entries)
+        incrementJournalEntries();
+      }
       
       // Provide haptic feedback
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -62,6 +105,15 @@ export default function JournalEntryScreen() {
   const handleCancel = () => {
     router.back();
   };
+
+  const addInspirationToContent = (text) => {
+    setContent(prev => prev + (prev ? '\n\n' : '') + text);
+    if (contentInputRef.current) {
+      contentInputRef.current.focus();
+    }
+  };
+  
+  const { height: screenHeight } = Dimensions.get('window');
   
   return (
     <View style={styles.container}>
@@ -72,88 +124,110 @@ export default function JournalEntryScreen() {
         }} 
       />
       
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={handleCancel}
-          >
-            <ArrowLeft size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {mode === 'edit' ? 'Edit Entry' : 'New Entry'}
-          </Text>
-          <View style={styles.headerRightPlaceholder} />
-        </View>
-        
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={handleCancel}
         >
-          <View style={styles.titleContainer}>
-            <TextInput
-              style={styles.titleInput}
-              placeholder="Title (optional)"
-              placeholderTextColor={colors.textMuted}
-              value={title}
-              onChangeText={setTitle}
-              maxLength={50}
-            />
-          </View>
-          
-          <View style={styles.contentContainer}>
-            <TextInput
-              style={styles.contentInput}
-              placeholder="What's on your mind today?"
-              placeholderTextColor={colors.textMuted}
-              value={content}
-              onChangeText={setContent}
-              multiline
-              textAlignVertical="top"
-              autoFocus
-            />
-          </View>
-          
-          <View style={styles.promptsContainer}>
-            <Text style={styles.promptsTitle}>Prompts to help you reflect:</Text>
-            <TouchableOpacity 
-              style={styles.promptButton}
-              onPress={() => setContent(prev => prev + (prev ? '\n\n' : '') + "Today I'm feeling...")}
-            >
-              <Text style={styles.promptText}>Today I'm feeling...</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.promptButton}
-              onPress={() => setContent(prev => prev + (prev ? '\n\n' : '') + "I'm proud that I...")}
-            >
-              <Text style={styles.promptText}>I'm proud that I...</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.promptButton}
-              onPress={() => setContent(prev => prev + (prev ? '\n\n' : '') + "A challenge I faced today was...")}
-            >
-              <Text style={styles.promptText}>A challenge I faced today was...</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-        
-        <View style={styles.footer}>
-          <Button
-            onPress={handleSave}
-            variant="primary"
-            style={styles.saveFullButton}
+          <ArrowLeft size={22} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {mode === 'edit' ? 'Edit Entry' : 'New Entry'}
+        </Text>
+        <View style={styles.headerRightPlaceholder} />
+      </View>
+
+      <View style={styles.inspirationsContainer}>
+        <Text style={styles.inspirationsLabel}>Inspirations</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.inspirationsScrollContent}
+          keyboardShouldPersistTaps="always"
+        >
+          <TouchableOpacity 
+            style={styles.inspirationChip}
+            onPress={() => addInspirationToContent("Today I'm feeling...")}
+            activeOpacity={0.7}
           >
-            Save Entry (+20 XP)
-          </Button>
-        </View>
-      </KeyboardAvoidingView>
+            <View style={styles.inspirationIconContainer}>
+              <Text style={styles.inspirationIcon}>😊</Text>
+            </View>
+            <Text style={styles.inspirationText}>Today I'm feeling...</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.inspirationChip}
+            onPress={() => addInspirationToContent("I'm proud that I...")}
+            activeOpacity={0.7}
+          >
+            <View style={styles.inspirationIconContainer}>
+              <Text style={styles.inspirationIcon}>🌟</Text>
+            </View>
+            <Text style={styles.inspirationText}>I'm proud that I...</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.inspirationChip}
+            onPress={() => addInspirationToContent("A challenge I faced today was...")}
+            activeOpacity={0.7}
+          >
+            <View style={styles.inspirationIconContainer}>
+              <Text style={styles.inspirationIcon}>💪</Text>
+            </View>
+            <Text style={styles.inspirationText}>A challenge I faced...</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.inspirationChip}
+            onPress={() => addInspirationToContent("I'm grateful for...")}
+            activeOpacity={0.7}
+          >
+            <View style={styles.inspirationIconContainer}>
+              <Text style={styles.inspirationIcon}>🙏</Text>
+            </View>
+            <Text style={styles.inspirationText}>I'm grateful for...</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+      
+      <View style={styles.contentArea}>
+        <TextInput
+          style={styles.titleInput}
+          placeholder="Title"
+          placeholderTextColor={colors.textMuted}
+          value={title}
+          onChangeText={setTitle}
+          maxLength={50}
+        />
+        
+        <TextInput
+          ref={contentInputRef}
+          style={styles.contentInput}
+          placeholder="What's on your mind today?"
+          placeholderTextColor={colors.textMuted}
+          value={content}
+          onChangeText={setContent}
+          multiline
+          textAlignVertical="top"
+          autoFocus
+        />
+      </View>
+      
+      {keyboardHeight > 0 && (
+        <TouchableOpacity 
+          style={[
+            styles.saveButton, 
+            { bottom: keyboardHeight + 16 }
+          ]}
+          onPress={handleSave}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.saveButtonText}>
+            {mode === 'edit' ? 'Save Changes' : 'Save (+20 XP)'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -163,108 +237,118 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  keyboardAvoidingContainer: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 60,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingBottom: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0,0,0,0.07)',
+    backgroundColor: colors.background,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '600',
     color: colors.text,
+    letterSpacing: 0.2,
   },
   headerRightPlaceholder: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
   },
-  scrollView: {
-    flex: 1,
+  inspirationsContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: colors.background,
   },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 100,
-  },
-  titleContainer: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  titleInput: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  contentContainer: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    minHeight: 300,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  contentInput: {
-    fontSize: 16,
-    color: colors.text,
-    lineHeight: 24,
-    minHeight: 280,
-  },
-  promptsContainer: {
-    marginBottom: 24,
-  },
-  promptsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  promptButton: {
-    backgroundColor: 'rgba(107, 152, 194, 0.15)',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(107, 152, 194, 0.2)',
-  },
-  promptText: {
+  inspirationsLabel: {
     fontSize: 15,
+    fontWeight: '600',
+    color: colors.textLight,
+    marginBottom: 12,
+    letterSpacing: 0.1,
+  },
+  inspirationsScrollContent: {
+    paddingRight: 16,
+  },
+  inspirationChip: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 12,
+    borderWidth: 0.5,
+    borderColor: 'rgba(107, 152, 194, 0.25)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  inspirationIconContainer: {
+    marginRight: 8,
+  },
+  inspirationIcon: {
+    fontSize: 16,
+  },
+  inspirationText: {
+    fontSize: 14,
     color: colors.primary,
     fontWeight: '500',
   },
-  footer: {
-    padding: 24,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+  contentArea: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    backgroundColor: colors.background,
   },
-  saveFullButton: {
-    width: '100%',
+  titleInput: {
+    fontSize: 20,
+    fontWeight: '500',
+    color: colors.text,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+    paddingBottom: 12,
+    marginBottom: 16,
+  },
+  contentInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    lineHeight: 24,
+    paddingBottom: 100,
+  },
+  saveButton: {
+    position: 'absolute',
+    right: 16,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+    letterSpacing: 0.3,
   },
 }); 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Check } from 'lucide-react-native';
 import colors from '@/constants/colors';
@@ -8,8 +8,13 @@ import { Card } from '@/components/ui/Card';
 import { createSafeAnimation } from '@/utils/animations';
 
 export const DailyChecklist = () => {
-  const { items, toggleItem } = useChecklistStore();
+  const { items, toggleItem, checkAndResetIfNewDay } = useChecklistStore();
   const { addXP } = useSobrietyStore();
+
+  // Check for a new day on component mount
+  useEffect(() => {
+    checkAndResetIfNewDay();
+  }, []);
 
   const handleToggle = (id: string) => {
     const item = items.find(item => item.id === id);
@@ -66,16 +71,16 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
   const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
   
   const animationStyle = {
-    opacity: animation,
-    transform: [
-      { 
-        translateY: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [20, 0]
-        })
-      }
-    ]
-  };
+        opacity: animation,
+        transform: [
+          { 
+            translateY: animation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [20, 0]
+            })
+          }
+        ]
+      };
   
   return (
     <AnimatedTouchable

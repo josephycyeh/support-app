@@ -123,19 +123,19 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Your Profile</Text>
           <Text style={styles.headerSubtitle}>Level {level} • {daysSober} days sober</Text>
-        </View>
-        
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>{daysSober}</Text>
-            <Text style={styles.statLabel}>Days Sober</Text>
-          </View>
-          
-          <View style={styles.statDivider} />
-          
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>Level {level}</Text>
-            <Text style={styles.statLabel}>{Math.floor(progressPercentage)}% to Next</Text>
+            </View>
+            
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{daysSober}</Text>
+                <Text style={styles.statLabel}>Days Sober</Text>
+              </View>
+              
+              <View style={styles.statDivider} />
+              
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>Level {level}</Text>
+                <Text style={styles.statLabel}>{Math.floor(progressPercentage)}% to Next</Text>
           </View>
         </View>
         
@@ -166,7 +166,7 @@ export default function ProfileScreen() {
                 style={styles.reasonItem}
                 onPress={() => handleOpenReasonEditor(reason)}
               >
-                <Heart size={20} color={colors.primary} />
+              <Heart size={20} color={colors.primary} />
                 <Text style={styles.reasonText}>{reason.text}</Text>
               </TouchableOpacity>
             ))}

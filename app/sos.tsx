@@ -80,7 +80,7 @@ export default function SOSScreen() {
   
   // Provide emergency haptic feedback on mount
   useEffect(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   }, []);
   
   // Handle back button on Android
@@ -138,7 +138,7 @@ export default function SOSScreen() {
                   setShowMotivation(true);
                   
                   // Provide success haptic feedback
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   
                   return 0;
                 }
@@ -202,7 +202,7 @@ export default function SOSScreen() {
     // Increment cravings overcome count
     incrementCravingsOvercome();
     
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
     router.back();
   };
@@ -261,8 +261,8 @@ export default function SOSScreen() {
           <View style={styles.reasonsContainer}>
             {reasons.map((reason) => (
               <View key={reason.id} style={styles.reasonItem}>
-                <View style={styles.reasonIcon}>
-                  <Heart size={20} color="#fff" />
+              <View style={styles.reasonIcon}>
+                <Heart size={20} color="#fff" />
                 </View>
                 <Text style={styles.reasonText}>{reason.text}</Text>
               </View>

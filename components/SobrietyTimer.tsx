@@ -49,9 +49,9 @@ export const SobrietyTimer = () => {
   }, [startDate]);
 
   const animationStyle = {
-    opacity: fadeAnim,
-    transform: [{ scale: scaleAnim }]
-  };
+        opacity: fadeAnim,
+        transform: [{ scale: scaleAnim }]
+      };
 
   return (
     <Animated.View style={[animationStyle, styles.container]}>

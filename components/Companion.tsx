@@ -122,7 +122,7 @@ export const Companion = () => {
                   loop={false}
                   autoPlay={false}
                   resizeMode="cover"
-                />
+              />
               </View>
             </View>
           </TouchableOpacity>

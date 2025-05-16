@@ -31,10 +31,10 @@ export const AnimatedCircle = ({
   }, [targetSize, duration]);
   
   const animationStyle = {
-    width: circleSize,
-    height: circleSize,
-    opacity: circleOpacity
-  };
+        width: circleSize,
+        height: circleSize,
+        opacity: circleOpacity
+      };
   
   return (
     <Animated.View 

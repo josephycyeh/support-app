@@ -34,9 +34,9 @@ const getDefaultState = (): SobrietyState => {
   
   return {
     startDate,
-    xp: 0,
-    level: 1,
-    xpToNextLevel: calculateXpForNextLevel(1),
+  xp: 0,
+  level: 1,
+  xpToNextLevel: calculateXpForNextLevel(1),
     levelUp: false,
     dailyXP: defaultDailyXP,
     sobrietyBreaks: [],
