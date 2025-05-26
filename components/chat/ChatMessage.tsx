@@ -7,14 +7,10 @@ interface ChatMessageProps {
   content: string;
   role: 'user' | 'assistant';
   id: string;
-  isToolInvocation?: boolean;
 }
 
-export const ChatMessage = ({ content, role, id, isToolInvocation }: ChatMessageProps) => {
+export const ChatMessage = ({ content, role, id }: ChatMessageProps) => {
   const isUser = role === 'user';
-  
-  // Check if content is a JSON string from a tool invocation
-  const isJsonContent = content.startsWith('[{') || content.startsWith('{');
 
   return (
     <View style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}>
@@ -29,13 +25,9 @@ export const ChatMessage = ({ content, role, id, isToolInvocation }: ChatMessage
       )}
       <View style={[
         styles.bubble, 
-        isUser ? styles.userBubble : styles.assistantBubble,
-        isJsonContent && styles.jsonBubble
+        isUser ? styles.userBubble : styles.assistantBubble
       ]}>
-        <Text style={[
-          styles.messageText,
-          isJsonContent && styles.jsonText
-        ]}>{content}</Text>
+        <Text style={styles.messageText}>{content}</Text>
       </View>
     </View>
   );
@@ -77,16 +69,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderWidth: 1,
   },
-  jsonBubble: {
-    backgroundColor: '#f0f0f0',
-    borderColor: '#ddd',
-  },
   messageText: {
     fontSize: 15,
     color: colors.text,
-  },
-  jsonText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 13,
   },
 }); 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -9,10 +9,10 @@ import {
   Image
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useActivityStore } from '@/store/activityStore';
+import { Header } from '@/components/ui/Header';
 import * as Haptics from 'expo-haptics';
 import { Button } from '@/components/ui/Button';
 import LottieView from 'lottie-react-native';
@@ -60,6 +60,14 @@ export default function BreathingExerciseScreen() {
   const circleSize = useSharedValue(100);
   const circleOpacity = useSharedValue(0.3);
   
+  const handleExit = useCallback(() => {
+    // Award XP if they completed at least one cycle
+    if (cyclesCompleted > 0 || currentState === BreathingState.COMPLETE) {
+      addXP(15); // Award XP for completing the exercise
+    }
+    router.back();
+  }, [cyclesCompleted, currentState, addXP, router]);
+  
   // Provide haptic feedback on state changes
   useEffect(() => {
     if (currentState !== BreathingState.READY) {
@@ -75,7 +83,7 @@ export default function BreathingExerciseScreen() {
     });
     
     return () => backHandler.remove();
-  }, []);
+  }, [handleExit]);
   
   // Provide countdown haptic feedback
   useEffect(() => {
@@ -87,7 +95,7 @@ export default function BreathingExerciseScreen() {
   
   // Main breathing cycle effect
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     
     if (isActive) {
       interval = setInterval(() => {
@@ -172,14 +180,6 @@ export default function BreathingExerciseScreen() {
     };
   });
   
-  const handleExit = () => {
-    // Award XP if they completed at least one cycle
-    if (cyclesCompleted > 0 || currentState === BreathingState.COMPLETE) {
-      addXP(15); // Award XP for completing the exercise
-    }
-    router.back();
-  };
-  
   const handleComplete = () => {
     // Award XP for completing the full exercise
     addXP(25);
@@ -207,12 +207,7 @@ export default function BreathingExerciseScreen() {
         }} 
       />
       
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={handleExit}
-      >
-        <ArrowLeft size={24} color={colors.text} />
-      </TouchableOpacity>
+      <Header onBack={handleExit} variant="floating" />
       
       <View style={styles.content}>
         {currentState === BreathingState.COMPLETE ? (
@@ -313,25 +308,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.cardBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   content: {
     flex: 1,

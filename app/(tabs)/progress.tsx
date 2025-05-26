@@ -5,7 +5,6 @@ import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { HeatmapCalendar } from '@/components/HeatmapCalendar';
-import { ProgressChart } from '@/components/ProgressChart';
 import { useActivityStore } from '@/store/activityStore';
 
 const screenWidth = Dimensions.get('window').width;
@@ -50,60 +49,121 @@ export default function ProgressScreen() {
             {/* Milestone 1 - First Day */}
             <MilestoneNode 
               title="First Day"
-              description="Begin your journey"
+              description="Your recovery journey begins"
               icon={<Clock size={20} color="#fff" />}
               color={colors.primary}
               completed={daysSober >= 1}
-              current={daysSober === 1}
+              current={daysSober === 0}
               xpReward={50}
+              scienceInfo="Your brain starts adjusting to life without substances"
             />
             
-            {/* Milestone 2 - One Week */}
+            {/* Milestone 2 - Three Days */}
+            <MilestoneNode 
+              title="Three Days"
+              description="Peak withdrawal phase"
+              icon={<Star size={20} color="#fff" />}
+              color="#FFA726" // Orange
+              completed={daysSober >= 3}
+              current={daysSober >= 1 && daysSober < 3}
+              xpReward={75}
+              scienceInfo="Physical withdrawal symptoms often peak around this time"
+            />
+            
+            {/* Milestone 3 - One Week */}
             <MilestoneNode 
               title="One Week"
-              description="7 days milestone"
+              description="Initial brain rebalancing"
               icon={<Calendar size={20} color="#fff" />}
               color={colors.accent}
               completed={daysSober >= 7}
-              current={daysSober >= 2 && daysSober < 7}
+              current={daysSober >= 3 && daysSober < 7}
               xpReward={100}
-              unlocks="Daily Meditation Challenge"
+              scienceInfo="Dopamine and serotonin systems begin to stabilize"
             />
             
-            {/* Milestone 3 - Two Weeks */}
+            {/* Milestone 4 - Two Weeks */}
             <MilestoneNode 
               title="Two Weeks"
-              description="14 days strong"
-              icon={<Star size={20} color="#fff" />}
-              color="#FFB347" // Orange
+              description="Sleep patterns improving"
+              icon={<Wind size={20} color="#fff" />}
+              color="#66BB6A" // Green
               completed={daysSober >= 14}
               current={daysSober >= 7 && daysSober < 14}
               xpReward={150}
-              unlocks="Community Support Feature"
+              scienceInfo="Many people report better sleep quality and mood stability"
             />
             
-            {/* Milestone 4 - One Month */}
+            {/* Milestone 5 - One Month */}
             <MilestoneNode 
               title="One Month"
-              description="30 days milestone"
+              description="Significant brain changes"
               icon={<Trophy size={20} color="#fff" />}
               color="#5E72E4" // Indigo
               completed={daysSober >= 30}
               current={daysSober >= 14 && daysSober < 30}
               xpReward={300}
-              unlocks="Advanced Coping Strategies"
+              scienceInfo="Neural pathways start rewiring, cognitive function improves"
             />
             
-            {/* Milestone 5 - Three Months */}
+            {/* Milestone 6 - Three Months */}
             <MilestoneNode 
               title="Three Months"
-              description="90 days transformation"
+              description="Neuroplasticity acceleration"
               icon={<Award size={20} color="#fff" />}
               color="#11CDEF" // Cyan
               completed={daysSober >= 90}
               current={daysSober >= 30 && daysSober < 90}
               xpReward={500}
-              unlocks="Personalized Recovery Plan"
+              scienceInfo="Brain forms new healthy neural pathways, willpower strengthens"
+            />
+            
+            {/* Milestone 7 - Six Months */}
+            <MilestoneNode 
+              title="Six Months"
+              description="Emotional regulation restored"
+              icon={<Heart size={20} color="#fff" />}
+              color="#E91E63" // Pink
+              completed={daysSober >= 180}
+              current={daysSober >= 90 && daysSober < 180}
+              xpReward={750}
+              scienceInfo="Emotional centers of brain show significant healing"
+            />
+            
+            {/* Milestone 8 - One Year */}
+            <MilestoneNode 
+              title="One Year"
+              description="Major milestone achievement"
+              icon={<Star size={20} color="#fff" />}
+              color="#FFD700" // Gold
+              completed={daysSober >= 365}
+              current={daysSober >= 180 && daysSober < 365}
+              xpReward={1000}
+              scienceInfo="Brain structure and function show remarkable recovery"
+            />
+            
+            {/* Milestone 9 - Two Years */}
+            <MilestoneNode 
+              title="Two Years"
+              description="Long-term transformation"
+              icon={<Award size={20} color="#fff" />}
+              color="#8E24AA" // Purple
+              completed={daysSober >= 730}
+              current={daysSober >= 365 && daysSober < 730}
+              xpReward={1500}
+              scienceInfo="Continued neural growth, reduced relapse risk"
+            />
+            
+            {/* Milestone 10 - Five Years */}
+            <MilestoneNode 
+              title="Five Years"
+              description="Recovery mastery"
+              icon={<Trophy size={20} color="#fff" />}
+              color="#FF6F00" // Deep Orange
+              completed={daysSober >= 1825}
+              current={daysSober >= 730 && daysSober < 1825}
+              xpReward={2500}
+              scienceInfo="Brain health fully restored, inspiring others on their journey"
             />
           </View>
         </View>
@@ -113,17 +173,6 @@ export default function ProgressScreen() {
           <Text style={styles.sectionTitle}>Sobriety Calendar</Text>
           <Text style={styles.sectionSubtitle}>Track your daily progress</Text>
           <HeatmapCalendar startDate={startDate} />
-        </View>
-        
-        {/* Progress Charts */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Progress Insights</Text>
-          <Text style={styles.sectionSubtitle}>Visualize your journey</Text>
-          
-          <View style={styles.chartContainer}>
-            <Text style={styles.chartTitle}>XP Growth Over Time</Text>
-            <ProgressChart />
-          </View>
         </View>
         
         {/* Badges Section */}
@@ -235,10 +284,10 @@ interface MilestoneProps {
   completed: boolean;
   current: boolean;
   xpReward: number;
-  unlocks?: string;
+  scienceInfo: string;
 }
 
-const MilestoneNode = ({ title, description, icon, color, completed, current, xpReward, unlocks }: MilestoneProps) => (
+const MilestoneNode = ({ title, description, icon, color, completed, current, xpReward, scienceInfo }: MilestoneProps) => (
   <View style={styles.milestoneContainer}>
     <View style={[
       styles.milestoneNode, 
@@ -262,15 +311,13 @@ const MilestoneNode = ({ title, description, icon, color, completed, current, xp
       ]}>
         {description}
       </Text>
-      {unlocks && (
-        <Text style={[
-          styles.milestoneUnlocks,
-          completed && { color: colors.primary },
-          current && { color: colors.primary }
-        ]}>
-          Unlocks: {unlocks}
-        </Text>
-      )}
+      <Text style={[
+        styles.milestoneScienceInfo,
+        completed && { color: colors.primary },
+        current && { color: colors.primary }
+      ]}>
+        {scienceInfo}
+      </Text>
       <Text style={[
         styles.milestoneXP,
         completed && { color: colors.primary },
@@ -467,7 +514,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginBottom: 6,
   },
-  milestoneUnlocks: {
+  milestoneScienceInfo: {
     fontSize: 13,
     color: colors.textMuted,
     marginBottom: 6,
@@ -512,15 +559,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textLight,
     marginBottom: 16,
-  },
-  chartContainer: {
-    marginBottom: 20,
-  },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
   },
   badgesContainer: {
     paddingRight: 20,

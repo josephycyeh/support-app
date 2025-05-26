@@ -1,28 +1,28 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert,  } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2 } from 'lucide-react-native';
+import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2, User } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
-import { useJournalStore } from '@/store/journalStore';
 import { useReasonsStore } from '@/store/reasonsStore';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
 import { AddReasonModal } from '@/components/AddReasonModal';
 import { EditReasonModal } from '@/components/EditReasonModal';
+import { EditNameModal } from '@/components/EditNameModal';
+import { EditAgeModal } from '@/components/EditAgeModal';
 import Modal from 'react-native-modal';
-import { BirthdayEditModal } from '@/components/BirthdayEditModal';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { level, xp, startDate, setBirthday, xpToNextLevel, resetSobriety } = useSobrietyStore();
-  const { entries } = useJournalStore();
+  const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge } = useSobrietyStore();
   const { reasons, addReason, updateReason, deleteReason } = useReasonsStore();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [showAgeModal, setShowAgeModal] = useState(false);
   const [selectedReason, setSelectedReason] = useState<{id: string, text: string} | null>(null);
   
   // Get today's date for the sobriety counter
@@ -34,12 +34,6 @@ export default function ProfileScreen() {
   
   // Calculate XP progress
   const progressPercentage = (xp / xpToNextLevel) * 100;
-  
-  // Get user's birthday (fallback to today if not set)
-  const birthday = useSobrietyStore.getState().birthday || new Date();
-  
-  // Get recent journal entries (last 3)
-  const recentEntries = entries.slice(0, 3);
   
   const handleAddNewReason = () => {
     setShowAddModal(true);
@@ -85,30 +79,30 @@ export default function ProfileScreen() {
     setSelectedReason(null);
   };
   
-  const handleNewJournalEntry = () => {
-    router.push('/journal-entry');
+  const handleEditName = () => {
+    setShowNameModal(true);
   };
   
-  const handleEditBirthday = () => {
-    setShowBirthdayModal(true);
+  const handleSaveName = (newName: string) => {
+    setName(newName);
+    setShowNameModal(false);
   };
   
-  const handleSaveBirthday = (date: Date) => {
-    setBirthday(date);
-    setShowBirthdayModal(false);
+  const closeNameModal = () => {
+    setShowNameModal(false);
   };
   
-  const closeBirthdayModal = () => {
-    setShowBirthdayModal(false);
+  const handleEditAge = () => {
+    setShowAgeModal(true);
   };
   
-  // Format birthday for display
-  const formatBirthday = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  const handleSaveAge = (newAge: number) => {
+    setAge(newAge);
+    setShowAgeModal(false);
+  };
+  
+  const closeAgeModal = () => {
+    setShowAgeModal(false);
   };
   
   return (
@@ -143,16 +137,23 @@ export default function ProfileScreen() {
           <SectionHeader title="Personal Information" />
           <Card style={styles.personalInfoContainer}>
             <PersonalInfoItem 
-              icon={<Calendar size={20} color={colors.primary} />}
-              label="Sobriety Date"
-              value={new Date(startDate).toLocaleDateString()}
+              icon={<User size={20} color={colors.primary} />}
+              label="Name"
+              value={name || "Not set"}
+              isEditable
+              onEdit={handleEditName}
             />
             <PersonalInfoItem 
               icon={<Calendar size={20} color={colors.primary} />}
-              label="Birthday"
-              value={formatBirthday(birthday)}
+              label="Age"
+              value={age ? `${age} years old` : "Not set"}
               isEditable
-              onEdit={handleEditBirthday}
+              onEdit={handleEditAge}
+            />
+            <PersonalInfoItem 
+              icon={<Calendar size={20} color={colors.primary} />}
+              label="Sobriety Date"
+              value={new Date(startDate).toLocaleDateString()}
             />
           </Card>
         </View>
@@ -174,32 +175,6 @@ export default function ProfileScreen() {
               <Text style={styles.addReasonText}>+ Add another reason</Text>
             </TouchableOpacity>
           </Card>
-        </View>
-        
-        <View style={styles.sectionContainer}>
-          <SectionHeader title="Journal Entries" />
-          <View style={styles.journalContainer}>
-            {recentEntries.length > 0 ? (
-              recentEntries.map(entry => (
-                <JournalEntry 
-                  key={entry.id}
-                  date={formatDate(entry.date)}
-                  title={entry.title}
-                  preview={entry.content}
-                />
-              ))
-            ) : (
-              <Text style={styles.noEntriesText}>No journal entries yet</Text>
-            )}
-          </View>
-          
-          <Button 
-            onPress={handleNewJournalEntry}
-            variant="primary"
-            style={styles.newEntryButton}
-          >
-            New Journal Entry
-          </Button>
         </View>
         
         <Button
@@ -229,40 +204,24 @@ export default function ProfileScreen() {
         onDelete={handleDeleteReason}
       />
       
-      {/* Birthday Edit Modal */}
-      <BirthdayEditModal
-        visible={showBirthdayModal}
-        currentDate={birthday}
-        onClose={closeBirthdayModal}
-        onSave={handleSaveBirthday}
+      {/* Edit Name Modal */}
+      <EditNameModal
+        visible={showNameModal}
+        currentName={name || ""}
+        onClose={closeNameModal}
+        onSave={handleSaveName}
+      />
+      
+      {/* Edit Age Modal */}
+      <EditAgeModal
+        visible={showAgeModal}
+        currentAge={age || 0}
+        onClose={closeAgeModal}
+        onSave={handleSaveAge}
       />
     </View>
   );
 }
-
-// Helper function to format date
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  
-  // If today, show "Today"
-  if (date.toDateString() === now.toDateString()) {
-    return 'Today';
-  }
-  
-  // If yesterday, show "Yesterday"
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) {
-    return 'Yesterday';
-  }
-  
-  // Otherwise, show date
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric'
-  });
-};
 
 interface PersonalInfoItemProps {
   icon: React.ReactNode;
@@ -287,20 +246,6 @@ const PersonalInfoItem = ({ icon, label, value, isEditable = false, onEdit }: Pe
       </TouchableOpacity>
     )}
   </View>
-);
-
-interface JournalProps {
-  date: string;
-  title: string;
-  preview: string;
-}
-
-const JournalEntry = ({ date, title, preview }: JournalProps) => (
-  <TouchableOpacity style={styles.journalEntry}>
-    <Text style={styles.journalDate}>{date}</Text>
-    <Text style={styles.journalTitle}>{title}</Text>
-    <Text style={styles.journalPreview} numberOfLines={2}>{preview}</Text>
-  </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
@@ -435,86 +380,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600',
-  },
-  goalsContainer: {
-    padding: 16,
-  },
-  goalItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  goalText: {
-    fontSize: 15,
-    color: colors.text,
-    marginLeft: 16,
-    flex: 1,
-  },
-  goalBadge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    backgroundColor: colors.border,
-  },
-  goalBadgeText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  addGoalButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  addGoalText: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  journalContainer: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  journalEntry: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  journalDate: {
-    fontSize: 13,
-    color: colors.textLight,
-    marginBottom: 6,
-  },
-  journalTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  journalPreview: {
-    fontSize: 14,
-    color: colors.textLight,
-    lineHeight: 20,
-  },
-  noEntriesText: {
-    fontSize: 15,
-    color: colors.textLight,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: 20,
-  },
-  newEntryButton: {
-    marginTop: 8,
   },
   resetButton: {
     marginTop: 20,

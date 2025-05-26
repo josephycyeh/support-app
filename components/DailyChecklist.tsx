@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { Check, Trophy } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
@@ -28,23 +28,63 @@ export const DailyChecklist = () => {
     }
   };
 
+  // Check if all items are completed
+  const allCompleted = items.every(item => item.completed);
+  const incompleteItems = items.filter(item => !item.completed);
+
   return (
     <Card>
       <View style={styles.headerContainer}>
         <Text style={styles.headerTitle}>Daily Checklist</Text>
       </View>
       
-      <View style={styles.itemsContainer}>
-        {items.map((item, index) => (
-          <ChecklistItem 
-            key={item.id}
-            item={item}
-            onToggle={handleToggle}
-            index={index}
-          />
-        ))}
-      </View>
+      {allCompleted ? (
+        <CompletionState />
+      ) : (
+        <View style={styles.itemsContainer}>
+          {incompleteItems.map((item, index) => (
+            <ChecklistItem 
+              key={item.id}
+              item={item}
+              onToggle={handleToggle}
+              index={index}
+            />
+          ))}
+        </View>
+      )}
     </Card>
+  );
+};
+
+const CompletionState = () => {
+  const [animation] = React.useState(new Animated.Value(0));
+  
+  React.useEffect(() => {
+    createSafeAnimation(animation, 1, 600).start();
+  }, []);
+  
+  const animationStyle = {
+    opacity: animation,
+    transform: [
+      { 
+        scale: animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.9, 1]
+        })
+      }
+    ]
+  };
+  
+  return (
+    <Animated.View style={[styles.completionContainer, animationStyle]}>
+      <View style={styles.completionIcon}>
+        <Trophy size={32} color={colors.primary} />
+      </View>
+      <Text style={styles.completionTitle}>All Done!</Text>
+      <Text style={styles.completionMessage}>
+        You've completed all your daily tasks. Great job staying committed to your journey!
+      </Text>
+    </Animated.View>
   );
 };
 
@@ -179,5 +219,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.primary,
     fontWeight: '600',
+  },
+  completionContainer: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
+  completionIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(107, 152, 194, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  completionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  completionMessage: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

@@ -1,10 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Plus, Edit, Trash2, ArrowLeft } from 'lucide-react-native';
+import { Plus, Edit, Trash2 } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useJournalStore, JournalEntry } from '@/store/journalStore';
 import { Button } from '@/components/ui/Button';
+import { Header } from '@/components/ui/Header';
 import { createSafeAnimation } from '@/utils/animations';
 
 export default function JournalScreen() {
@@ -66,7 +67,20 @@ export default function JournalScreen() {
         mode: 'edit', 
         id: entry.id,
         title: entry.title,
-        content: entry.content
+        content: entry.content,
+        date: entry.date
+      }
+    });
+  };
+  
+  const handleViewEntry = (entry: JournalEntry) => {
+    router.push({
+      pathname: '/journal-view',
+      params: { 
+        id: entry.id,
+        title: entry.title,
+        content: entry.content,
+        date: entry.date
       }
     });
   };
@@ -98,16 +112,7 @@ export default function JournalScreen() {
         }} 
       />
       
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={handleBackPress}
-        >
-          <ArrowLeft size={24} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Your Journal</Text>
-        <View style={styles.headerRight} />
-      </View>
+      <Header title="Your Journal" onBack={handleBackPress} />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.headerSubtitle}>Record your thoughts and reflections</Text>
@@ -122,6 +127,7 @@ export default function JournalScreen() {
                   key={entry.id} 
                   entry={entry}
                   onEdit={() => handleEditEntry(entry)}
+                  onView={() => handleViewEntry(entry)}
                   onDelete={() => handleDeleteEntry(entry.id)}
                   index={groupIndex * 10 + entryIndex}
                 />
@@ -158,19 +164,22 @@ export default function JournalScreen() {
 interface JournalEntryCardProps {
   entry: JournalEntry;
   onEdit: () => void;
+  onView: () => void;
   onDelete: () => void;
   index: number;
 }
 
-const JournalEntryCard = ({ entry, onEdit, onDelete, index }: JournalEntryCardProps) => {
+const JournalEntryCard = ({ entry, onEdit, onView, onDelete, index }: JournalEntryCardProps) => {
   const [animation] = React.useState(new Animated.Value(0));
   
   React.useEffect(() => {
     // Staggered animation based on index
     const delay = index * 50;
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       createSafeAnimation(animation, 1, 400).start();
     }, delay);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
   
   // Format time
@@ -207,7 +216,7 @@ const JournalEntryCard = ({ entry, onEdit, onDelete, index }: JournalEntryCardPr
     <AnimatedTouchable 
       style={[styles.entryCard, animationStyle]}
       activeOpacity={0.7}
-      onPress={onEdit}
+      onPress={onView}
     >
       <View style={styles.entryHeader}>
         <Text style={styles.entryTitle}>{entry.title}</Text>
@@ -243,37 +252,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 10,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.cardBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  headerRight: {
-    width: 44,
   },
   scrollView: {
     flex: 1,

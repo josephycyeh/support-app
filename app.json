@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.caladanapps.myro"
+      "bundleIdentifier": "com.caladanapps.myro",
+      "appleTeamId": "FJ8TN5K3MB"
     },
     "android": {
       "adaptiveIcon": {
@@ -25,6 +26,8 @@
       "package": "com.caladanapps.myro"
     },
     "web": {
+      "bundler": "metro",
+      "output": "server",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

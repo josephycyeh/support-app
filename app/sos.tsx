@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -9,10 +9,11 @@ import {
   StatusBar
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { ArrowLeft, Check, Heart, Star } from 'lucide-react-native';
+import { Check, Heart, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
+import { Header } from '@/components/ui/Header';
 import * as Haptics from 'expo-haptics';
 import Animated, { 
   useSharedValue, 
@@ -71,6 +72,14 @@ export default function SOSScreen() {
   // Calculate days sober for motivation
   const daysSober = Math.floor((new Date().getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
   
+  const handleExit = useCallback(() => {
+    // Award XP if they completed at least one cycle
+    if (cyclesCompleted > 0) {
+      addXP(15); // Award XP for using the SOS feature
+    }
+    router.back();
+  }, [cyclesCompleted, addXP, router]);
+  
   // Provide haptic feedback on state changes
   useEffect(() => {
     if (currentState !== BreathingState.READY) {
@@ -91,7 +100,7 @@ export default function SOSScreen() {
     });
     
     return () => backHandler.remove();
-  }, []);
+  }, [handleExit]);
   
   // Provide countdown haptic feedback
   useEffect(() => {
@@ -103,7 +112,7 @@ export default function SOSScreen() {
   
   // Main breathing cycle effect
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     
     if (isActive) {
       interval = setInterval(() => {
@@ -187,14 +196,6 @@ export default function SOSScreen() {
     };
   });
   
-  const handleExit = () => {
-    // Award XP if they completed at least one cycle
-    if (cyclesCompleted > 0) {
-      addXP(15); // Award XP for using the SOS feature
-    }
-    router.back();
-  };
-  
   const handleCrisisOvercome = () => {
     // Award XP for overcoming the crisis
     addXP(30);
@@ -231,12 +232,7 @@ export default function SOSScreen() {
         }} 
       />
       
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={handleExit}
-      >
-        <ArrowLeft size={24} color={colors.text} />
-      </TouchableOpacity>
+      <Header onBack={handleExit} variant="floating" />
       
       {showMotivation ? (
         <ScrollView 
@@ -327,25 +323,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.cardBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   breathingContainer: {
     flex: 1,

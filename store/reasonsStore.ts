@@ -9,7 +9,7 @@ export interface Reason {
 
 interface ReasonsStore {
   reasons: Reason[];
-  addReason: (reason: Reason) => void;
+  addReason: (text: string) => void;
   deleteReason: (id: string) => void;
   updateReason: (id: string, text: string) => void;
   getReasons: () => Reason[];
@@ -27,9 +27,9 @@ export const useReasonsStore = create<ReasonsStore>()(
     (set, get) => ({
       reasons: defaultReasons,
       
-      addReason: (reason: Reason) => 
+      addReason: (text: string) => 
         set((state) => ({
-          reasons: [...state.reasons, reason]
+          reasons: [...state.reasons, { id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, text }]
         })),
       
       deleteReason: (id: string) => 

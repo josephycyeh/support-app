@@ -12,11 +12,11 @@ import {
   Dimensions
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useJournalStore } from '@/store/journalStore';
 import { useActivityStore } from '@/store/activityStore';
+import { Header } from '@/components/ui/Header';
 import * as Haptics from 'expo-haptics';
 
 export default function JournalEntryScreen() {
@@ -28,7 +28,7 @@ export default function JournalEntryScreen() {
   const [title, setTitle] = useState(typeof params.title === 'string' ? params.title : '');
   const [content, setContent] = useState(typeof params.content === 'string' ? params.content : '');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const contentInputRef = useRef(null);
+  const contentInputRef = useRef<TextInput>(null);
   const { addXP } = useSobrietyStore();
   const { addEntry, updateEntry } = useJournalStore();
   const { incrementJournalEntries } = useActivityStore();
@@ -76,7 +76,7 @@ export default function JournalEntryScreen() {
           id: entryId,
           title: title.trim() || 'Untitled',
           content: content.trim(),
-          date: new Date().toISOString(), // You might want to keep the original date instead
+          date: typeof params.date === 'string' ? params.date : new Date().toISOString(), // Keep original date
         });
       } else {
         // Add new journal entry
@@ -106,7 +106,7 @@ export default function JournalEntryScreen() {
     router.back();
   };
 
-  const addInspirationToContent = (text) => {
+  const addInspirationToContent = (text: string) => {
     setContent(prev => prev + (prev ? '\n\n' : '') + text);
     if (contentInputRef.current) {
       contentInputRef.current.focus();
@@ -124,18 +124,10 @@ export default function JournalEntryScreen() {
         }} 
       />
       
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={handleCancel}
-        >
-          <ArrowLeft size={22} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          {mode === 'edit' ? 'Edit Entry' : 'New Entry'}
-        </Text>
-        <View style={styles.headerRightPlaceholder} />
-      </View>
+      <Header 
+        title={mode === 'edit' ? 'Edit Entry' : 'New Entry'} 
+        onBack={handleCancel} 
+      />
 
       <View style={styles.inspirationsContainer}>
         <Text style={styles.inspirationsLabel}>Inspirations</Text>
@@ -236,34 +228,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 60,
-    paddingBottom: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(0,0,0,0.07)',
-    backgroundColor: colors.background,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.text,
-    letterSpacing: 0.2,
-  },
-  headerRightPlaceholder: {
-    width: 36,
-    height: 36,
   },
   inspirationsContainer: {
     paddingHorizontal: 16,

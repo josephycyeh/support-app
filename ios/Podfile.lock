@@ -1,7 +1,7 @@
 PODS:
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
-  - EXConstants (17.1.4):
+  - EXConstants (17.1.6):
     - ExpoModulesCore
   - EXImageLoader (5.1.0):
     - ExpoModulesCore
@@ -87,6 +87,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
+  - ExpoNetwork (7.1.5):
+    - ExpoModulesCore
   - ExpoSplashScreen (0.30.7):
     - ExpoModulesCore
   - ExpoSymbols (0.4.4):
@@ -2195,6 +2197,7 @@ DEPENDENCIES:
   - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - ExpoLocation (from `../node_modules/expo-location/ios`)
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
+  - ExpoNetwork (from `../node_modules/expo-network/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
@@ -2327,6 +2330,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-location/ios"
   ExpoModulesCore:
     :path: "../node_modules/expo-modules-core"
+  ExpoNetwork:
+    :path: "../node_modules/expo-network/ios"
   ExpoSplashScreen:
     :path: "../node_modules/expo-splash-screen/ios"
   ExpoSymbols:
@@ -2492,7 +2497,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
-  EXConstants: eca0d87f26dd68b2fc6453154720f86db749bd00
+  EXConstants: 9f310f44bfedba09087042756802040e464323c0
   EXImageLoader: 4d3d3284141f1a45006cc4d0844061c182daf7ee
   Expo: 99c668f97effa0add9a1e9e15e4e38633e839b2a
   ExpoAsset: ecda157f3ef69824d04015fa796dcfbda2304f21
@@ -2508,6 +2513,7 @@ SPEC CHECKSUMS:
   ExpoLinking: b6a0320bf46ae36807d3dc27b4a1d4474505f99c
   ExpoLocation: 073779bf6ed3928dfe42a8614dc6ee18197572d1
   ExpoModulesCore: 3ac17421302df62928fc99c133cf25bdbcf0b004
+  ExpoNetwork: 92cac43c13a2d9e9c1470ec8804836574ff34068
   ExpoSplashScreen: 382c785b29e4adac044eba865cea7ac66888bd83
   ExpoSymbols: 5324de61341b396965a1cd3d2c738227b13d6a60
   ExpoSystemUI: d9a01e293bcbed7631ad98b0f4a001c29d52c6c6
