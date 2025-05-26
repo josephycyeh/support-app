@@ -8,33 +8,19 @@ import { Card } from '@/components/ui/Card';
 import { createSafeAnimation } from '@/utils/animations';
 
 export const DailyChecklist = () => {
-  const { items, toggleItem, checkAndResetIfNewDay } = useChecklistStore();
+  const { items, toggleItem, checkAndResetIfNewDay, lastResetDate } = useChecklistStore();
   const { addXP } = useSobrietyStore();
-  const [isInitialized, setIsInitialized] = React.useState(false);
+  const [renderKey, setRenderKey] = React.useState(0);
 
-  // Check for a new day on component mount and force re-render
+  // Check for a new day on component mount
   useEffect(() => {
-    const initializeChecklist = async () => {
-      checkAndResetIfNewDay();
-      setIsInitialized(true);
-    };
-    
-    initializeChecklist();
+    checkAndResetIfNewDay();
   }, []);
 
-  // Don't render until initialized to prevent showing stale data
-  if (!isInitialized) {
-    return (
-      <Card>
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}>Daily Checklist</Text>
-        </View>
-        <View style={styles.itemsContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </Card>
-    );
-  }
+  // Force re-render when items change
+  useEffect(() => {
+    setRenderKey(prev => prev + 1);
+  }, [items, lastResetDate]);
 
   const handleToggle = (id: string) => {
     const item = items.find(item => item.id === id);
@@ -53,7 +39,7 @@ export const DailyChecklist = () => {
   const incompleteItems = items.filter(item => !item.completed);
 
   return (
-    <Card>
+    <Card key={renderKey}>
       <View style={styles.headerContainer}>
         <Text style={styles.headerTitle}>Daily Checklist</Text>
       </View>
@@ -64,7 +50,7 @@ export const DailyChecklist = () => {
         <View style={styles.itemsContainer}>
           {incompleteItems.map((item, index) => (
             <ChecklistItem 
-              key={item.id}
+              key={`${item.id}-${renderKey}`}
               item={item}
               onToggle={handleToggle}
               index={index}
@@ -265,11 +251,5 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
     lineHeight: 22,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: colors.textLight,
-    textAlign: 'center',
-    padding: 20,
   },
 });

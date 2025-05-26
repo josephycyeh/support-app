@@ -52,13 +52,6 @@ export default function TriggerEntryScreen() {
       }
     );
 
-    // Auto-focus the trigger input when component mounts
-    setTimeout(() => {
-      if (triggerInputRef.current) {
-        triggerInputRef.current.focus();
-      }
-    }, 100);
-
     // Only reset the form when creating a new entry
     if (mode !== 'edit') {
       setTitle('');
