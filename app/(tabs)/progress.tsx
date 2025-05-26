@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Stack } from 'expo-router';
-import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check } from 'lucide-react-native';
+import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check, Target, Zap, Shield, Flame, Sun, Moon } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { HeatmapCalendar } from '@/components/HeatmapCalendar';
@@ -20,7 +20,11 @@ export default function ProgressScreen() {
   const earlyRiserProgress = Math.min(daysSober, 5) * 20; // 20% per day up to 5 days
   const mindfulMasterProgress = Math.min(breathingExercises * 10, 100); // 10% per exercise up to 10
   const journalKeeperProgress = Math.min(journalEntries * 20, 100); // 20% per entry up to 5
-  const communityHelperProgress = 30; // Fixed for now, could be dynamic in the future
+  const streakWarriorProgress = Math.min(daysSober, 7) * (100/7); // 7 days streak
+  const craveConquerorProgress = Math.min(cravingsOvercome * 25, 100); // 4 cravings overcome
+  const levelUpProgress = Math.min(level * 25, 100); // Reach level 4
+  const xpCollectorProgress = Math.min((xp / 500) * 100, 100); // Collect 500 XP
+  const consistencyProgress = Math.min(daysSober >= 30 ? 100 : 0, 100); // 30 days consistent
   
   return (
     <View style={styles.container}>
@@ -187,7 +191,7 @@ export default function ProgressScreen() {
             <BadgeItem 
               title="Early Riser" 
               description="Complete morning check-in 5 days in a row"
-              icon={<Clock size={24} color="#FFFFFF" />}
+              icon={<Sun size={24} color="#FFFFFF" />}
               color={colors.primary}
               progress={earlyRiserProgress}
               earned={earlyRiserProgress >= 100}
@@ -209,12 +213,44 @@ export default function ProgressScreen() {
               earned={journalKeeperProgress >= 100}
             />
             <BadgeItem 
-              title="Community Helper" 
-              description="Support 3 community members"
-              icon={<Heart size={24} color="#FFFFFF" />}
-              color="#F5365C" // Pink
-              progress={communityHelperProgress}
-              earned={communityHelperProgress >= 100}
+              title="Streak Warrior" 
+              description="Maintain a streak of 7 days"
+              icon={<Flame size={24} color="#FFFFFF" />}
+              color="#66BB6A" // Green
+              progress={streakWarriorProgress}
+              earned={streakWarriorProgress >= 100}
+            />
+            <BadgeItem 
+              title="Cravings Conqueror" 
+              description="Overcome 4 cravings"
+              icon={<Shield size={24} color="#FFFFFF" />}
+              color="#FFA726" // Orange
+              progress={craveConquerorProgress}
+              earned={craveConquerorProgress >= 100}
+            />
+            <BadgeItem 
+              title="Level Up" 
+              description="Reach level 4"
+              icon={<TrendingUp size={24} color="#FFFFFF" />}
+              color="#5E72E4" // Indigo
+              progress={levelUpProgress}
+              earned={levelUpProgress >= 100}
+            />
+            <BadgeItem 
+              title="XP Collector" 
+              description="Collect 500 XP"
+              icon={<Zap size={24} color="#FFFFFF" />}
+              color="#E91E63" // Pink
+              progress={xpCollectorProgress}
+              earned={xpCollectorProgress >= 100}
+            />
+            <BadgeItem 
+              title="Consistency Champion" 
+              description="Stay consistent for 30 days"
+              icon={<Target size={24} color="#FFFFFF" />}
+              color="#8E24AA" // Purple
+              progress={consistencyProgress}
+              earned={consistencyProgress >= 100}
             />
           </ScrollView>
         </View>

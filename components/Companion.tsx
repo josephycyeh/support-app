@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   },
   companionContainer: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 5,
     width: '100%',
   },
   companionRow: {
@@ -260,7 +260,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   companionImageContainer: {
-    marginBottom: 12,
     borderRadius: 60,
     borderWidth: 0,
     width: 120,

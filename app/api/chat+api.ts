@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     
     The user can chat with you any time they need support, advice, or just want to talk.
     
-  
+  `
   });
 
   return result.toDataStreamResponse({

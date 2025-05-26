@@ -10,11 +10,31 @@ import { createSafeAnimation } from '@/utils/animations';
 export const DailyChecklist = () => {
   const { items, toggleItem, checkAndResetIfNewDay } = useChecklistStore();
   const { addXP } = useSobrietyStore();
+  const [isInitialized, setIsInitialized] = React.useState(false);
 
-  // Check for a new day on component mount
+  // Check for a new day on component mount and force re-render
   useEffect(() => {
-    checkAndResetIfNewDay();
+    const initializeChecklist = async () => {
+      checkAndResetIfNewDay();
+      setIsInitialized(true);
+    };
+    
+    initializeChecklist();
   }, []);
+
+  // Don't render until initialized to prevent showing stale data
+  if (!isInitialized) {
+    return (
+      <Card>
+        <View style={styles.headerContainer}>
+          <Text style={styles.headerTitle}>Daily Checklist</Text>
+        </View>
+        <View style={styles.itemsContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </Card>
+    );
+  }
 
   const handleToggle = (id: string) => {
     const item = items.find(item => item.id === id);
@@ -245,5 +265,11 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
     lineHeight: 22,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+    padding: 20,
   },
 });

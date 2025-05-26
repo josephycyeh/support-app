@@ -7,6 +7,7 @@ export interface JournalEntry {
   title: string;
   content: string;
   date: string; // ISO string
+  type?: 'journal' | 'trigger'; // Optional for backward compatibility
 }
 
 interface JournalStore {

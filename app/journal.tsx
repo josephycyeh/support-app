@@ -1,16 +1,18 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Plus, Edit, Trash2 } from 'lucide-react-native';
+import { Plus, Edit, Trash2, AlertTriangle, BookOpen } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useJournalStore, JournalEntry } from '@/store/journalStore';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
+import { JournalModeModal } from '@/components/JournalModeModal';
 import { createSafeAnimation } from '@/utils/animations';
 
 export default function JournalScreen() {
   const router = useRouter();
   const { entries, deleteEntry } = useJournalStore();
+  const [showModeModal, setShowModeModal] = React.useState(false);
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -57,38 +59,84 @@ export default function JournalScreen() {
   };
   
   const handleNewEntry = () => {
+    setShowModeModal(true);
+  };
+  
+  const handleSelectJournal = () => {
+    setShowModeModal(false);
     router.push('/journal-entry');
   };
   
+  const handleSelectTrigger = () => {
+    setShowModeModal(false);
+    router.push('/trigger-entry');
+  };
+  
   const handleEditEntry = (entry: JournalEntry) => {
-    router.push({
-      pathname: '/journal-entry',
-      params: { 
-        mode: 'edit', 
-        id: entry.id,
-        title: entry.title,
-        content: entry.content,
-        date: entry.date
-      }
-    });
+    if (entry.type === 'trigger') {
+      // Parse the trigger content to extract fields
+      const lines = entry.content.split('\n\n');
+      const triggerMatch = lines[0]?.match(/Trigger: (.+)/);
+      const intensityMatch = lines[1]?.match(/Intensity: (\d+)\/10/);
+      const copingMatch = lines[2]?.match(/Coping Strategy: (.+)/);
+      const outcomeMatch = lines[3]?.match(/Outcome: (.+)/);
+      
+      // Convert outcome text back to the button value
+      const outcomeText = outcomeMatch?.[1] || 'Stayed Strong';
+      const outcomeValue = outcomeText === 'Stayed Strong' ? 'stayed-strong' : 'relapsed';
+      
+      router.push({
+        pathname: '/trigger-entry',
+        params: {
+          mode: 'edit',
+          id: entry.id,
+          title: entry.title,
+          trigger: triggerMatch?.[1] || '',
+          intensity: intensityMatch?.[1] || '5',
+          copingStrategy: copingMatch?.[1] || '',
+          outcome: outcomeValue,
+          date: entry.date,
+        },
+      });
+    } else {
+      router.push({
+        pathname: '/journal-entry',
+        params: { 
+          mode: 'edit', 
+          id: entry.id,
+          title: entry.title,
+          content: entry.content,
+          date: entry.date
+        }
+      });
+    }
   };
   
   const handleViewEntry = (entry: JournalEntry) => {
-    router.push({
-      pathname: '/journal-view',
-      params: { 
-        id: entry.id,
-        title: entry.title,
-        content: entry.content,
-        date: entry.date
-      }
-    });
+    if (entry.type === 'trigger') {
+      router.push({
+        pathname: '/trigger-view',
+        params: { 
+          id: entry.id,
+        }
+      });
+    } else {
+      router.push({
+        pathname: '/journal-view',
+        params: { 
+          id: entry.id,
+          title: entry.title,
+          content: entry.content,
+          date: entry.date
+        }
+      });
+    }
   };
   
   const handleDeleteEntry = (entryId: string) => {
     Alert.alert(
       "Delete Entry",
-      "Are you sure you want to delete this journal entry? This cannot be undone.",
+      "Are you sure you want to delete this entry? This cannot be undone.",
       [
         {
           text: "Cancel",
@@ -115,7 +163,7 @@ export default function JournalScreen() {
       <Header title="Your Journal" onBack={handleBackPress} />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.headerSubtitle}>Record your thoughts and reflections</Text>
+        <Text style={styles.headerSubtitle}>Record your thoughts and track triggers</Text>
         
         {Object.keys(groupedEntries).length > 0 ? (
           Object.entries(groupedEntries).map(([date, dateEntries], groupIndex) => (
@@ -136,16 +184,16 @@ export default function JournalScreen() {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateTitle}>No journal entries yet</Text>
+            <Text style={styles.emptyStateTitle}>No entries yet</Text>
             <Text style={styles.emptyStateText}>
-              Start recording your thoughts and reflections to track your journey.
+              Start recording your thoughts and tracking triggers on your recovery journey.
             </Text>
             <Button
               onPress={handleNewEntry}
               variant="primary"
               style={styles.emptyStateButton}
             >
-              Write First Entry
+              Create First Entry
             </Button>
           </View>
         )}
@@ -157,6 +205,13 @@ export default function JournalScreen() {
       >
         <Plus size={24} color="#FFFFFF" />
       </TouchableOpacity>
+      
+      <JournalModeModal
+        visible={showModeModal}
+        onClose={() => setShowModeModal(false)}
+        onSelectJournal={handleSelectJournal}
+        onSelectTrigger={handleSelectTrigger}
+      />
     </View>
   );
 }
@@ -219,7 +274,19 @@ const JournalEntryCard = ({ entry, onEdit, onView, onDelete, index }: JournalEnt
       onPress={onView}
     >
       <View style={styles.entryHeader}>
-        <Text style={styles.entryTitle}>{entry.title}</Text>
+        <View style={styles.entryTitleContainer}>
+          <View style={[
+            styles.entryTypeIcon,
+            { backgroundColor: entry.type === 'trigger' ? 'rgba(240, 161, 161, 0.15)' : 'rgba(126, 174, 217, 0.15)' }
+          ]}>
+            {entry.type === 'trigger' ? (
+              <AlertTriangle size={16} color={colors.danger} />
+            ) : (
+              <BookOpen size={16} color={colors.primary} />
+            )}
+          </View>
+          <Text style={styles.entryTitle}>{entry.title}</Text>
+        </View>
         <Text style={styles.entryTime}>{formatTime(entry.date)}</Text>
       </View>
       
@@ -292,6 +359,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  entryTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  entryTypeIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
   entryTitle: {
     fontSize: 18,

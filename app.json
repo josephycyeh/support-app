@@ -2,7 +2,7 @@
   "expo": {
     "name": "idk yet",
     "slug": "sushi-support-app",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -32,10 +32,7 @@
     },
     "plugins": [
       [
-        "expo-router",
-        {
-          "origin": "https://rork.app/"
-        }
+        "expo-router"
       ]
     ],
     "experiments": {
