@@ -6,7 +6,7 @@ PODS:
   - EXImageLoader (5.1.0):
     - ExpoModulesCore
     - React-Core
-  - Expo (53.0.4):
+  - Expo (53.0.9):
     - DoubleConversion
     - ExpoModulesCore
     - glog
@@ -33,11 +33,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - ExpoAsset (11.1.4):
+  - ExpoAsset (11.1.5):
     - ExpoModulesCore
   - ExpoBlur (14.1.4):
     - ExpoModulesCore
-  - ExpoFileSystem (18.1.8):
+  - ExpoFileSystem (18.1.10):
     - ExpoModulesCore
   - ExpoFont (13.3.0):
     - ExpoModulesCore
@@ -62,7 +62,7 @@ PODS:
     - ExpoModulesCore
   - ExpoLocation (18.1.4):
     - ExpoModulesCore
-  - ExpoModulesCore (2.3.12):
+  - ExpoModulesCore (2.3.13):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -121,6 +121,37 @@ PODS:
   - libwebp/sharpyuv (1.5.0)
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
+  - livekit-react-native (2.7.4):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - livekit-react-native-webrtc
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - livekit-react-native-webrtc (125.0.9):
+    - React-Core
+    - WebRTC-SDK (~> 125.6422.07)
+  - LiveKitExpoPlugin (1.0.1):
+    - ExpoModulesCore
+    - livekit-react-native
   - lottie-ios (4.5.0)
   - lottie-react-native (7.2.2):
     - DoubleConversion
@@ -2176,6 +2207,7 @@ PODS:
     - libwebp (~> 1.0)
     - SDWebImage/Core (~> 5.17)
   - SocketRocket (0.7.1)
+  - WebRTC-SDK (125.6422.07)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2207,6 +2239,9 @@ DEPENDENCIES:
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - "livekit-react-native (from `../node_modules/@livekit/react-native`)"
+  - "livekit-react-native-webrtc (from `../node_modules/@livekit/react-native-webrtc`)"
+  - "LiveKitExpoPlugin (from `../node_modules/@livekit/react-native-expo-plugin/ios`)"
   - lottie-react-native (from `../node_modules/lottie-react-native`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -2292,6 +2327,7 @@ SPEC REPOS:
     - SDWebImageSVGCoder
     - SDWebImageWebPCoder
     - SocketRocket
+    - WebRTC-SDK
 
 EXTERNAL SOURCES:
   boost:
@@ -2351,6 +2387,12 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2025-03-03-RNv0.79.0-bc17d964d03743424823d7dd1a9f37633459c5c5
+  livekit-react-native:
+    :path: "../node_modules/@livekit/react-native"
+  livekit-react-native-webrtc:
+    :path: "../node_modules/@livekit/react-native-webrtc"
+  LiveKitExpoPlugin:
+    :path: "../node_modules/@livekit/react-native-expo-plugin/ios"
   lottie-react-native:
     :path: "../node_modules/lottie-react-native"
   RCT-Folly:
@@ -2499,10 +2541,10 @@ SPEC CHECKSUMS:
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: 9f310f44bfedba09087042756802040e464323c0
   EXImageLoader: 4d3d3284141f1a45006cc4d0844061c182daf7ee
-  Expo: 99c668f97effa0add9a1e9e15e4e38633e839b2a
-  ExpoAsset: ecda157f3ef69824d04015fa796dcfbda2304f21
+  Expo: a9fc723f6c8f673f0e7e036c9021772d3a1a0707
+  ExpoAsset: 3bc9adb7dbbf27ae82c18ca97eb988a3ae7e73b1
   ExpoBlur: 7f9379db213e4a56aeceda82e94a7fea1b1d8c48
-  ExpoFileSystem: 47ccd351beaa608f80f82a6f13ac8b0524ef529f
+  ExpoFileSystem: c36eb8155eb2381c83dda7dc210e3eec332368b6
   ExpoFont: db9293b9c4585e60e30602ea4d939ad9705fe963
   ExpoHaptics: 0ff6e0d83cd891178a306e548da1450249d54500
   ExpoHead: 57c18f2ed394929f52f7704e6fa755a2697ae7ee
@@ -2512,7 +2554,7 @@ SPEC CHECKSUMS:
   ExpoLinearGradient: a3126d055dd021c1eb38a2cf28052ccbd1a2b3e2
   ExpoLinking: b6a0320bf46ae36807d3dc27b4a1d4474505f99c
   ExpoLocation: 073779bf6ed3928dfe42a8614dc6ee18197572d1
-  ExpoModulesCore: 3ac17421302df62928fc99c133cf25bdbcf0b004
+  ExpoModulesCore: 5d37821c36f3781dcd0ea9a393800c90eaa6259d
   ExpoNetwork: 92cac43c13a2d9e9c1470ec8804836574ff34068
   ExpoSplashScreen: 382c785b29e4adac044eba865cea7ac66888bd83
   ExpoSymbols: 5324de61341b396965a1cd3d2c738227b13d6a60
@@ -2526,6 +2568,9 @@ SPEC CHECKSUMS:
   libavif: 84bbb62fb232c3018d6f1bab79beea87e35de7b7
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
+  livekit-react-native: 254725c7bba94310f3434cb8561d319e80698172
+  livekit-react-native-webrtc: 864803e4564acb74e32a955daa1db18996a3d436
+  LiveKitExpoPlugin: 8e0f4bdffa921c27c13e1504ea0e668b6f859278
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
   lottie-react-native: 8bc11e10576d1a3f77f4e0ae5b70503c5c890a09
   RCT-Folly: e78785aa9ba2ed998ea4151e314036f6c49e6d82
@@ -2602,6 +2647,7 @@ SPEC CHECKSUMS:
   SDWebImageSVGCoder: 15a300a97ec1c8ac958f009c02220ac0402e936c
   SDWebImageWebPCoder: e38c0a70396191361d60c092933e22c20d5b1380
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
+  WebRTC-SDK: dff00a3892bc570b6014e046297782084071657e
   Yoga: d15f5aa644c466e917569ac43b19cbf17975239a
 
 PODFILE CHECKSUM: 5f1a8eefe1c733f16a2779a79b87aaef12329ec1

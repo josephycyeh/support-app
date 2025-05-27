@@ -2,7 +2,7 @@
   "expo": {
     "name": "idk yet",
     "slug": "sushi-support-app",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -16,6 +16,11 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.caladanapps.myro",
+      "infoPlist": {
+            "UIBackgroundModes": [
+            "voip"
+            ]
+        },
       "appleTeamId": "FJ8TN5K3MB"
     },
     "android": {
@@ -33,7 +38,9 @@
     "plugins": [
       [
         "expo-router"
-      ]
+      ],
+      "@livekit/react-native-expo-plugin",
+      "@config-plugins/react-native-webrtc"
     ],
     "experiments": {
       "typedRoutes": true

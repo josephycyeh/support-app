@@ -36,3 +36,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 .vercel
+
+ios/
+android/

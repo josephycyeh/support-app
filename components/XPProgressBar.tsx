@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Sparkles } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
@@ -20,6 +21,10 @@ export const XPProgressBar = () => {
       </View>
       <View style={styles.xpTextContainer}>
         <Text style={styles.xpText}>{xp} / {xpToNextLevel}</Text>
+      </View>
+      <View style={styles.unlockPreview}>
+        <Sparkles size={12} color={colors.accent} />
+        <Text style={styles.unlockText}>Next level: New Sushi animations!</Text>
       </View>
     </View>
   );
@@ -66,5 +71,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textLight,
     fontWeight: '500',
-  }
+  },
+  unlockPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+    gap: 4,
+  },
+  unlockText: {
+    fontSize: 11,
+    color: colors.accent,
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
 });

@@ -9,7 +9,6 @@ import LottieView from 'lottie-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
 export const Companion = () => {
-  const [optionsVisible, setOptionsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showLevelUpMessage, setShowLevelUpMessage] = useState(false);
   const lottieRef = useRef<LottieView>(null);
@@ -43,27 +42,13 @@ export const Companion = () => {
     }
   }, [levelUp, setLevelUpComplete]);
 
-  const toggleOptions = () => {
-    setOptionsVisible(!optionsVisible);
+  const handleChatPress = () => {
+    router.push('/chat');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  const handleOptionPress = (option: string) => {
-    setOptionsVisible(false);
-    
-    switch(option) {
-      case 'breathing':
-        router.push('/breathing');
-        break;
-      case 'chat':
-        router.push('/chat');
-        break;
-      case 'thought':
-        // Navigate to the journal entry screen for new entries
-        router.push('/journal-entry');
-        break;
-    }
-    
-    // Provide haptic feedback
+  const handleBreathingPress = () => {
+    router.push('/breathing');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
@@ -88,8 +73,8 @@ export const Companion = () => {
   };
 
   const handleJournalPress = () => {
-    // Navigate to the journal screen instead of showing the modal
-    router.push('/journal');
+    // Navigate to the journal entry screen for new entries
+    router.push('/journal-entry');
     
     // Provide haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -99,6 +84,14 @@ export const Companion = () => {
     <View style={styles.container}>
       <View style={styles.companionContainer}>
         <View style={styles.companionRow}>
+          {/* Breathing button positioned to the left of companion */}
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.leftButton]}
+            onPress={handleBreathingPress}
+          >
+            <Wind size={24} color={colors.primary} />
+          </TouchableOpacity>
+
           <TouchableOpacity 
             activeOpacity={0.8}
             onPress={handleCompanionPress}
@@ -129,7 +122,7 @@ export const Companion = () => {
           
           {/* Journal button positioned to the right of companion */}
           <TouchableOpacity 
-            style={styles.journalButton}
+            style={[styles.actionButton, styles.rightButton]}
             onPress={handleJournalPress}
           >
             <BookOpen size={24} color={colors.primary} />
@@ -138,11 +131,11 @@ export const Companion = () => {
       </View>
       
       <Button 
-        onPress={toggleOptions}
+        onPress={handleChatPress}
         variant="secondary"
         style={styles.talkButton}
       >
-        Speak with Sushi
+        Talk with Sushi
       </Button>
 
       {/* Level Up Modal */}
@@ -176,65 +169,6 @@ export const Companion = () => {
           </View>
         </View>
       </Modal>
-
-      {/* Options Modal */}
-      <Modal
-        visible={optionsVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setOptionsVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setOptionsVisible(false)}
-        >
-          <View style={styles.optionsContainer}>
-            <View style={styles.optionsContent}>
-              <Text style={styles.optionsTitle}>How can Sushi help?</Text>
-              
-              <TouchableOpacity 
-                style={styles.optionButton}
-                onPress={() => handleOptionPress('thought')}
-              >
-                <View style={styles.optionIconContainer}>
-                  <BookOpen size={22} color={colors.primary} />
-                </View>
-                <Text style={styles.optionText}>Log a thought</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.optionButton}
-                onPress={() => handleOptionPress('chat')}
-              >
-                <View style={styles.optionIconContainer}>
-                  <MessageSquare size={22} color={colors.primary} />
-                </View>
-                <Text style={styles.optionText}>Speak with Sushi</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.optionButton}
-                onPress={() => handleOptionPress('breathing')}
-              >
-                <View style={styles.optionIconContainer}>
-                  <Wind size={22} color={colors.primary} />
-                </View>
-                <Text style={styles.optionText}>Do a breathing exercise</Text>
-              </TouchableOpacity>
-              
-              <Button
-                onPress={() => setOptionsVisible(false)}
-                variant="outline"
-                size="small"
-                style={styles.closeButton}
-              >
-                Close
-              </Button>
-            </View>
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 };
@@ -255,6 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
     width: '100%',
+    paddingHorizontal: 40,
   },
   companionTouchable: {
     alignItems: 'center',
@@ -288,9 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 20,
   },
-  journalButton: {
-    position: 'absolute',
-    right: 20,
+  actionButton: {
     backgroundColor: colors.cardBackground,
     borderRadius: 30,
     padding: 12,
@@ -299,6 +232,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
+  },
+  leftButton: {
+    position: 'absolute',
+    left: 20,
+  },
+  rightButton: {
+    position: 'absolute',
+    right: 20,
   },
   // Level Up Modal Styles
   levelUpOverlay: {
@@ -354,51 +295,5 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  // Options Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  optionsContainer: {
-    width: '85%',
-    maxWidth: 320,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  optionsContent: {
-    backgroundColor: colors.cardBackground,
-    padding: 20,
-    borderRadius: 16,
-  },
-  optionsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  optionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  optionIconContainer: {
-    width: 40,
-    alignItems: 'center',
-  },
-  optionText: {
-    fontSize: 16,
-    color: colors.text,
-    fontWeight: '500',
-    marginLeft: 10,
-  },
-  closeButton: {
-    marginTop: 16,
   },
 });

@@ -12,7 +12,11 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://sushi-support-app.expo.app",
+        "EXPO_PUBLIC_BACKEND_URL": "https://sushi-support-app-backend.onrender.com"
+      }
     }
   },
   "submit": {

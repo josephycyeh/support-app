@@ -99,12 +99,12 @@ export default function JournalScreen() {
         },
       });
     } else {
-      router.push({
-        pathname: '/journal-entry',
-        params: { 
-          mode: 'edit', 
-          id: entry.id,
-          title: entry.title,
+    router.push({
+      pathname: '/journal-entry',
+      params: { 
+        mode: 'edit', 
+        id: entry.id,
+        title: entry.title,
           content: entry.content,
           date: entry.date
         }
@@ -128,8 +128,8 @@ export default function JournalScreen() {
           title: entry.title,
           content: entry.content,
           date: entry.date
-        }
-      });
+      }
+    });
     }
   };
   
@@ -285,7 +285,7 @@ const JournalEntryCard = ({ entry, onEdit, onView, onDelete, index }: JournalEnt
               <BookOpen size={16} color={colors.primary} />
             )}
           </View>
-          <Text style={styles.entryTitle}>{entry.title}</Text>
+        <Text style={styles.entryTitle}>{entry.title}</Text>
         </View>
         <Text style={styles.entryTime}>{formatTime(entry.date)}</Text>
       </View>

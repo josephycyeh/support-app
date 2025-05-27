@@ -47,16 +47,16 @@ export const DailyChecklist = () => {
       {allCompleted ? (
         <CompletionState />
       ) : (
-        <View style={styles.itemsContainer}>
+      <View style={styles.itemsContainer}>
           {incompleteItems.map((item, index) => (
-            <ChecklistItem 
+          <ChecklistItem 
               key={`${item.id}-${renderKey}`}
-              item={item}
-              onToggle={handleToggle}
-              index={index}
-            />
-          ))}
-        </View>
+            item={item}
+            onToggle={handleToggle}
+            index={index}
+          />
+        ))}
+      </View>
       )}
     </Card>
   );

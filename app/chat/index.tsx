@@ -1,14 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Text, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator, Text, KeyboardAvoidingView, Platform, Keyboard, TouchableOpacity } from 'react-native';
 import { useChat } from '@ai-sdk/react';
 import { fetch as expoFetch } from 'expo/fetch';
 import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Phone } from 'lucide-react-native';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { Header } from '@/components/ui/Header';
 import { generateAPIUrl } from '../../utils/api'
 import colors from '@/constants/colors';
+import * as Haptics from 'expo-haptics';
 
 export default function ChatScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
@@ -51,6 +53,11 @@ export default function ChatScreen() {
     };
   }, []);
 
+  const handleVoiceCall = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/voice-call');
+  };
+
   if (error) {
     return (
       <SafeAreaView style={styles.errorContainer}>
@@ -62,6 +69,15 @@ export default function ChatScreen() {
     );
   }
 
+  const VoiceCallButton = () => (
+    <TouchableOpacity 
+      style={styles.voiceCallButton}
+      onPress={handleVoiceCall}
+    >
+      <Phone size={20} color={colors.primary} />
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <Stack.Screen 
@@ -70,7 +86,11 @@ export default function ChatScreen() {
         }} 
       />
       
-      <Header title="Talk to Sushi" onBack={() => router.back()} />
+      <Header 
+        title="Talk to Sushi" 
+        onBack={() => router.back()} 
+        rightComponent={<VoiceCallButton />}
+      />
       
       <KeyboardAvoidingView 
         style={styles.keyboardAvoidingView}
@@ -149,5 +169,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMuted,
     textAlign: 'center',
+  },
+  voiceCallButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.cardBackground,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 }); 
