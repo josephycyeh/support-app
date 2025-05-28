@@ -17,10 +17,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.caladanapps.myro",
       "infoPlist": {
-            "UIBackgroundModes": [
-            "voip"
-            ]
-        },
+        "UIBackgroundModes": [
+          "voip"
+        ]
+      },
       "appleTeamId": "FJ8TN5K3MB"
     },
     "android": {
@@ -40,7 +40,8 @@
         "expo-router"
       ],
       "@livekit/react-native-expo-plugin",
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
