@@ -42,12 +42,24 @@ export default function JournalScreen() {
   const groupedEntries = React.useMemo(() => {
     const groups: { [key: string]: JournalEntry[] } = {};
     
-    entries.forEach(entry => {
+    // First sort all entries by date (newest first)
+    const sortedEntries = [...entries].sort((a, b) => {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+    
+    sortedEntries.forEach(entry => {
       const dateKey = formatDate(entry.date);
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }
       groups[dateKey].push(entry);
+    });
+    
+    // Sort entries within each date group by time (newest first)
+    Object.keys(groups).forEach(dateKey => {
+      groups[dateKey].sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
     });
     
     return groups;
@@ -165,7 +177,14 @@ export default function JournalScreen() {
         <Text style={styles.headerSubtitle}>Record your thoughts and track triggers</Text>
         
         {Object.keys(groupedEntries).length > 0 ? (
-          Object.entries(groupedEntries).map(([date, dateEntries], groupIndex) => (
+          Object.entries(groupedEntries)
+            .sort(([dateA], [dateB]) => {
+              // Sort date groups by the first entry's date (newest first)
+              const firstEntryA = groupedEntries[dateA][0];
+              const firstEntryB = groupedEntries[dateB][0];
+              return new Date(firstEntryB.date).getTime() - new Date(firstEntryA.date).getTime();
+            })
+            .map(([date, dateEntries], groupIndex) => (
             <View key={date} style={styles.dateGroup}>
               <Text style={styles.dateHeader}>{date}</Text>
               

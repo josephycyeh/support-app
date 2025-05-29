@@ -114,52 +114,57 @@ export default function SOSScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   }, []);
   
-  // Affirmations effect - cycles through affirmations for 30 seconds
+  // Affirmations effect - simplified: cycle through 3 affirmations over 10 seconds
   useEffect(() => {
     if (currentPhase === SOSPhase.AFFIRMATIONS) {
+      let affirmationCount = 0;
+      
       // Start with first affirmation fading in
       RNAnimated.timing(affirmationOpacity, {
         toValue: 1,
-        duration: 1000,
+        duration: 800,
         useNativeDriver: true,
       }).start();
 
-      // Set up affirmation cycling with smoother transitions
+      // Change affirmations every ~3 seconds
       const affirmationInterval = setInterval(() => {
-        // Smooth fade out to fade in transition
-        RNAnimated.timing(affirmationOpacity, {
-          toValue: 0,
-          duration: 800,
-          useNativeDriver: true,
-        }).start(() => {
-          // Change affirmation at the midpoint when fully faded out
-          setCurrentAffirmationIndex(prev => (prev + 1) % AFFIRMATIONS.length);
-          
-          // Immediately start fading in the new affirmation
+        affirmationCount++;
+        
+        if (affirmationCount < 4) {
+          // Fade out and change to next affirmation
           RNAnimated.timing(affirmationOpacity, {
-            toValue: 1,
-            duration: 1000,
+            toValue: 0,
+            duration: 600,
             useNativeDriver: true,
-          }).start();
-        });
-      }, 4000); // Change affirmation every 4 seconds for smoother feel
+          }).start(() => {
+            setCurrentAffirmationIndex(prev => (prev + 1) % AFFIRMATIONS.length);
+            
+            RNAnimated.timing(affirmationOpacity, {
+              toValue: 1,
+              duration: 800,
+              useNativeDriver: true,
+            }).start();
+          });
+        }
+      }, 2500);
 
-      // Main timer countdown
+      // Transition to breathing after 10 seconds
+      const transitionTimer = setTimeout(() => {
+        setCurrentPhase(SOSPhase.BREATHING);
+        setIsActive(true);
+        setTimer(3);
+        setCurrentState(BreathingState.READY);
+      }, 10000);
+
+      // Main timer countdown for display
       const timerInterval = setInterval(() => {
-        setAffirmationTimer(prev => {
-          if (prev <= 1) {
-            // Transition to breathing phase
-            setCurrentPhase(SOSPhase.BREATHING);
-            setIsActive(true);
-            return 0;
-          }
-          return prev - 1;
-        });
+        setAffirmationTimer(prev => Math.max(0, prev - 1));
       }, 1000);
 
       return () => {
         clearInterval(affirmationInterval);
         clearInterval(timerInterval);
+        clearTimeout(transitionTimer);
       };
     }
   }, [currentPhase, affirmationOpacity]);
@@ -242,7 +247,7 @@ export default function SOSScreen() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, currentState, cyclesCompleted]);
+  }, [isActive, currentState, cyclesCompleted, currentPhase]);
   
   // Animation function for the breathing circle using Reanimated
   const animateCircle = (toSize: number, duration: number) => {
@@ -299,7 +304,7 @@ export default function SOSScreen() {
       
       <Stack.Screen 
         options={{
-          title: "SOS Support",
+          title: "Crisis Support",
           headerShown: false,
         }} 
       />
@@ -326,62 +331,58 @@ export default function SOSScreen() {
           </Text>
         </View>
       ) : showMotivation ? (
-        <ScrollView 
+        <View 
           style={styles.motivationContainer}
-          contentContainerStyle={styles.motivationContent}
-          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.motivationTitle}>You're Doing Great</Text>
-          
-          <View style={styles.sobrietyCard}>
-            <Text style={styles.sobrietyLabel}>Your Sobriety Streak</Text>
-            <Text style={styles.sobrietyValue}>{daysSober} days</Text>
-            <Text style={styles.sobrietySubtext}>That's an incredible achievement!</Text>
-          </View>
-          
-          <View style={styles.quoteCard}>
-            <Text style={styles.quoteText}>{randomQuote}</Text>
-          </View>
-          
-          <Text style={styles.sectionTitle}>Remember Your Reasons for Change</Text>
-          
-          <View style={styles.reasonsContainer}>
-            {reasons.map((reason) => (
-              <View key={reason.id} style={styles.reasonItem}>
-              <View style={styles.reasonIcon}>
-                <Heart size={20} color="#fff" />
-                </View>
-                <Text style={styles.reasonText}>{reason.text}</Text>
-              </View>
-            ))}
+          <View style={styles.motivationContent}>
+            <Text style={styles.motivationTitle}>You're Doing Great</Text>
             
-            <View style={styles.reasonItem}>
-              <View style={styles.reasonIcon}>
-                <Star size={20} color="#fff" />
+            <View style={styles.sobrietyCard}>
+              <Text style={styles.sobrietyLabel}>Your Sobriety Streak</Text>
+              <Text style={styles.sobrietyValue}>{daysSober} days</Text>
+              <Text style={styles.sobrietySubtext}>That's an incredible achievement!</Text>
+            </View>
+            
+            <Text style={styles.sectionTitle}>Remember Your Reasons for Change</Text>
+            
+            <View style={styles.reasonsContainer}>
+              {reasons.slice(0, 2).map((reason) => (
+                <View key={reason.id} style={styles.reasonItem}>
+                <View style={styles.reasonIcon}>
+                  <Heart size={20} color="#fff" />
+                  </View>
+                  <Text style={styles.reasonText}>{reason.text}</Text>
+                </View>
+              ))}
+              
+              <View style={styles.reasonItem}>
+                <View style={styles.reasonIcon}>
+                  <Star size={20} color="#fff" />
+                </View>
+                <Text style={styles.reasonText}>
+                  You've already overcome {daysSober} days of challenges. This is just one more.
+                </Text>
               </View>
-              <Text style={styles.reasonText}>
-                You've already overcome {daysSober} days of challenges. This is just one more.
-              </Text>
+            </View>
+            
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity 
+                style={styles.overcomeButton}
+                onPress={handleCrisisOvercome}
+              >
+                <Check size={20} color="#fff" />
+                <Text style={styles.overcomeButtonText}>I've Overcome This (+30 XP)</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.continueButton}
+                onPress={handleContinueBreathing}
+              >
+                <Text style={styles.continueButtonText}>Continue Breathing</Text>
+              </TouchableOpacity>
             </View>
           </View>
-          
-          <View style={styles.buttonsContainer}>
-            <TouchableOpacity 
-              style={styles.overcomeButton}
-              onPress={handleCrisisOvercome}
-            >
-              <Check size={20} color="#fff" />
-              <Text style={styles.overcomeButtonText}>I've Overcome This (+30 XP)</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.continueButton}
-              onPress={handleContinueBreathing}
-            >
-              <Text style={styles.continueButtonText}>Continue Breathing</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+        </View>
       ) : (
         <View style={styles.breathingContainer}>
           <Text style={styles.stateText}>{currentState}</Text>
@@ -474,107 +475,95 @@ const styles = StyleSheet.create({
     marginTop: 60,
   },
   motivationContent: {
-    padding: 24,
-    paddingTop: 20,
-    paddingBottom: 40,
+    flex: 1,
+    padding: 20,
+    paddingTop: 10,
+    justifyContent: 'space-between',
   },
   motivationTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 24,
+    marginBottom: 16,
     textAlign: 'center',
   },
   sobrietyCard: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 20,
+    padding: 20,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 14,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
     borderWidth: 1,
     borderColor: colors.border,
   },
   sobrietyLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textLight,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sobrietyValue: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: '700',
     color: colors.primary,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sobrietySubtext: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.text,
     fontStyle: 'italic',
-  },
-  quoteCard: {
-    backgroundColor: 'rgba(107, 152, 194, 0.15)',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 28,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
-  },
-  quoteText: {
-    fontSize: 18,
-    color: colors.text,
-    fontStyle: 'italic',
-    lineHeight: 26,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 16,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   reasonsContainer: {
-    gap: 16,
-    marginBottom: 30,
+    gap: 12,
+    marginBottom: 20,
   },
   reasonItem: {
     flexDirection: 'row',
     backgroundColor: colors.cardBackground,
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 16,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
     borderColor: colors.border,
   },
   reasonIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   reasonText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: colors.text,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   buttonsContainer: {
-    gap: 16,
+    gap: 12,
   },
   overcomeButton: {
     backgroundColor: colors.success,

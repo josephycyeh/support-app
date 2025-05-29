@@ -39,13 +39,17 @@ export const EditReasonModal = ({ visible, reason, onClose, onSave, onDelete }: 
       isVisible={visible}
       onBackdropPress={onClose}
       onBackButtonPress={onClose}
-      backdropTransitionOutTiming={0}
+      backdropTransitionInTiming={300}
+      backdropTransitionOutTiming={300}
       backdropOpacity={0.5}
-      useNativeDriver
+      useNativeDriver={false}
       style={styles.modal}
       animationIn="slideInUp"
       animationOut="slideOutDown"
+      animationInTiming={400}
+      animationOutTiming={300}
       avoidKeyboard={true}
+      hideModalContentWhileAnimating={true}
     >
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>

@@ -37,14 +37,14 @@ export default function ChatScreen() {
     const welcomeMessage = {
       id: 'welcome',
       role: 'assistant' as const,
-      content: "Hi there! I'm Sushi, your companion on this journey. How are you feeling today? I'm here to talk, listen, or just keep you company whenever you need it."
+      content: `Hi there! I'm Sushi, your companion on this journey. I'm here to talk, listen, or just keep you company whenever you need it.\n\nYou can also ask me about your sobriety journey, celebrate your milestones, get tips, and more, just ask!`
     };
     
     addMessage(welcomeMessage);
     return [welcomeMessage];
   }, [storedMessages, addMessage]);
 
-  const { messages, error, handleInputChange, input, handleSubmit, isLoading } = useChat({
+  const { messages, error, handleInputChange, input, handleSubmit, isLoading, setMessages } = useChat({
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     api: generateAPIUrl('/api/chat'),
     body: { sobrietyContext },
@@ -60,6 +60,38 @@ export default function ChatScreen() {
       });
     }
   });
+
+  // Sync chat UI when store changes (e.g., when history is cleared or demo data loaded)
+  useEffect(() => {
+    const storeMessageIds = storedMessages.map(msg => msg.id);
+    const currentMessageIds = messages.map(msg => msg.id);
+    
+    // Check if store has been cleared (only has welcome message) but UI has more
+    const isStoreCleared = storedMessages.length === 1 && storedMessages[0].id === 'welcome';
+    const hasUIMessages = messages.length > 1;
+    
+    // Check if store has significantly different messages (e.g., demo data loaded)
+    const hasStoreDifferentMessages = storeMessageIds.length !== currentMessageIds.length ||
+      !storeMessageIds.every((id, index) => id === currentMessageIds[index]);
+    
+    if (isStoreCleared && hasUIMessages) {
+      // Store was cleared, sync UI to show only welcome message
+      const welcomeMessage = storedMessages[0];
+      setMessages([{
+        id: welcomeMessage.id,
+        role: welcomeMessage.role,
+        content: welcomeMessage.content
+      }]);
+    } else if (hasStoreDifferentMessages && storedMessages.length > 1) {
+      // Store has different messages (like demo data), sync UI to match store
+      const syncedMessages = storedMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content
+      }));
+      setMessages(syncedMessages);
+    }
+  }, [storedMessages, messages, setMessages]);
 
   // Simple message sync - only save new user messages
   const lastMessageRef = useRef<string | null>(null);

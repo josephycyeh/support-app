@@ -28,6 +28,7 @@ export const SobrietyTimer = () => {
 
   useEffect(() => {
     const calculateTimeElapsed = () => {
+      // startDate is always an ISO timestamp now - consistent across all components
       const start = new Date(startDate).getTime();
       const now = new Date().getTime();
       const difference = now - start;

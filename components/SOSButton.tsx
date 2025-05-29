@@ -1,27 +1,29 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Heart } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
 
 export const SOSButton = () => {
   const router = useRouter();
 
-  const handleSOSPress = () => {
+  const handleCrisisSupportPress = () => {
     // Provide haptic feedback
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     
     router.push('/sos');
-      };
+  };
 
   return (
     <View style={styles.container}>
       <TouchableOpacity 
         style={styles.button} 
         activeOpacity={0.8}
-        onPress={handleSOSPress}
+        onPress={handleCrisisSupportPress}
       >
-        <Text style={styles.buttonText}>SOS</Text>
+        <Heart size={20} color="#FFFFFF" />
+        <Text style={styles.buttonText}>HELP</Text>
       </TouchableOpacity>
     </View>
   );
@@ -35,9 +37,9 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   button: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: colors.danger,
     justifyContent: 'center',
     alignItems: 'center',
@@ -50,8 +52,9 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   buttonText: {
-    color: '#2D3142',
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
+    marginTop: 2,
   },
 });

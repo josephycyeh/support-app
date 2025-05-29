@@ -42,7 +42,7 @@ export interface JournalInfo {
     type: string;
     title: string;
     date: string;
-    preview: string;
+    content: string;
   }>;
 }
 
@@ -78,7 +78,7 @@ export function useSobrietyContext(): SobrietyContext {
   // Calculate days sober (memoized for performance)
   const daysSober = useMemo(() => {
     const today = new Date();
-    const start = new Date(startDate);
+    const start = new Date(startDate); // startDate is always ISO timestamp now
     return Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   }, [startDate]);
 
@@ -116,7 +116,7 @@ export function useSobrietyContext(): SobrietyContext {
           type: entry.type || 'journal',
           title: entry.title,
           date: entry.date,
-          preview: entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : '')
+          content: entry.content
         })),
       },
       checklist: {

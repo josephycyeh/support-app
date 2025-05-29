@@ -22,18 +22,18 @@ const getTodayDateStr = () => {
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())).toISOString().split('T')[0];
 };
 
-// Format a date object to YYYY-MM-DD string
-const formatDateToYYYYMMDD = (date: Date) => {
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString().split('T')[0];
+// Format a date object to ISO timestamp for consistent precision
+const formatDateToISOString = (date: Date) => {
+  return date.toISOString();
 };
 
-// Default state with current date as start date
+// Default state with current timestamp as start date
 const getDefaultState = (): SobrietyState => {
   const today = getTodayDateStr();
   const defaultDailyXP: Record<string, number> = {};
   defaultDailyXP[today] = 0; // Initialize today with 0 XP
   
-  const startDate = formatDateToYYYYMMDD(new Date());
+  const startDate = formatDateToISOString(new Date());
   
   return {
     startDate,
@@ -93,7 +93,7 @@ export const useSobrietyStore = create<SobrietyStore>()(
           
           // Only add the date if it's not already recorded
           if (!state.sobrietyBreaks.includes(breakDate)) {
-            const newStartDate = formatDateToYYYYMMDD(new Date());
+            const newStartDate = formatDateToISOString(new Date());
             return {
               ...state, // Preserve all existing state including firstAppUseDate
               sobrietyBreaks: [...state.sobrietyBreaks, breakDate],
@@ -113,9 +113,12 @@ export const useSobrietyStore = create<SobrietyStore>()(
             updatedBreaks.push(today);
           }
           
+          // Reset to current timestamp for immediate 0:0:0:0
+          const newStartDate = formatDateToISOString(new Date());
+          
           return {
             ...state, // Preserve XP, level, dailyXP, firstAppUseDate, and other data
-            startDate: formatDateToYYYYMMDD(new Date()), // Reset only sobriety start date
+            startDate: newStartDate, // Reset to current timestamp
             sobrietyBreaks: updatedBreaks, // Keep the record of sobriety breaks
           };
         }),
@@ -123,6 +126,7 @@ export const useSobrietyStore = create<SobrietyStore>()(
       checkAndAwardMilestones: () => 
         set((state) => {
           const now = new Date();
+          // Parse startDate as ISO timestamp (always full timestamp now)
           const sobrietyStart = new Date(state.startDate);
           const daysSober = Math.floor((now.getTime() - sobrietyStart.getTime()) / (1000 * 60 * 60 * 24));
           

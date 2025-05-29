@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import colors from '@/constants/colors';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
@@ -22,8 +22,11 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
   const firstAppUse = new Date(firstAppUseDate || startDate); // Fallback to startDate for existing users
   const daysSinceSobrietyStart = Math.floor((today.getTime() - sobrietyStart.getTime()) / (1000 * 60 * 60 * 24));
   
-  // Generate calendar data
-  const calendarData = generateCalendarData(viewYear, viewMonth, startDate, dailyXP, sobrietyBreaks);
+  // Generate calendar data (memoized for performance)
+  const calendarData = useMemo(() => 
+    generateCalendarData(viewYear, viewMonth, startDate, dailyXP, sobrietyBreaks, firstAppUseDate),
+    [viewYear, viewMonth, startDate, dailyXP, sobrietyBreaks, firstAppUseDate]
+  );
   
   // Get month name
   const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long' });
@@ -208,7 +211,8 @@ const generateCalendarData = (
   month: number, 
   startDate: string, 
   dailyXP: Record<string, number> = {}, 
-  sobrietyBreaks: string[] = []
+  sobrietyBreaks: string[] = [],
+  firstAppUseDate?: string
 ) => {
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -237,13 +241,12 @@ const generateCalendarData = (
       } else {
         // Create date at the beginning of the day (midnight) to avoid timezone issues
         const currentDate = new Date(Date.UTC(year, month, dayCounter, 0, 0, 0));
+        
+        // Check if this is a future date
         const isToday = dayCounter === today.getDate() && 
                         month === today.getMonth() && 
                         year === today.getFullYear();
-        
-        // Check if date is before sobriety start
-        const sobrietyStart = new Date(startDate);
-        const isBeforeSobrietyStart = currentDate < sobrietyStart;
+        const isFuture = currentDate > today;
         
         // Format date as ISO string for lookup
         const dateStr = formatDateToYYYYMMDD(currentDate);
@@ -254,17 +257,23 @@ const generateCalendarData = (
         // Get XP earned for this day
         const xpEarned = dailyXP[dateStr] || 0;
         
-        // Calculate intensity based on XP
+        // Simple logic: no color for future dates or sobriety breaks
         let intensity = 0;
-        if (!isBeforeSobrietyStart && !isSobrietyBreak) {
-          if (xpEarned > 0 && xpEarned <= 20) {
+        if (!isFuture && !isSobrietyBreak) {
+          if (xpEarned > 0) {
+            // Color based on XP amount
+            if (xpEarned <= 10) {
+              intensity = 0.3;
+            } else if (xpEarned <= 30) {
+              intensity = 0.5;
+            } else if (xpEarned <= 60) {
+              intensity = 0.8;
+            } else {
+              intensity = 1.0;
+            }
+          } else if (currentDate >= new Date(firstAppUseDate || startDate)) {
+            // Base sober color for days after first app use (even with 0 XP)
             intensity = 0.2;
-          } else if (xpEarned > 20 && xpEarned <= 50) {
-            intensity = 0.5;
-          } else if (xpEarned > 50 && xpEarned <= 100) {
-            intensity = 0.8;
-          } else if (xpEarned > 100) {
-            intensity = 1.0;
           }
         }
         

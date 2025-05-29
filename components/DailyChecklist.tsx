@@ -1,13 +1,16 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Check, Trophy } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { Card } from '@/components/ui/Card';
-import { createSafeAnimation } from '@/utils/animations';
 
-export const DailyChecklist = () => {
+interface DailyChecklistProps {
+  onTaskCompleted?: () => void;
+}
+
+export const DailyChecklist = ({ onTaskCompleted }: DailyChecklistProps) => {
   const { items, toggleItem, checkAndResetIfNewDay, lastResetDate } = useChecklistStore();
   const { addXP } = useSobrietyStore();
   const [renderKey, setRenderKey] = React.useState(0);
@@ -25,9 +28,10 @@ export const DailyChecklist = () => {
   const handleToggle = (id: string) => {
     const item = items.find(item => item.id === id);
     if (item) {
-      // If completing the item, add XP
+      // If completing the item, add XP and trigger companion animation
       if (!item.completed) {
         addXP(item.xpReward);
+        onTaskCompleted?.(); // Trigger companion animation
       }
       // Toggle the item
       toggleItem(id);
@@ -63,26 +67,8 @@ export const DailyChecklist = () => {
 };
 
 const CompletionState = () => {
-  const [animation] = React.useState(new Animated.Value(0));
-  
-  React.useEffect(() => {
-    createSafeAnimation(animation, 1, 600).start();
-  }, []);
-  
-  const animationStyle = {
-    opacity: animation,
-    transform: [
-      { 
-        scale: animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.9, 1]
-        })
-      }
-    ]
-  };
-  
   return (
-    <Animated.View style={[styles.completionContainer, animationStyle]}>
+    <View style={styles.completionContainer}>
       <View style={styles.completionIcon}>
         <Trophy size={32} color={colors.primary} />
       </View>
@@ -90,7 +76,7 @@ const CompletionState = () => {
       <Text style={styles.completionMessage}>
         You've completed all your daily tasks. Great job staying committed to your journey!
       </Text>
-    </Animated.View>
+    </View>
   );
 };
 
@@ -106,34 +92,11 @@ interface ChecklistItemProps {
 }
 
 const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
-  // Animation for staggered entry
-  const [animation] = React.useState(new Animated.Value(0));
-  
-  React.useEffect(() => {
-    // Stagger the animation of each item
-    createSafeAnimation(animation, 1, 400, undefined).start();
-  }, []);
-  
-  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-  
-  const animationStyle = {
-        opacity: animation,
-        transform: [
-          { 
-            translateY: animation.interpolate({
-              inputRange: [0, 1],
-              outputRange: [20, 0]
-            })
-          }
-        ]
-      };
-  
   return (
-    <AnimatedTouchable
+    <TouchableOpacity
       style={[
         styles.itemButton,
-        item.completed && styles.itemButtonCompleted,
-        animationStyle
+        item.completed && styles.itemButtonCompleted
       ]}
       onPress={() => onToggle(item.id)}
       activeOpacity={0.7}
@@ -153,7 +116,7 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
       <View style={styles.xpBadge}>
         <Text style={styles.xpText}>+{item.xpReward}</Text>
       </View>
-    </AnimatedTouchable>
+    </TouchableOpacity>
   );
 };
 

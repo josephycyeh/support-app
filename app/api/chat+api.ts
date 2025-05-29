@@ -27,41 +27,83 @@ export async function POST(req: Request) {
   if (sobrietyContext) {
     systemPrompt += `\n\nCURRENT USER CONTEXT:\n`;
     
-    if (sobrietyContext.daysSober !== undefined) {
-      systemPrompt += `- Days sober: ${sobrietyContext.daysSober} days\n`;
+    // Personal information
+    if (sobrietyContext.personal?.daysSober !== undefined) {
+      systemPrompt += `- Days sober: ${sobrietyContext.personal.daysSober} days\n`;
     }
     
-    if (sobrietyContext.level) {
-      systemPrompt += `- Current level: ${sobrietyContext.level}\n`;
+    if (sobrietyContext.personal?.name) {
+      systemPrompt += `- Name: ${sobrietyContext.personal.name}\n`;
     }
     
-    if (sobrietyContext.xp) {
-      systemPrompt += `- Total XP earned: ${sobrietyContext.xp}\n`;
+    if (sobrietyContext.personal?.age) {
+      systemPrompt += `- Age: ${sobrietyContext.personal.age}\n`;
     }
     
-    if (sobrietyContext.recentMilestones && sobrietyContext.recentMilestones.length > 0) {
-      systemPrompt += `- Recent milestones achieved: ${sobrietyContext.recentMilestones.join(', ')} days\n`;
+    // Progress information
+    if (sobrietyContext.progress?.level) {
+      systemPrompt += `- Current level: ${sobrietyContext.progress.level}\n`;
     }
     
+    if (sobrietyContext.progress?.xp) {
+      systemPrompt += `- Current XP: ${sobrietyContext.progress.xp}/${sobrietyContext.progress.xpToNextLevel}\n`;
+    }
+    
+    if (sobrietyContext.progress?.milestonesReached && sobrietyContext.progress.milestonesReached.length > 0) {
+      systemPrompt += `- Milestones achieved: ${sobrietyContext.progress.milestonesReached.join(', ')} days\n`;
+    }
+    
+    // Reasons for sobriety
     if (sobrietyContext.reasons && sobrietyContext.reasons.length > 0) {
       systemPrompt += `- Their reasons for sobriety: ${sobrietyContext.reasons.map((r: any) => r.text).join('; ')}\n`;
     }
     
-    if (sobrietyContext.recentActivities) {
-      const activities = sobrietyContext.recentActivities;
+    // Recent activities
+    if (sobrietyContext.recentActivity) {
+      const activities = sobrietyContext.recentActivity;
       if (activities.breathingExercises > 0) {
         systemPrompt += `- Breathing exercises completed: ${activities.breathingExercises}\n`;
       }
-      if (activities.journalEntries > 0) {
-        systemPrompt += `- Journal entries written: ${activities.journalEntries}\n`;
+      if (activities.journalCount > 0) {
+        systemPrompt += `- Journal entries written: ${activities.journalCount}\n`;
       }
       if (activities.cravingsOvercome > 0) {
         systemPrompt += `- Cravings overcome: ${activities.cravingsOvercome}\n`;
       }
     }
     
-    if (sobrietyContext.currentStreak) {
-      systemPrompt += `- Current sobriety streak: ${sobrietyContext.currentStreak} days\n`;
+    // Mood information
+    if (sobrietyContext.mood?.averageMood !== null && sobrietyContext.mood?.averageMood !== undefined) {
+      systemPrompt += `- Recent average mood: ${sobrietyContext.mood.averageMood.toFixed(1)}/5 (last 7 days)\n`;
+    }
+    
+    if (sobrietyContext.mood?.moodStreak > 0) {
+      systemPrompt += `- Current positive mood streak: ${sobrietyContext.mood.moodStreak} days\n`;
+    }
+    
+    // Journal information
+    if (sobrietyContext.journal?.totalEntries > 0) {
+      systemPrompt += `- Total journal entries: ${sobrietyContext.journal.totalEntries}\n`;
+      
+      if (sobrietyContext.journal.recentEntries && sobrietyContext.journal.recentEntries.length > 0) {
+        systemPrompt += `- Recent journal topics: ${sobrietyContext.journal.recentEntries.map((entry: any) => entry.title).join(', ')}\n`;
+        
+        systemPrompt += `\nRECENT JOURNAL ENTRIES:\n`;
+        sobrietyContext.journal.recentEntries.forEach((entry: any, index: number) => {
+          const entryDate = new Date(entry.date).toLocaleDateString();
+          systemPrompt += `${index + 1}. "${entry.title}" (${entryDate}, ${entry.type}):\n${entry.content}\n\n`;
+        });
+      }
+    }
+    
+    // Daily checklist progress
+    if (sobrietyContext.checklist) {
+      systemPrompt += `- Today's checklist progress: ${sobrietyContext.checklist.completedToday}/${sobrietyContext.checklist.totalItems} completed\n`;
+    }
+    
+    // Sobriety breaks (if any)
+    if (sobrietyContext.progress?.sobrietyBreaks && sobrietyContext.progress.sobrietyBreaks.length > 0) {
+      systemPrompt += `- Note: User has had ${sobrietyContext.progress.sobrietyBreaks.length} previous sobriety breaks\n`;
     }
     
     systemPrompt += `\nUse this context to provide more personalized support and acknowledge their specific journey and achievements.`;

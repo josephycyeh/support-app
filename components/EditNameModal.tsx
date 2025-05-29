@@ -37,13 +37,17 @@ export const EditNameModal = ({ visible, currentName, onClose, onSave }: EditNam
       isVisible={visible}
       onBackdropPress={handleClose}
       onBackButtonPress={handleClose}
-      backdropTransitionOutTiming={0}
+      backdropTransitionInTiming={300}
+      backdropTransitionOutTiming={300}
       backdropOpacity={0.5}
-      useNativeDriver
+      useNativeDriver={false}
       style={styles.modal}
       animationIn="slideInUp"
       animationOut="slideOutDown"
+      animationInTiming={400}
+      animationOutTiming={300}
       avoidKeyboard={true}
+      hideModalContentWhileAnimating={true}
     >
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>

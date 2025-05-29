@@ -8,7 +8,11 @@ import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
-export const Companion = () => {
+interface CompanionProps {
+  animationTrigger?: number;
+}
+
+export const Companion = ({ animationTrigger }: CompanionProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showLevelUpMessage, setShowLevelUpMessage] = useState(false);
   const lottieRef = useRef<LottieView>(null);
@@ -33,14 +37,34 @@ export const Companion = () => {
       
       // When animation is done, reset flags
       setTimeout(() => {
-        // Keep message a bit longer than animation
-        setTimeout(() => {
-          setShowLevelUpMessage(false);
-          setLevelUpComplete();
-        }, 1000);
-      }, 3000); // Animation is 18 frames at 24fps ≈ 750ms, but we extend it
+        setShowLevelUpMessage(false);
+        setLevelUpComplete();
+      }, 2000); // Shortened to 2 seconds total
     }
   }, [levelUp, setLevelUpComplete]);
+
+  // Trigger petting animation when a task is completed
+  useEffect(() => {
+    if (animationTrigger && animationTrigger > 0) {
+      // Don't trigger animation if level up modal is showing or already animating
+      if (showLevelUpMessage || isAnimating) return;
+      
+      // Provide haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Play the petting animation
+      setIsAnimating(true);
+      if (lottieRef.current) {
+        lottieRef.current.reset();
+        lottieRef.current.play();
+        
+        // Reset animation state after it completes
+        setTimeout(() => {
+          setIsAnimating(false);
+        }, 1800); // Animation is 43 frames at 24fps ≈ 1800ms
+      }
+    }
+  }, [animationTrigger, showLevelUpMessage, isAnimating]);
 
   const handleChatPress = () => {
     router.push('/chat');
@@ -53,8 +77,8 @@ export const Companion = () => {
   };
 
   const handleCompanionPress = () => {
-    // Don't trigger pet animation if level up modal is showing
-    if (showLevelUpMessage) return;
+    // Don't trigger pet animation if level up modal is showing or already animating
+    if (showLevelUpMessage || isAnimating) return;
     
     // Provide haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -85,12 +109,15 @@ export const Companion = () => {
       <View style={styles.companionContainer}>
         <View style={styles.companionRow}>
           {/* Breathing button positioned to the left of companion */}
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.leftButton]}
-            onPress={handleBreathingPress}
-          >
-            <Wind size={24} color={colors.primary} />
-          </TouchableOpacity>
+          <View style={[styles.actionButtonContainer, styles.leftButtonContainer]}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleBreathingPress}
+            >
+              <Wind size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <Text style={styles.actionButtonLabel}>Breathing</Text>
+          </View>
 
           <TouchableOpacity 
             activeOpacity={0.8}
@@ -121,12 +148,15 @@ export const Companion = () => {
           </TouchableOpacity>
           
           {/* Journal button positioned to the right of companion */}
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.rightButton]}
-            onPress={handleJournalPress}
-          >
-            <BookOpen size={24} color={colors.primary} />
-          </TouchableOpacity>
+          <View style={[styles.actionButtonContainer, styles.rightButtonContainer]}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={handleJournalPress}
+            >
+              <BookOpen size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <Text style={styles.actionButtonLabel}>Journal</Text>
+          </View>
         </View>
       </View>
       
@@ -223,6 +253,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 20,
   },
+  actionButtonContainer: {
+    alignItems: 'center',
+  },
+  leftButtonContainer: {
+    position: 'absolute',
+    left: 20,
+  },
+  rightButtonContainer: {
+    position: 'absolute',
+    right: 20,
+  },
   actionButton: {
     backgroundColor: colors.cardBackground,
     borderRadius: 30,
@@ -232,14 +273,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 4,
+    marginBottom: 6,
   },
-  leftButton: {
-    position: 'absolute',
-    left: 20,
-  },
-  rightButton: {
-    position: 'absolute',
-    right: 20,
+  actionButtonLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.primary,
+    textAlign: 'center',
   },
   // Level Up Modal Styles
   levelUpOverlay: {

@@ -27,11 +27,9 @@ export default function ProfileScreen() {
   const [showAgeModal, setShowAgeModal] = useState(false);
   const [selectedReason, setSelectedReason] = useState<{id: string, text: string} | null>(null);
   
-  // Get today's date for the sobriety counter
+  // Calculate days sober using consistent ISO timestamp format
   const today = new Date();
-  const sobrietyDate = new Date(startDate);
-  
-  // Calculate days sober
+  const sobrietyDate = new Date(startDate); // startDate is always ISO timestamp now
   const daysSober = Math.floor((today.getTime() - sobrietyDate.getTime()) / (1000 * 60 * 60 * 24));
   
   // Calculate XP progress
@@ -125,6 +123,24 @@ export default function ProfileScreen() {
     );
   };
   
+  const handleResetSobriety = () => {
+    Alert.alert(
+      "Reset Sobriety Counter",
+      "Are you sure you want to reset your sobriety counter? This will restart your streak from day 0.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Reset Counter", 
+          onPress: () => resetSobriety(),
+          style: "destructive"
+        }
+      ]
+    );
+  };
+  
   return (
     <View style={styles.container}>
       <Stack.Screen 
@@ -198,7 +214,7 @@ export default function ProfileScreen() {
         </View>
         
         <Button
-          onPress={() => resetSobriety()}
+          onPress={handleResetSobriety}
           variant="outline"
           style={styles.resetButton}
           icon={<LogOut size={18} color={colors.danger} />}

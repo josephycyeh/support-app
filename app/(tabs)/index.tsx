@@ -12,6 +12,7 @@ import { MoodButton } from '@/components/MoodButton';
 import { useMoodStore } from '@/store/moodStore';
 import * as Haptics from 'expo-haptics';
 import { useSobrietyStore } from '@/store/sobrietyStore';
+import { DemoDataButton } from '@/components/DemoDataButton';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function HomeScreen() {
   const { checkHasLoggedToday } = useMoodStore();
   const [showMoodTracker, setShowMoodTracker] = useState(false);
   const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
+  const [triggerCompanionAnimation, setTriggerCompanionAnimation] = useState(0);
 
   // Check mood status immediately on mount to prevent flickering
   useEffect(() => {
@@ -57,6 +59,11 @@ export default function HomeScreen() {
     setHasLoggedMoodToday(hasLogged);
   };
 
+  const handleTaskCompleted = () => {
+    // Trigger companion animation by incrementing the trigger value
+    setTriggerCompanionAnimation(prev => prev + 1);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -67,14 +74,17 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <XPProgressBar />
-        <Companion />
+        <Companion animationTrigger={triggerCompanionAnimation} />
         <SobrietyTimer />
         
         {!hasLoggedMoodToday && (
           <MoodButton onPress={handleMoodTrackerOpen} />
         )}
         
-        <DailyChecklist />
+        <DailyChecklist onTaskCompleted={handleTaskCompleted} />
+        
+        {/* Temporary Demo Data Button - Remove after demo */}
+        <DemoDataButton />
         
         {/* Add some space at the bottom for the floating button */}
         <View style={{ height: 50 }} />
