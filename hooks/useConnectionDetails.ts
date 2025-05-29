@@ -23,7 +23,7 @@ export function useConnectionDetails(userContext?: any): ConnectionDetails | und
           throw new Error('EXPO_PUBLIC_BACKEND_URL environment variable is not set');
         }
         
-        const response = await fetch('http://127.0.0.1:4000/getConnectionDetails', {
+        const response = await fetch(connectionDetailsEndpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

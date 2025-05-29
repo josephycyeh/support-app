@@ -4,123 +4,80 @@ import { streamText } from 'ai';
 export async function POST(req: Request) {
   const { messages, sobrietyContext } = await req.json();
 
-  console.log('API received sobriety context:', {
-    hasContext: !!sobrietyContext,
-    personal: sobrietyContext?.personal,
-    progressLevel: sobrietyContext?.progress?.level,
-    journalCount: sobrietyContext?.journal?.totalEntries,
-    moodAvg: sobrietyContext?.mood?.averageMood
-  });
-
   // Build context-aware system prompt
   let systemPrompt = `You are Sushi, a friendly and supportive companion in a sobriety app. 
   Your primary role is to provide emotional support, practical advice, and motivation to users 
   maintaining their sobriety journey. You are empathetic, non-judgmental, and encouraging.
   
+  Don't need to be overly empathetic to the point of being annoying and unnatural. Be natural and conversational.
+
+
   Remember these important guidelines:
   - Be conversational and friendly, like a supportive friend.
   - Provide practical tips for maintaining sobriety when appropriate.
   - Celebrate the user's milestones and achievements, no matter how small.
-  - Reference their specific data when relevant to personalize responses.
-  - Be supportive during difficult times and acknowledge their progress.
-  - Keep responses warm, encouraging, and focused on their recovery journey.
-  - Use their name if provided to make conversations more personal.
-  
-  CURRENT USER CONTEXT:\n`;
+  - If the user is struggling, offer encouragement and remind them of their strength.
+  - Avoid clinical or overly formal language - keep conversations warm and relatable.
+  - If the user is experiencing a crisis, suggest using the SOS button in the app.
+  - Never encourage or normalize alcohol or substance use.
+  - Reference their specific progress and context when relevant.
+  `;
 
+  // Add personalized context if available
   if (sobrietyContext) {
-    // Personal information
-    if (sobrietyContext.personal) {
-      const { name, age, daysSober, sobrietyStartDate, firstAppUseDate } = sobrietyContext.personal;
-      if (name) systemPrompt += `- User's name: ${name}\n`;
-      if (age) systemPrompt += `- User's age: ${age}\n`;
-      systemPrompt += `- Days sober: ${daysSober} days\n`;
-      systemPrompt += `- Current sobriety streak started: ${sobrietyStartDate}\n`;
-      if (firstAppUseDate && firstAppUseDate !== sobrietyStartDate) {
-        systemPrompt += `- First started using the app: ${firstAppUseDate}\n`;
-      }
+    systemPrompt += `\n\nCURRENT USER CONTEXT:\n`;
+    
+    if (sobrietyContext.daysSober !== undefined) {
+      systemPrompt += `- Days sober: ${sobrietyContext.daysSober} days\n`;
     }
-
-    // Progress and achievements
-    if (sobrietyContext.progress) {
-      const { level, xp, xpToNextLevel, milestonesReached, sobrietyBreaks } = sobrietyContext.progress;
-      systemPrompt += `- Current level: ${level}\n`;
-      systemPrompt += `- Total XP earned: ${xp}\n`;
-      if (xpToNextLevel) systemPrompt += `- XP needed for next level: ${xpToNextLevel}\n`;
-      if (milestonesReached && milestonesReached.length > 0) {
-        systemPrompt += `- Milestones achieved: ${milestonesReached.join(', ')} days\n`;
-      }
-      if (sobrietyBreaks && sobrietyBreaks.length > 0) {
-        systemPrompt += `- Previous sobriety breaks: ${sobrietyBreaks.length} recorded\n`;
-      }
+    
+    if (sobrietyContext.level) {
+      systemPrompt += `- Current level: ${sobrietyContext.level}\n`;
     }
-
-    // Recent activity patterns
-    if (sobrietyContext.recentActivity) {
-      const { breathingExercises, journalCount, cravingsOvercome, dailyXP } = sobrietyContext.recentActivity;
-      systemPrompt += `- Total breathing exercises completed: ${breathingExercises}\n`;
-      systemPrompt += `- Total journal entries: ${journalCount}\n`;
-      systemPrompt += `- Cravings overcome: ${cravingsOvercome}\n`;
-      if (dailyXP && dailyXP.length > 0) {
-        const recentXP = dailyXP.map(([date, xp]: [string, number]) => `${date}: ${xp}XP`).join('; ');
-        systemPrompt += `- Recent daily XP: ${recentXP}\n`;
-      }
+    
+    if (sobrietyContext.xp) {
+      systemPrompt += `- Total XP earned: ${sobrietyContext.xp}\n`;
     }
-
-    // Mood tracking data
-    if (sobrietyContext.mood) {
-      const { averageMood, moodStreak, recentMoods } = sobrietyContext.mood;
-      if (averageMood > 0) {
-        systemPrompt += `- Average mood (last 7 days): ${averageMood}/5\n`;
-      }
-      if (moodStreak > 0) {
-        systemPrompt += `- Current mood tracking streak: ${moodStreak} days\n`;
-      }
-      if (recentMoods && recentMoods.length > 0) {
-        const moodSummary = recentMoods.map((entry: any) => `${entry.date}: ${entry.mood}/5`).slice(0, 3).join('; ');
-        systemPrompt += `- Recent moods: ${moodSummary}\n`;
-      }
+    
+    if (sobrietyContext.recentMilestones && sobrietyContext.recentMilestones.length > 0) {
+      systemPrompt += `- Recent milestones achieved: ${sobrietyContext.recentMilestones.join(', ')} days\n`;
     }
-
-    // Journal entries context
-    if (sobrietyContext.journal) {
-      const { totalEntries, recentEntries } = sobrietyContext.journal;
-      systemPrompt += `- Total journal/trigger entries: ${totalEntries}\n`;
-      if (recentEntries && recentEntries.length > 0) {
-        systemPrompt += `- Recent entries:\n`;
-        recentEntries.forEach((entry: any) => {
-          systemPrompt += `  * ${entry.type === 'trigger' ? 'Trigger log' : 'Journal'}: "${entry.title}" (${entry.date}) - ${entry.preview}\n`;
-        });
-      }
-    }
-
-    // Daily checklist progress
-    if (sobrietyContext.checklist) {
-      const { completedToday, totalItems, todaysItems } = sobrietyContext.checklist;
-      systemPrompt += `- Today's checklist progress: ${completedToday}/${totalItems} completed\n`;
-      if (todaysItems && todaysItems.length > 0) {
-        const completedItems = todaysItems.filter((item: any) => item.completed).map((item: any) => item.title);
-        if (completedItems.length > 0) {
-          systemPrompt += `- Completed today: ${completedItems.join(', ')}\n`;
-        }
-      }
-    }
-
-    // Reasons for sobriety
+    
     if (sobrietyContext.reasons && sobrietyContext.reasons.length > 0) {
       systemPrompt += `- Their reasons for sobriety: ${sobrietyContext.reasons.map((r: any) => r.text).join('; ')}\n`;
     }
+    
+    if (sobrietyContext.recentActivities) {
+      const activities = sobrietyContext.recentActivities;
+      if (activities.breathingExercises > 0) {
+        systemPrompt += `- Breathing exercises completed: ${activities.breathingExercises}\n`;
+      }
+      if (activities.journalEntries > 0) {
+        systemPrompt += `- Journal entries written: ${activities.journalEntries}\n`;
+      }
+      if (activities.cravingsOvercome > 0) {
+        systemPrompt += `- Cravings overcome: ${activities.cravingsOvercome}\n`;
+      }
+    }
+    
+    if (sobrietyContext.currentStreak) {
+      systemPrompt += `- Current sobriety streak: ${sobrietyContext.currentStreak} days\n`;
+    }
+    
+    systemPrompt += `\nUse this context to provide more personalized support and acknowledge their specific journey and achievements.`;
   }
 
-  systemPrompt += `\nUse this context to provide personalized, relevant support and celebrate their progress!\n`;
-
-  const result = await streamText({
-    model: openai('gpt-4o-mini'),
-    messages: [
-      { role: 'system', content: systemPrompt },
-      ...messages,
-    ],
+  const result = streamText({
+    model: openai('gpt-4o'),
+    messages,
+    temperature: 0.7,
+    system: systemPrompt
   });
 
-  return result.toDataStreamResponse();
+  return result.toDataStreamResponse({
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'Content-Encoding': 'none',
+    },
+  });
 } 
