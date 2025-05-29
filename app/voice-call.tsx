@@ -31,6 +31,10 @@ import { Mic, MicOff, PhoneOff, Phone } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
 
+import { registerGlobals } from '@livekit/react-native';
+registerGlobals();
+
+
 export default function VoiceCallScreen() {
   const [shouldConnect, setShouldConnect] = useState(false);
 

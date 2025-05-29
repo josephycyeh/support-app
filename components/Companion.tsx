@@ -73,8 +73,8 @@ export const Companion = () => {
   };
 
   const handleJournalPress = () => {
-    // Navigate to the journal entry screen for new entries
-    router.push('/journal-entry');
+    // Navigate to the main journal page to view all entries
+    router.push('/journal');
     
     // Provide haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

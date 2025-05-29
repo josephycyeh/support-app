@@ -33,6 +33,8 @@ export default function TriggerEntryScreen() {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   const triggerInputRef = useRef<TextInput>(null);
+  const copingInputRef = useRef<TextInput>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const { addXP } = useSobrietyStore();
   const { addEntry, updateEntry } = useJournalStore();
   const { incrementJournalEntries } = useActivityStore();
@@ -66,6 +68,31 @@ export default function TriggerEntryScreen() {
       keyboardDidHideListener.remove();
     };
   }, [mode]);
+
+  // Function to scroll to a specific input when focused
+  const scrollToInput = (inputRef: React.RefObject<TextInput>) => {
+    if (inputRef.current && scrollViewRef.current) {
+      inputRef.current.measureInWindow((x: number, y: number, width: number, height: number) => {
+        const { height: screenHeight } = Dimensions.get('window');
+        const keyboardOffset = keyboardHeight || 300; // Default keyboard height estimate
+        const scrollOffset = y + height - (screenHeight - keyboardOffset - 100); // 100px buffer
+        
+        if (scrollOffset > 0) {
+          scrollViewRef.current?.scrollTo({
+            y: scrollOffset,
+            animated: true,
+          });
+        }
+      });
+    }
+  };
+
+  // Handle coping strategy input focus
+  const handleCopingFocus = () => {
+    setTimeout(() => {
+      scrollToInput(copingInputRef);
+    }, 100); // Small delay to ensure keyboard is showing
+  };
   
   const handleSave = () => {
     if (trigger.trim()) {
@@ -120,7 +147,11 @@ export default function TriggerEntryScreen() {
   const { height: screenHeight } = Dimensions.get('window');
   
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <Stack.Screen 
         options={{
           title: "Trigger Log",
@@ -183,7 +214,12 @@ export default function TriggerEntryScreen() {
         </ScrollView>
       </View>
       
-      <ScrollView style={styles.contentArea} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.contentArea} 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <TextInput
           style={styles.titleInput}
           placeholder="Title (optional)"
@@ -228,6 +264,7 @@ export default function TriggerEntryScreen() {
         
         <Text style={styles.fieldLabel}>Coping Strategy Used</Text>
         <TextInput
+          ref={copingInputRef}
           style={styles.copingInput}
           placeholder="What did you do to cope?"
           placeholderTextColor={colors.textMuted}
@@ -235,6 +272,7 @@ export default function TriggerEntryScreen() {
           onChangeText={setCopingStrategy}
           multiline
           textAlignVertical="top"
+          onFocus={handleCopingFocus}
         />
         
         <Text style={styles.fieldLabel}>Outcome</Text>
@@ -272,8 +310,6 @@ export default function TriggerEntryScreen() {
           </TouchableOpacity>
         </View>
         
-   
-        
         <TouchableOpacity 
           style={[
             styles.logButton,
@@ -293,7 +329,7 @@ export default function TriggerEntryScreen() {
         
         <View style={styles.finalBottomPadding} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

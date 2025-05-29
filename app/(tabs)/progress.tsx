@@ -13,8 +13,40 @@ export default function ProgressScreen() {
   const { startDate, level, xp } = useSobrietyStore();
   const { breathingExercises, journalEntries, cravingsOvercome } = useActivityStore();
   
-  // Calculate days sober
-  const daysSober = Math.floor((new Date().getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate days sober more accurately
+  const now = new Date();
+  const start = new Date(startDate);
+  // Reset hours to avoid timezone issues
+  now.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+  const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  
+  // Define milestone thresholds for better tracking
+  const milestones = [
+    { days: 1, title: "First Day", key: "first" },
+    { days: 3, title: "Three Days", key: "three" },
+    { days: 7, title: "One Week", key: "week" },
+    { days: 14, title: "Two Weeks", key: "twoWeeks" },
+    { days: 30, title: "One Month", key: "month" },
+    { days: 90, title: "Three Months", key: "threeMonths" },
+    { days: 180, title: "Six Months", key: "sixMonths" },
+    { days: 365, title: "One Year", key: "year" },
+    { days: 730, title: "Two Years", key: "twoYears" },
+    { days: 1825, title: "Five Years", key: "fiveYears" },
+  ];
+  
+  // Helper function to determine milestone state
+  const getMilestoneState = (targetDays: number, index: number) => {
+    if (daysSober >= targetDays) {
+      return { completed: true, current: false };
+    }
+    
+    // Current milestone is the next one to achieve
+    const previousMilestone = index > 0 ? milestones[index - 1] : null;
+    const isNext = !previousMilestone || daysSober >= previousMilestone.days;
+    
+    return { completed: false, current: isNext };
+  };
   
   // Calculate badge progress
   const earlyRiserProgress = Math.min(daysSober, 5) * 20; // 20% per day up to 5 days
@@ -56,8 +88,8 @@ export default function ProgressScreen() {
               description="Your recovery journey begins"
               icon={<Clock size={20} color="#fff" />}
               color={colors.primary}
-              completed={daysSober >= 1}
-              current={daysSober === 0}
+              completed={getMilestoneState(1, 0).completed}
+              current={getMilestoneState(1, 0).current}
               xpReward={50}
               scienceInfo="Your brain starts adjusting to life without substances"
             />
@@ -68,8 +100,8 @@ export default function ProgressScreen() {
               description="Peak withdrawal phase"
               icon={<Star size={20} color="#fff" />}
               color="#FFA726" // Orange
-              completed={daysSober >= 3}
-              current={daysSober >= 1 && daysSober < 3}
+              completed={getMilestoneState(3, 1).completed}
+              current={getMilestoneState(3, 1).current}
               xpReward={75}
               scienceInfo="Physical withdrawal symptoms often peak around this time"
             />
@@ -80,8 +112,8 @@ export default function ProgressScreen() {
               description="Initial brain rebalancing"
               icon={<Calendar size={20} color="#fff" />}
               color={colors.accent}
-              completed={daysSober >= 7}
-              current={daysSober >= 3 && daysSober < 7}
+              completed={getMilestoneState(7, 2).completed}
+              current={getMilestoneState(7, 2).current}
               xpReward={100}
               scienceInfo="Dopamine and serotonin systems begin to stabilize"
             />
@@ -92,8 +124,8 @@ export default function ProgressScreen() {
               description="Sleep patterns improving"
               icon={<Wind size={20} color="#fff" />}
               color="#66BB6A" // Green
-              completed={daysSober >= 14}
-              current={daysSober >= 7 && daysSober < 14}
+              completed={getMilestoneState(14, 3).completed}
+              current={getMilestoneState(14, 3).current}
               xpReward={150}
               scienceInfo="Many people report better sleep quality and mood stability"
             />
@@ -104,8 +136,8 @@ export default function ProgressScreen() {
               description="Significant brain changes"
               icon={<Trophy size={20} color="#fff" />}
               color="#5E72E4" // Indigo
-              completed={daysSober >= 30}
-              current={daysSober >= 14 && daysSober < 30}
+              completed={getMilestoneState(30, 4).completed}
+              current={getMilestoneState(30, 4).current}
               xpReward={300}
               scienceInfo="Neural pathways start rewiring, cognitive function improves"
             />
@@ -116,8 +148,8 @@ export default function ProgressScreen() {
               description="Neuroplasticity acceleration"
               icon={<Award size={20} color="#fff" />}
               color="#11CDEF" // Cyan
-              completed={daysSober >= 90}
-              current={daysSober >= 30 && daysSober < 90}
+              completed={getMilestoneState(90, 5).completed}
+              current={getMilestoneState(90, 5).current}
               xpReward={500}
               scienceInfo="Brain forms new healthy neural pathways, willpower strengthens"
             />
@@ -128,8 +160,8 @@ export default function ProgressScreen() {
               description="Emotional regulation restored"
               icon={<Heart size={20} color="#fff" />}
               color="#E91E63" // Pink
-              completed={daysSober >= 180}
-              current={daysSober >= 90 && daysSober < 180}
+              completed={getMilestoneState(180, 6).completed}
+              current={getMilestoneState(180, 6).current}
               xpReward={750}
               scienceInfo="Emotional centers of brain show significant healing"
             />
@@ -140,8 +172,8 @@ export default function ProgressScreen() {
               description="Major milestone achievement"
               icon={<Star size={20} color="#fff" />}
               color="#FFD700" // Gold
-              completed={daysSober >= 365}
-              current={daysSober >= 180 && daysSober < 365}
+              completed={getMilestoneState(365, 7).completed}
+              current={getMilestoneState(365, 7).current}
               xpReward={1000}
               scienceInfo="Brain structure and function show remarkable recovery"
             />
@@ -152,8 +184,8 @@ export default function ProgressScreen() {
               description="Long-term transformation"
               icon={<Award size={20} color="#fff" />}
               color="#8E24AA" // Purple
-              completed={daysSober >= 730}
-              current={daysSober >= 365 && daysSober < 730}
+              completed={getMilestoneState(730, 8).completed}
+              current={getMilestoneState(730, 8).current}
               xpReward={1500}
               scienceInfo="Continued neural growth, reduced relapse risk"
             />
@@ -164,8 +196,8 @@ export default function ProgressScreen() {
               description="Recovery mastery"
               icon={<Trophy size={20} color="#fff" />}
               color="#FF6F00" // Deep Orange
-              completed={daysSober >= 1825}
-              current={daysSober >= 730 && daysSober < 1825}
+              completed={getMilestoneState(1825, 9).completed}
+              current={getMilestoneState(1825, 9).current}
               xpReward={2500}
               scienceInfo="Brain health fully restored, inspiring others on their journey"
             />
@@ -299,12 +331,6 @@ export default function ProgressScreen() {
               progress={Math.min(journalEntries, 5)}
               total={5}
             />
-            <ChallengeCard 
-              title="Share your story with the community"
-              xpReward={40}
-              progress={0}
-              total={1}
-            />
           </View>
         </View>
       </ScrollView>
@@ -327,46 +353,54 @@ const MilestoneNode = ({ title, description, icon, color, completed, current, xp
   <View style={styles.milestoneContainer}>
     <View style={[
       styles.milestoneNode, 
-      { backgroundColor: completed ? color : current ? color : colors.border },
+      { 
+        backgroundColor: completed ? color : colors.border,
+        opacity: completed || current ? 1 : 0.6
+      },
       current && styles.currentNode
     ]}>
       {icon}
     </View>
-    <View style={styles.milestoneContent}>
+    <View style={[
+      styles.milestoneContent,
+      current && styles.currentMilestoneContent
+    ]}>
+      {current && (
+        <View style={styles.currentBadge}>
+          <Text style={styles.currentBadgeText}>CURRENT</Text>
+        </View>
+      )}
       <Text style={[
         styles.milestoneTitle,
-        completed && { color: colors.text },
-        current && { color: colors.text, fontWeight: '700' }
+        { 
+          color: completed || current ? colors.text : colors.textMuted,
+          fontWeight: current ? '700' : completed ? '600' : '500'
+        }
       ]}>
         {title}
       </Text>
       <Text style={[
         styles.milestoneDescription,
-        completed && { color: colors.textLight },
-        current && { color: colors.textLight }
+        { color: completed || current ? colors.textLight : colors.textMuted }
       ]}>
         {description}
       </Text>
-        <Text style={[
+      <Text style={[
         styles.milestoneScienceInfo,
-          completed && { color: colors.primary },
-          current && { color: colors.primary }
-        ]}>
+        { color: completed || current ? colors.primary : colors.textMuted }
+      ]}>
         {scienceInfo}
-        </Text>
+      </Text>
       <Text style={[
         styles.milestoneXP,
-        completed && { color: colors.primary },
-        current && { color: colors.primary, fontWeight: '600' }
+        { 
+          color: completed || current ? colors.primary : colors.textMuted,
+          fontWeight: current ? '700' : '500'
+        }
       ]}>
         +{xpReward} XP
       </Text>
     </View>
-    {completed && (
-      <View style={styles.completedBadge}>
-        <Check size={12} color="#fff" />
-      </View>
-    )}
   </View>
 );
 
@@ -528,10 +562,11 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBackground,
   },
   currentNode: {
-    borderColor: colors.cardBackground,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    borderColor: colors.primary,
+    borderWidth: 3,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 4,
   },
@@ -560,17 +595,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
     fontWeight: '500',
-  },
-  completedBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   sectionContainer: {
     marginBottom: 30,
@@ -745,5 +769,28 @@ const styles = StyleSheet.create({
   challengeProgressText: {
     fontSize: 13,
     color: colors.textLight,
+  },
+  currentMilestoneContent: {
+    backgroundColor: 'rgba(107, 152, 194, 0.08)',
+    borderRadius: 12,
+    padding: 12,
+    marginLeft: -12,
+    paddingLeft: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 152, 194, 0.2)',
+  },
+  currentBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  currentBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

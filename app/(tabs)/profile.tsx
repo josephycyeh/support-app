@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert,  } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2, User } from 'lucide-react-native';
+import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2, User, MessageSquare } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
+import { useChatStore } from '@/store/chatStore';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +19,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge } = useSobrietyStore();
   const { reasons, addReason, updateReason, deleteReason } = useReasonsStore();
+  const { clearHistory } = useChatStore();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -105,6 +107,24 @@ export default function ProfileScreen() {
     setShowAgeModal(false);
   };
   
+  const handleClearChatHistory = () => {
+    Alert.alert(
+      "Clear Chat History",
+      "Are you sure you want to delete all your conversations with Sushi? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Clear History", 
+          onPress: () => clearHistory(),
+          style: "destructive"
+        }
+      ]
+    );
+  };
+  
   return (
     <View style={styles.container}>
       <Stack.Screen 
@@ -185,6 +205,16 @@ export default function ProfileScreen() {
           textStyle={styles.resetButtonText}
         >
           Reset Sobriety Counter
+        </Button>
+        
+        <Button
+          onPress={handleClearChatHistory}
+          variant="secondary"
+          style={styles.clearChatHistoryButton}
+          icon={<MessageSquare size={18} color={colors.primary} />}
+          textStyle={styles.clearChatHistoryButtonText}
+        >
+          Clear Chat History
         </Button>
       </ScrollView>
       
@@ -388,6 +418,14 @@ const styles = StyleSheet.create({
   },
   resetButtonText: {
     color: colors.danger,
+  },
+  clearChatHistoryButton: {
+    marginTop: 12,
+    backgroundColor: 'rgba(107, 152, 194, 0.15)',
+    borderColor: 'rgba(107, 152, 194, 0.3)',
+  },
+  clearChatHistoryButtonText: {
+    color: colors.primary,
   },
   modal: {
     margin: 0,

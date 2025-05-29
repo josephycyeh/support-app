@@ -4,12 +4,16 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { registerGlobals } from '@livekit/react-native';
+
 
 import { ErrorBoundary } from "./error-boundary";
 
 // Register LiveKit globals
-registerGlobals();
+
+
+
+
+
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.

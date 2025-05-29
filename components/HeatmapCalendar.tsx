@@ -14,11 +14,12 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
   
   // Get sobriety data from store
-  const { dailyXP, sobrietyBreaks } = useSobrietyStore();
+  const { dailyXP, sobrietyBreaks, firstAppUseDate } = useSobrietyStore();
   
   // Calculate days since sobriety start
   const today = new Date();
   const sobrietyStart = new Date(startDate);
+  const firstAppUse = new Date(firstAppUseDate || startDate); // Fallback to startDate for existing users
   const daysSinceSobrietyStart = Math.floor((today.getTime() - sobrietyStart.getTime()) / (1000 * 60 * 60 * 24));
   
   // Generate calendar data
@@ -49,10 +50,10 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
   
   // Check if previous month navigation should be disabled
   const isPrevMonthDisabled = () => {
-    const startMonth = sobrietyStart.getMonth();
-    const startYear = sobrietyStart.getFullYear();
+    const startMonth = firstAppUse.getMonth();
+    const startYear = firstAppUse.getFullYear();
     
-    return (viewYear < startYear) || (viewYear === startYear && viewMonth <= startMonth);
+    return (viewYear < startYear) || (viewYear === startYear && viewMonth < startMonth);
   };
   
   // Check if next month navigation should be disabled
@@ -60,7 +61,7 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
-    return (viewYear > currentYear) || (viewYear === currentYear && viewMonth >= currentMonth);
+    return (viewYear > currentYear) || (viewYear === currentYear && viewMonth > currentMonth);
   };
   
   return (
@@ -118,23 +119,24 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
       </View>
       
       <View style={styles.legend}>
-        <Text style={styles.legendTitle}>Activity Level:</Text>
+        <Text style={styles.legendTitle}>Daily Engagement:</Text>
+        <Text style={styles.legendSubtitle}>Sobriety + activities make days bluer</Text>
         <View style={styles.legendItems}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: 'rgba(126, 174, 217, 0.2)' }]} />
-            <Text style={styles.legendText}>Low</Text>
+            <Text style={styles.legendText}>Sober</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: 'rgba(126, 174, 217, 0.5)' }]} />
-            <Text style={styles.legendText}>Medium</Text>
+            <Text style={styles.legendText}>Active</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: 'rgba(126, 174, 217, 0.8)' }]} />
-            <Text style={styles.legendText}>High</Text>
+            <Text style={styles.legendText}>Engaged</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: colors.primary }]} />
-            <Text style={styles.legendText}>Perfect</Text>
+            <Text style={styles.legendText}>Thriving</Text>
           </View>
         </View>
       </View>
@@ -162,7 +164,7 @@ const CalendarDay = ({ day, intensity, isToday, isEmpty, isSobrietyBreak, xpEarn
   let tooltipText = `${xpEarned} XP`;
   
   if (isSobrietyBreak) {
-    backgroundColor = 'rgba(240, 161, 161, 0.2)'; // Light red for sobriety breaks
+    backgroundColor = 'transparent'; // No color for sobriety breaks
     tooltipText = 'Sobriety break';
   } else if (intensity > 0) {
     if (intensity < 0.3) {
@@ -181,15 +183,13 @@ const CalendarDay = ({ day, intensity, isToday, isEmpty, isSobrietyBreak, xpEarn
       style={[
         styles.dayCell,
         { backgroundColor },
-        isToday && styles.todayCell,
-        isSobrietyBreak && styles.sobrietyBreakCell
+        isToday && styles.todayCell
       ]}
     >
       <Text style={[
         styles.dayText,
         isToday && styles.todayText,
-        intensity > 0.5 && styles.highIntensityText,
-        isSobrietyBreak && styles.sobrietyBreakText
+        intensity > 0.5 && styles.highIntensityText
       ]}>
         {day}
       </Text>
@@ -375,12 +375,6 @@ const styles = StyleSheet.create({
   highIntensityText: {
     color: '#FFFFFF',
   },
-  sobrietyBreakCell: {
-    borderColor: colors.danger,
-  },
-  sobrietyBreakText: {
-    color: colors.danger,
-  },
   legend: {
     marginTop: 8,
   },
@@ -388,6 +382,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     marginBottom: 8,
+  },
+  legendSubtitle: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginBottom: 16,
   },
   legendItems: {
     flexDirection: 'row',

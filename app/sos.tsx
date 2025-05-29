@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   ScrollView,
   BackHandler,
-  StatusBar
+  StatusBar,
+  Animated as RNAnimated
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Check, Heart, Star } from 'lucide-react-native';
@@ -37,6 +38,23 @@ enum BreathingState {
   READY = 'Get Ready',
 }
 
+// Add affirmations phase
+enum SOSPhase {
+  AFFIRMATIONS = 'affirmations',
+  BREATHING = 'breathing'
+}
+
+// Affirmations for immediate relief
+const AFFIRMATIONS = [
+  "This craving is temporary, but your strength is permanent",
+  "You've survived every difficult moment so far",
+  "Your recovery matters more than this feeling",
+  "Each breath you take is a victory", 
+  "You are worthy of the life you're building",
+  "This moment will pass, your progress won't",
+  "Your future self is cheering you on right now"
+];
+
 // Motivational quotes and reminders
 const MOTIVATIONAL_QUOTES = [
   "This craving will pass. You are stronger than you think.",
@@ -56,6 +74,10 @@ export default function SOSScreen() {
   const { addXP, startDate } = useSobrietyStore();
   const { reasons } = useReasonsStore();
   const { incrementCravingsOvercome } = useActivityStore();
+  const [currentPhase, setCurrentPhase] = useState<SOSPhase>(SOSPhase.AFFIRMATIONS);
+  const [currentAffirmationIndex, setCurrentAffirmationIndex] = useState(0);
+  const [affirmationOpacity] = useState(new RNAnimated.Value(0));
+  const [affirmationTimer, setAffirmationTimer] = useState(10); // 10 seconds total
   const [currentState, setCurrentState] = useState<BreathingState>(BreathingState.READY);
   const [timer, setTimer] = useState(3); // Start with 3 second countdown
   const [isActive, setIsActive] = useState(true);
@@ -92,6 +114,56 @@ export default function SOSScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   }, []);
   
+  // Affirmations effect - cycles through affirmations for 30 seconds
+  useEffect(() => {
+    if (currentPhase === SOSPhase.AFFIRMATIONS) {
+      // Start with first affirmation fading in
+      RNAnimated.timing(affirmationOpacity, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start();
+
+      // Set up affirmation cycling with smoother transitions
+      const affirmationInterval = setInterval(() => {
+        // Smooth fade out to fade in transition
+        RNAnimated.timing(affirmationOpacity, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+        }).start(() => {
+          // Change affirmation at the midpoint when fully faded out
+          setCurrentAffirmationIndex(prev => (prev + 1) % AFFIRMATIONS.length);
+          
+          // Immediately start fading in the new affirmation
+          RNAnimated.timing(affirmationOpacity, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }).start();
+        });
+      }, 4000); // Change affirmation every 4 seconds for smoother feel
+
+      // Main timer countdown
+      const timerInterval = setInterval(() => {
+        setAffirmationTimer(prev => {
+          if (prev <= 1) {
+            // Transition to breathing phase
+            setCurrentPhase(SOSPhase.BREATHING);
+            setIsActive(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        clearInterval(affirmationInterval);
+        clearInterval(timerInterval);
+      };
+    }
+  }, [currentPhase, affirmationOpacity]);
+  
   // Handle back button on Android
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -114,7 +186,7 @@ export default function SOSScreen() {
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
     
-    if (isActive) {
+    if (isActive && currentPhase === SOSPhase.BREATHING) {
       interval = setInterval(() => {
         setTimer(prevTimer => {
           // Provide haptic feedback for last 3 seconds of each phase
@@ -234,7 +306,26 @@ export default function SOSScreen() {
       
       <Header onBack={handleExit} variant="floating" />
       
-      {showMotivation ? (
+      {currentPhase === SOSPhase.AFFIRMATIONS ? (
+        <View style={styles.affirmationsContainer}>
+          <Text style={styles.affirmationsTitle}>Take a Deep Breath</Text>
+          
+          <View style={styles.affirmationWrapper}>
+            <RNAnimated.Text 
+              style={[
+                styles.affirmationText,
+                { opacity: affirmationOpacity }
+              ]}
+            >
+              {AFFIRMATIONS[currentAffirmationIndex]}
+            </RNAnimated.Text>
+          </View>
+          
+          <Text style={styles.affirmationSubtext}>
+            Breathing exercises in {affirmationTimer} seconds
+          </Text>
+        </View>
+      ) : showMotivation ? (
         <ScrollView 
           style={styles.motivationContainer}
           contentContainerStyle={styles.motivationContent}
@@ -521,5 +612,40 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     fontWeight: '500',
+  },
+  // Affirmations styles
+  affirmationsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+    paddingBottom: 60,
+  },
+  affirmationsTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 60,
+    textAlign: 'center',
+  },
+  affirmationWrapper: {
+    minHeight: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 50,
+    paddingHorizontal: 20,
+  },
+  affirmationText: {
+    fontSize: 26,
+    fontWeight: '600',
+    color: colors.primary,
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  affirmationSubtext: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginTop: 10,
   },
 });

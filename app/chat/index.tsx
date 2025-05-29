@@ -11,22 +11,149 @@ import { Header } from '@/components/ui/Header';
 import { generateAPIUrl } from '../../utils/api'
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
+import { useSobrietyStore } from '@/store/sobrietyStore';
+import { useReasonsStore } from '@/store/reasonsStore';
+import { useJournalStore } from '@/store/journalStore';
+import { useMoodStore } from '@/store/moodStore';
+import { useChecklistStore } from '@/store/checklistStore';
+import { useActivityStore } from '@/store/activityStore';
+import { useChatStore, ChatMessage as StoredChatMessage } from '@/store/chatStore';
 
 export default function ChatScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // Chat history store
+  const { messages: storedMessages, addMessage } = useChatStore();
+  
+  // Get sobriety context from all stores
+  const { startDate, level, xp, xpToNextLevel, milestonesReached, firstAppUseDate, sobrietyBreaks, dailyXP, name, age } = useSobrietyStore();
+  const { reasons } = useReasonsStore();
+  const { entries: journalEntries } = useJournalStore();
+  const { entries: moodEntries, getAverageMood, getMoodStreak } = useMoodStore();
+  const { items: checklistItems } = useChecklistStore();
+  const { breathingExercises, journalEntries: journalCount, cravingsOvercome } = useActivityStore();
+  
+  // Calculate days sober
+  const today = new Date();
+  const start = new Date(startDate);
+  const daysSober = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+  // Build comprehensive sobriety context
+  const sobrietyContext = React.useMemo(() => {
+    const context = {
+      personal: {
+        name,
+        age,
+        daysSober,
+        sobrietyStartDate: startDate,
+        firstAppUseDate,
+      },
+      progress: {
+        level,
+        xp,
+        xpToNextLevel,
+        milestonesReached,
+        sobrietyBreaks,
+      },
+      recentActivity: {
+        breathingExercises,
+        journalCount,
+        cravingsOvercome,
+        dailyXP: Object.entries(dailyXP).slice(-7), // Last 7 days
+      },
+      mood: {
+        averageMood: getAverageMood(7), // Last 7 days
+        moodStreak: getMoodStreak(),
+        recentMoods: moodEntries.slice(0, 5), // Last 5 mood entries
+      },
+      journal: {
+        totalEntries: journalEntries.length,
+        recentEntries: journalEntries.slice(0, 3).map(entry => ({
+          type: entry.type || 'journal',
+          title: entry.title,
+          date: entry.date,
+          preview: entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : '')
+        })),
+      },
+      checklist: {
+        todaysItems: checklistItems,
+        completedToday: checklistItems.filter(item => item.completed).length,
+        totalItems: checklistItems.length,
+      },
+      reasons,
+    };
+    
+    console.log('Building sobriety context:', {
+      daysSober: context.personal.daysSober,
+      level: context.progress.level,
+      journalEntries: context.journal.totalEntries,
+      avgMood: context.mood.averageMood
+    });
+    
+    return context;
+  }, [
+    name, age, daysSober, startDate, firstAppUseDate,
+    level, xp, xpToNextLevel, milestonesReached, sobrietyBreaks,
+    breathingExercises, journalCount, cravingsOvercome, dailyXP,
+    getAverageMood, getMoodStreak, moodEntries,
+    journalEntries, checklistItems, reasons
+  ]);
+
+  // Initialize with welcome message if store is empty
+  const initialMessages = React.useMemo(() => {
+    if (storedMessages.length > 0) {
+      return storedMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content
+      }));
+    }
+    
+    // Add welcome message to store and return it
+    const welcomeMessage = {
+      id: 'welcome',
+      role: 'assistant' as const,
+      content: "Hi there! I'm Sushi, your companion on this journey. How are you feeling today? I'm here to talk, listen, or just keep you company whenever you need it."
+    };
+    
+    addMessage(welcomeMessage);
+    return [welcomeMessage];
+  }, [storedMessages, addMessage]);
+
   const { messages, error, handleInputChange, input, handleSubmit, isLoading } = useChat({
     fetch: expoFetch as unknown as typeof globalThis.fetch,
     api: generateAPIUrl('/api/chat'),
+    body: { sobrietyContext },
     onError: error => console.error(error, 'ERROR'),
     id: 'sushi-chat',
-    initialMessages: [
-      {
-        id: 'welcome',
+    initialMessages,
+    onFinish: (message) => {
+      // Save assistant messages to store
+      addMessage({
+        id: message.id,
         role: 'assistant',
-        content: "Hi there! I'm Sushi, your companion on this journey. How are you feeling today? I'm here to talk, listen, or just keep you company whenever you need it."
-      }
-    ]
+        content: message.content
+      });
+    }
   });
+
+  // Simple message sync - only save new user messages
+  const lastMessageRef = useRef<string | null>(null);
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    
+    if (lastMessage && 
+        lastMessage.role === 'user' && 
+        lastMessage.id !== lastMessageRef.current) {
+      
+      lastMessageRef.current = lastMessage.id;
+      addMessage({
+        id: lastMessage.id,
+        role: 'user',
+        content: lastMessage.content
+      });
+    }
+  }, [messages, addMessage]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {

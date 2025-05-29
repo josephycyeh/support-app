@@ -6,7 +6,8 @@ export interface ChecklistItem {
 }
 
 export interface SobrietyState {
-  startDate: string; // ISO string
+  startDate: string; // ISO string - current sobriety streak start
+  firstAppUseDate: string; // ISO string - when user first used the app
   xp: number;
   level: number;
   xpToNextLevel: number;

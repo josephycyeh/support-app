@@ -1,13 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Animated, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Plus, Edit, Trash2, AlertTriangle, BookOpen } from 'lucide-react-native';
+import { Plus, Edit, Trash2, AlertTriangle, BookOpen, MoreHorizontal } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useJournalStore, JournalEntry } from '@/store/journalStore';
 import { Button } from '@/components/ui/Button';
 import { Header } from '@/components/ui/Header';
 import { JournalModeModal } from '@/components/JournalModeModal';
-import { createSafeAnimation } from '@/utils/animations';
 
 export default function JournalScreen() {
   const router = useRouter();
@@ -225,93 +224,164 @@ interface JournalEntryCardProps {
 }
 
 const JournalEntryCard = ({ entry, onEdit, onView, onDelete, index }: JournalEntryCardProps) => {
-  const [animation] = React.useState(new Animated.Value(0));
+  const [showMenu, setShowMenu] = React.useState(false);
+  const [menuPosition, setMenuPosition] = React.useState({ x: 0, y: 0 });
+  const menuButtonRef = React.useRef<TouchableOpacity>(null);
   
-  React.useEffect(() => {
-    // Staggered animation based on index
-    const delay = index * 50;
-    const timeoutId = setTimeout(() => {
-      createSafeAnimation(animation, 1, 400).start();
-    }, delay);
+  const handleMenuPress = (e: any) => {
+    e.stopPropagation();
     
-    return () => clearTimeout(timeoutId);
-  }, []);
-  
-  // Format time
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    if (menuButtonRef.current) {
+      menuButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+        setMenuPosition({
+          x: pageX - 120, // Position menu to the left of the button
+          y: pageY + height + 5, // Position below the button with small gap
+        });
+        setShowMenu(true);
+      });
+    }
+  };
+
+  const handleEditPress = () => {
+    setShowMenu(false);
+    onEdit();
+  };
+
+  const handleDeletePress = () => {
+    setShowMenu(false);
+    onDelete();
   };
   
-  // Truncate content for preview
-  const truncateContent = (content: string, maxLength = 120) => {
-    if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength) + '...';
+  // Render content based on entry type
+  const renderContent = () => {
+    if (entry.type === 'trigger') {
+      const lines = entry.content.split('\n\n');
+      const triggerMatch = lines[0]?.match(/Trigger: (.+)/);
+      const intensityMatch = lines[1]?.match(/Intensity: (\d+)\/10/);
+      const outcomeMatch = lines[3]?.match(/Outcome: (.+)/);
+      
+      return (
+        <View style={styles.triggerContent}>
+          <Text style={styles.triggerText} numberOfLines={2}>
+            {lines[0]?.match(/Trigger: (.+)/)?.[1] || ''}
+          </Text>
+          
+          <View style={styles.triggerDetails}>
+            <View style={styles.intensitySection}>
+              <Text style={styles.intensityLabel}>Intensity</Text>
+              <View style={styles.intensityBarContainer}>
+                <View style={styles.intensityBarBackground}>
+                  <View 
+                    style={[
+                      styles.intensityBarFill, 
+                      { 
+                        width: `${(parseInt(intensityMatch?.[1] || '5') / 10) * 100}%`,
+                        backgroundColor: parseInt(intensityMatch?.[1] || '5') <= 3 ? '#10B981' : parseInt(intensityMatch?.[1] || '5') <= 6 ? '#F59E0B' : '#EF4444'
+                      }
+                    ]} 
+                  />
+                </View>
+                <Text style={styles.intensityValue}>{parseInt(intensityMatch?.[1] || '5')}/10</Text>
+              </View>
+            </View>
+            
+            <View style={styles.outcomeSection}>
+              <Text style={styles.outcomeLabel}>Outcome</Text>
+              <Text style={styles.outcomeValue}>
+                {outcomeMatch?.[1] === 'Stayed Strong' ? 'Stayed Strong' : 'Relapsed'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      );
+    } else {
+      return (
+        <Text style={styles.entryContent} numberOfLines={2}>
+          {entry.content}
+        </Text>
+      );
+    }
   };
-  
-  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
-  
-  const animationStyle = {
-        opacity: animation,
-        transform: [
-          { 
-            translateY: animation.interpolate({
-              inputRange: [0, 1],
-              outputRange: [20, 0]
-            })
-          }
-        ]
-      };
   
   return (
-    <AnimatedTouchable 
-      style={[styles.entryCard, animationStyle]}
-      activeOpacity={0.7}
-      onPress={onView}
-    >
-      <View style={styles.entryHeader}>
-        <View style={styles.entryTitleContainer}>
-          <View style={[
-            styles.entryTypeIcon,
-            { backgroundColor: entry.type === 'trigger' ? 'rgba(240, 161, 161, 0.15)' : 'rgba(126, 174, 217, 0.15)' }
-          ]}>
-            {entry.type === 'trigger' ? (
-              <AlertTriangle size={16} color={colors.danger} />
-            ) : (
-              <BookOpen size={16} color={colors.primary} />
-            )}
+    <>
+      <TouchableOpacity 
+        style={styles.entryCard}
+        onPress={onView}
+      >
+        <View style={styles.entryHeader}>
+          <View style={styles.entryTitleContainer}>
+            <View style={[
+              styles.entryTypeIcon,
+              { backgroundColor: entry.type === 'trigger' ? 'rgba(240, 161, 161, 0.15)' : 'rgba(126, 174, 217, 0.15)' }
+            ]}>
+              {entry.type === 'trigger' ? (
+                <AlertTriangle size={16} color={colors.danger} />
+              ) : (
+                <BookOpen size={16} color={colors.primary} />
+              )}
+            </View>
+            <Text style={styles.entryTitle}>{entry.title}</Text>
           </View>
-        <Text style={styles.entryTitle}>{entry.title}</Text>
         </View>
-        <Text style={styles.entryTime}>{formatTime(entry.date)}</Text>
-      </View>
-      
-      <Text style={styles.entryContent} numberOfLines={4}>
-        {truncateContent(entry.content)}
-      </Text>
-      
-      <View style={styles.entryActions}>
-        <TouchableOpacity 
-          style={styles.actionButton}
-          onPress={onEdit}
-        >
-          <Edit size={18} color={colors.primary} />
-          <Text style={styles.actionText}>Edit</Text>
-        </TouchableOpacity>
         
+        {renderContent()}
+
+        <View style={styles.entryFooter}>
+          <Text style={styles.entryDate}>{new Date(entry.date).toLocaleDateString('en-US', { 
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          })}</Text>
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={handleMenuPress}
+            ref={menuButtonRef}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MoreHorizontal size={20} color={colors.textLight} />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+
+      {/* Menu Modal */}
+      <Modal
+        visible={showMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowMenu(false)}
+      >
         <TouchableOpacity 
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={onDelete}
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={() => setShowMenu(false)}
         >
-          <Trash2 size={18} color={colors.danger} />
-          <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
+          <View style={[styles.menuContainer, { left: menuPosition.x, top: menuPosition.y }]}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={handleEditPress}
+            >
+              <Edit size={18} color={colors.primary} />
+              <Text style={styles.menuItemText}>Edit</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.menuSeparator} />
+            
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={handleDeletePress}
+            >
+              <Trash2 size={18} color={colors.danger} />
+              <Text style={[styles.menuItemText, { color: colors.danger }]}>Delete</Text>
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
-      </View>
-    </AnimatedTouchable>
+      </Modal>
+    </>
   );
 };
 
@@ -343,22 +413,21 @@ const styles = StyleSheet.create({
   },
   entryCard: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   entryHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   entryTitleContainer: {
     flexDirection: 'row',
@@ -366,77 +435,165 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   entryTypeIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   entryTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.text,
     flex: 1,
-  },
-  entryTime: {
-    fontSize: 14,
-    color: colors.textLight,
+    lineHeight: 24,
   },
   entryContent: {
     fontSize: 15,
-    color: colors.text,
+    color: colors.textLight,
     lineHeight: 22,
     marginBottom: 16,
+    fontWeight: '400',
   },
-  entryActions: {
+  // Trigger-specific styles
+  triggerContent: {
+    marginBottom: 16,
+  },
+  triggerText: {
+    fontSize: 15,
+    color: colors.textLight,
+    lineHeight: 22,
+    marginBottom: 18,
+    fontWeight: '400',
+  },
+  triggerDetails: {
     flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: 16,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 16,
+    paddingTop: 2,
   },
-  actionButton: {
+  intensitySection: {
+    flex: 1,
+  },
+  intensityLabel: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginBottom: 6,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  intensityBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 24,
+    gap: 8,
   },
-  actionText: {
-    fontSize: 14,
-    color: colors.primary,
-    marginLeft: 6,
+  intensityBarBackground: {
+    flex: 0.7,
+    height: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    borderRadius: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  intensityBarFill: {
+    height: '100%',
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  intensityValue: {
+    fontSize: 12,
+    color: colors.text,
+    fontWeight: '800',
+    minWidth: 32,
+    textAlign: 'right',
+  },
+  outcomeSection: {
+    alignItems: 'flex-start',
+    flex: 0.8,
+  },
+  outcomeLabel: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginBottom: 6,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  outcomeValue: {
+    fontSize: 12,
+    color: colors.text,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  entryFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.04)',
+  },
+  entryDate: {
+    fontSize: 11,
+    color: colors.textMuted,
+    flex: 1,
     fontWeight: '500',
   },
-  deleteButton: {
-    marginLeft: 'auto',
-    marginRight: 0,
+  menuButton: {
+    padding: 4,
+    borderRadius: 12,
   },
-  deleteText: {
-    color: colors.danger,
+  // Menu styles
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  addButton: {
+  menuContainer: {
     position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    minWidth: 150,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+    fontWeight: '500',
+  },
+  menuSeparator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: 16,
   },
   emptyState: {
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-    marginTop: 40,
+    paddingVertical: 60,
   },
   emptyStateTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
     color: colors.text,
     marginBottom: 12,
@@ -445,10 +602,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textLight,
     textAlign: 'center',
-    marginBottom: 24,
     lineHeight: 24,
+    marginBottom: 32,
+    paddingHorizontal: 20,
   },
   emptyStateButton: {
     paddingHorizontal: 32,
+  },
+  addButton: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

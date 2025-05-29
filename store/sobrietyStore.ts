@@ -37,9 +37,10 @@ const getDefaultState = (): SobrietyState => {
   
   return {
     startDate,
-  xp: 0,
-  level: 1,
-  xpToNextLevel: calculateXpForNextLevel(1),
+    firstAppUseDate: startDate, // First time using app is same as first sobriety start
+    xp: 0,
+    level: 1,
+    xpToNextLevel: calculateXpForNextLevel(1),
     levelUp: false,
     dailyXP: defaultDailyXP,
     sobrietyBreaks: [],
@@ -94,8 +95,9 @@ export const useSobrietyStore = create<SobrietyStore>()(
           if (!state.sobrietyBreaks.includes(breakDate)) {
             const newStartDate = formatDateToYYYYMMDD(new Date());
             return {
+              ...state, // Preserve all existing state including firstAppUseDate
               sobrietyBreaks: [...state.sobrietyBreaks, breakDate],
-              startDate: newStartDate, // Reset sobriety start date
+              startDate: newStartDate, // Reset sobriety start date only
             };
           }
           
@@ -112,7 +114,7 @@ export const useSobrietyStore = create<SobrietyStore>()(
           }
           
           return {
-            ...state, // Preserve XP, level, and daily XP data
+            ...state, // Preserve XP, level, dailyXP, firstAppUseDate, and other data
             startDate: formatDateToYYYYMMDD(new Date()), // Reset only sobriety start date
             sobrietyBreaks: updatedBreaks, // Keep the record of sobriety breaks
           };

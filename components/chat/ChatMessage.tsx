@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import colors from '@/constants/colors';
 
 interface ChatMessageProps {
@@ -23,12 +24,20 @@ export const ChatMessage = ({ content, role, id }: ChatMessageProps) => {
           />
         </View>
       )}
-      <View style={[
-        styles.bubble, 
-        isUser ? styles.userBubble : styles.assistantBubble
-      ]}>
-        <Text style={styles.messageText}>{content}</Text>
-      </View>
+      {isUser ? (
+        <LinearGradient
+          colors={['#7BA4CA', '#6B98C2']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.bubble, styles.userBubble]}
+        >
+          <Text style={[styles.messageText, styles.userMessageText]}>{content}</Text>
+        </LinearGradient>
+      ) : (
+        <View style={[styles.bubble, styles.assistantBubble]}>
+          <Text style={[styles.messageText, styles.assistantMessageText]}>{content}</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -58,19 +67,36 @@ const styles = StyleSheet.create({
   bubble: {
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     maxWidth: '85%',
   },
   userBubble: {
-    backgroundColor: colors.primary,
+    shadowColor: '#6B98C2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   assistantBubble: {
     backgroundColor: colors.cardBackground,
     borderColor: colors.border,
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   messageText: {
     fontSize: 15,
+    lineHeight: 20,
+  },
+  userMessageText: {
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  assistantMessageText: {
     color: colors.text,
+    fontWeight: '400',
   },
 }); 

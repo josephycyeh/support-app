@@ -131,18 +131,28 @@ export default function TriggerViewScreen() {
           <View style={styles.fieldContainer}>
             <Text style={styles.fieldLabel}>Intensity</Text>
             <View style={styles.intensityContainer}>
-              <View style={styles.intensityScale}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                  <View
-                    key={num}
+              <View style={styles.intensityBarContainer}>
+                <View style={styles.intensityBarBackground}>
+                  <View 
                     style={[
-                      styles.intensityDot,
-                      num <= parseInt(intensity) && styles.intensityDotActive
+                      styles.intensityBarFill,
+                      {
+                        width: `${(parseInt(intensity) / 10) * 100}%`,
+                        backgroundColor: parseInt(intensity) <= 3 ? '#10B981' : parseInt(intensity) <= 6 ? '#F59E0B' : '#EF4444'
+                      }
                     ]}
                   />
-                ))}
+                </View>
+                <Text style={styles.intensityValue}>{intensity}/10</Text>
               </View>
-              <Text style={styles.intensityText}>{intensity}/10</Text>
+              <Text style={styles.intensityDescription}>
+                {parseInt(intensity) <= 3 
+                  ? 'Low intensity trigger' 
+                  : parseInt(intensity) <= 6 
+                    ? 'Moderate intensity trigger'
+                    : 'High intensity trigger'
+                }
+              </Text>
             </View>
           </View>
           
@@ -159,13 +169,31 @@ export default function TriggerViewScreen() {
             <Text style={styles.fieldLabel}>Outcome</Text>
             <View style={styles.outcomeContainer}>
               <View style={[
-                styles.outcomeIndicator,
-                { backgroundColor: outcome === 'Stayed Strong' ? colors.success : colors.danger }
+                styles.outcomeCard,
+                { backgroundColor: outcome === 'Stayed Strong' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)' }
               ]}>
-                <Text style={styles.outcomeEmoji}>
-                  {outcome === 'Stayed Strong' ? '💪' : '😢'}
-                </Text>
-                <Text style={styles.outcomeText}>{outcome}</Text>
+                <View style={[
+                  styles.outcomeIconContainer,
+                  { backgroundColor: outcome === 'Stayed Strong' ? '#10B981' : '#EF4444' }
+                ]}>
+                  <Text style={styles.outcomeEmoji}>
+                    {outcome === 'Stayed Strong' ? '💪' : '😢'}
+                  </Text>
+                </View>
+                <View style={styles.outcomeTextContainer}>
+                  <Text style={[
+                    styles.outcomeTitle,
+                    { color: outcome === 'Stayed Strong' ? '#10B981' : '#EF4444' }
+                  ]}>
+                    {outcome}
+                  </Text>
+                  <Text style={styles.outcomeSubtitle}>
+                    {outcome === 'Stayed Strong' 
+                      ? 'You successfully managed this trigger' 
+                      : 'This was a challenging moment'
+                    }
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -264,26 +292,49 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   intensityContainer: {
-    alignItems: 'center',
     gap: 12,
   },
-  intensityScale: {
-    flexDirection: 'row',
-    gap: 8,
+  intensityBarContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 24,
   },
-  intensityDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.border,
+  intensityBarBackground: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  intensityDotActive: {
-    backgroundColor: colors.danger,
+  intensityBarFill: {
+    height: '100%',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  intensityText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.danger,
+  intensityValue: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 24,
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  intensityDescription: {
+    fontSize: 14,
+    color: colors.textLight,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   notFoundContainer: {
     flex: 1,
@@ -300,21 +351,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  outcomeIndicator: {
-    width: 140,
+  outcomeCard: {
+    width: '100%',
+    height: 100,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+  },
+  outcomeIconContainer: {
+    width: 40,
     height: 40,
     borderRadius: 20,
-    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 20,
   },
-  outcomeEmoji: {
+  outcomeTextContainer: {
+    flex: 1,
+  },
+  outcomeTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginRight: 8,
+    color: colors.text,
+    marginBottom: 8,
   },
-  outcomeText: {
+  outcomeSubtitle: {
+    fontSize: 16,
+    color: colors.textLight,
+  },
+  outcomeEmoji: {
     fontSize: 18,
     fontWeight: '600',
     color: '#FFFFFF',
