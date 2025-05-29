@@ -8,7 +8,7 @@ const connectionDetailsEndpoint = `${process.env.EXPO_PUBLIC_BACKEND_URL}/getCon
  * 
  * Fetches serverUrl and participantToken from the Sushi Support App backend.
  */
-export function useConnectionDetails(): ConnectionDetails | undefined {
+export function useConnectionDetails(userContext?: any): ConnectionDetails | undefined {
   const [details, setDetails] = useState<ConnectionDetails | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,11 +23,14 @@ export function useConnectionDetails(): ConnectionDetails | undefined {
           throw new Error('EXPO_PUBLIC_BACKEND_URL environment variable is not set');
         }
         
-        const response = await fetch(connectionDetailsEndpoint, {
-          method: 'GET',
+        const response = await fetch('http://127.0.0.1:4000/getConnectionDetails', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            userContext: userContext || {}
+          }),
         });
 
         if (!response.ok) {
@@ -53,7 +56,7 @@ export function useConnectionDetails(): ConnectionDetails | undefined {
     };
 
     fetchConnectionDetails();
-  }, []);
+  }, [userContext]);
 
   return details;
 }

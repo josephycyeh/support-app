@@ -31,12 +31,94 @@ import { Mic, MicOff, PhoneOff, Phone } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
 
+// Import all the stores like in chat
+import { useSobrietyStore } from '@/store/sobrietyStore';
+import { useReasonsStore } from '@/store/reasonsStore';
+import { useJournalStore } from '@/store/journalStore';
+import { useMoodStore } from '@/store/moodStore';
+import { useChecklistStore } from '@/store/checklistStore';
+import { useActivityStore } from '@/store/activityStore';
+
 import { registerGlobals } from '@livekit/react-native';
 registerGlobals();
 
 
 export default function VoiceCallScreen() {
   const [shouldConnect, setShouldConnect] = useState(false);
+
+  // Gather user context for voice agent (same as chat)
+  const { startDate, level, xp, xpToNextLevel, milestonesReached, firstAppUseDate, sobrietyBreaks, dailyXP, name, age } = useSobrietyStore();
+  const { reasons } = useReasonsStore();
+  const { entries: journalEntries } = useJournalStore();
+  const { entries: moodEntries, getAverageMood, getMoodStreak } = useMoodStore();
+  const { items: checklistItems } = useChecklistStore();
+  const { breathingExercises, journalEntries: journalCount, cravingsOvercome } = useActivityStore();
+  
+  // Calculate days sober
+  const today = new Date();
+  const start = new Date(startDate);
+  const daysSober = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+  // Build comprehensive sobriety context (same as chat)
+  const userContext = React.useMemo(() => {
+    const context = {
+      personal: {
+        name,
+        age,
+        daysSober,
+        sobrietyStartDate: startDate,
+        firstAppUseDate,
+      },
+      progress: {
+        level,
+        xp,
+        xpToNextLevel,
+        milestonesReached,
+        sobrietyBreaks,
+      },
+      recentActivity: {
+        breathingExercises,
+        journalCount,
+        cravingsOvercome,
+        dailyXP: Object.entries(dailyXP).slice(-7), // Last 7 days
+      },
+      mood: {
+        averageMood: getAverageMood(7), // Last 7 days
+        moodStreak: getMoodStreak(),
+        recentMoods: moodEntries.slice(0, 5), // Last 5 mood entries
+      },
+      journal: {
+        totalEntries: journalEntries.length,
+        recentEntries: journalEntries.slice(0, 3).map(entry => ({
+          type: entry.type || 'journal',
+          title: entry.title,
+          date: entry.date,
+          preview: entry.content.substring(0, 100) + (entry.content.length > 100 ? '...' : '')
+        })),
+      },
+      checklist: {
+        todaysItems: checklistItems,
+        completedToday: checklistItems.filter(item => item.completed).length,
+        totalItems: checklistItems.length,
+      },
+      reasons,
+    };
+    
+    console.log('Voice call building user context:', {
+      daysSober: context.personal.daysSober,
+      level: context.progress.level,
+      journalEntries: context.journal.totalEntries,
+      avgMood: context.mood.averageMood
+    });
+    
+    return context;
+  }, [
+    name, age, daysSober, startDate, firstAppUseDate,
+    level, xp, xpToNextLevel, milestonesReached, sobrietyBreaks,
+    breathingExercises, journalCount, cravingsOvercome, dailyXP,
+    getAverageMood, getMoodStreak, moodEntries,
+    journalEntries, checklistItems, reasons
+  ]);
 
   // Start the audio session first.
   useEffect(() => {
@@ -50,7 +132,7 @@ export default function VoiceCallScreen() {
     };
   }, []);
 
-  const connectionDetails = useConnectionDetails();
+  const connectionDetails = useConnectionDetails(userContext);
   console.log('connectionDetails', connectionDetails);
 
   const handleStartCall = () => {
