@@ -1,115 +1,170 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, Text, KeyboardAvoidingView, Platform, Keyboard, TouchableOpacity } from 'react-native';
-import { useChat } from '@ai-sdk/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, ScrollView, Text, KeyboardAvoidingView, Platform, Keyboard, TouchableOpacity, AppState } from 'react-native';
 import { fetch as expoFetch } from 'expo/fetch';
 import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Phone } from 'lucide-react-native';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { ChatInput } from '@/components/chat/ChatInput';
+import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { Header } from '@/components/ui/Header';
 import { generateAPIUrl } from '../../utils/api'
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
-import { useChatStore, ChatMessage as StoredChatMessage } from '@/store/chatStore';
+import { useChatStore } from '@/store/chatStore';
 import { useSobrietyContext } from '@/hooks/useSobrietyContext';
+
+// Simple ID generator
+const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 export default function ChatScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
-  // Chat history store
-  const { messages: storedMessages, addMessage } = useChatStore();
+  // Simple state management
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Get comprehensive sobriety context using shared hook
+  // Chat store - single source of truth
+  const { messages, addMessage, clearHistory, removeMessage, setMessageFailed, removeAllFailedMessages } = useChatStore();
+  
+  // Get comprehensive sobriety context
   const sobrietyContext = useSobrietyContext();
 
   // Initialize with welcome message if store is empty
-  const initialMessages = React.useMemo(() => {
-    if (storedMessages.length > 0) {
-      return storedMessages.map(msg => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content
-      }));
+  useEffect(() => {
+    if (messages.length === 0) {
+      const welcomeMessage = {
+        id: 'welcome',
+        role: 'assistant' as const,
+        content: `Hi there! I'm Sushi, your companion on this journey. I'm here to talk, listen, or just keep you company whenever you need it.\n\nYou can also ask me about your sobriety journey, celebrate your milestones, get tips, and more, just ask!`
+      };
+      addMessage(welcomeMessage);
     }
-    
-    // Add welcome message to store and return it
-    const welcomeMessage = {
-      id: 'welcome',
-      role: 'assistant' as const,
-      content: `Hi there! I'm Sushi, your companion on this journey. I'm here to talk, listen, or just keep you company whenever you need it.\n\nYou can also ask me about your sobriety journey, celebrate your milestones, get tips, and more, just ask!`
+  }, []);
+
+  // Send message function - much simpler than useChat
+  const sendMessage = async (content: string) => {
+    if (!content.trim() || isLoading) return;
+
+    // Clear any failed messages before sending new one (like WhatsApp behavior)
+    removeAllFailedMessages();
+
+    // Create user message
+    const userMessage = {
+      id: generateId(),
+      role: 'user' as const,
+      content: content.trim()
     };
-    
-    addMessage(welcomeMessage);
-    return [welcomeMessage];
-  }, [storedMessages, addMessage]);
 
-  const { messages, error, handleInputChange, input, handleSubmit, isLoading, setMessages } = useChat({
-    fetch: expoFetch as unknown as typeof globalThis.fetch,
-    api: generateAPIUrl('/api/chat'),
-    body: { sobrietyContext },
-    onError: error => console.error(error, 'ERROR'),
-    id: 'sushi-chat',
-    initialMessages,
-    onFinish: (message) => {
-      // Save assistant messages to store
-      addMessage({
-        id: message.id,
-        role: 'assistant',
-        content: message.content
+    // Add user message to store immediately
+    addMessage(userMessage);
+    
+    // Clear input
+    setInput('');
+
+    // Get fresh messages from store after adding the user message
+    const { getMessages } = useChatStore.getState();
+    const allMessages = getMessages();
+
+    setIsLoading(true);
+    
+    // Create abort controller for this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const response = await expoFetch(generateAPIUrl('/api/chat'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: allMessages, // Store format = API format, no conversion needed
+          sobrietyContext
+        }),
+        signal: controller.signal
       });
-    }
-  });
 
-  // Sync chat UI when store changes (e.g., when history is cleared or demo data loaded)
-  useEffect(() => {
-    const storeMessageIds = storedMessages.map(msg => msg.id);
-    const currentMessageIds = messages.map(msg => msg.id);
-    
-    // Check if store has been cleared (only has welcome message) but UI has more
-    const isStoreCleared = storedMessages.length === 1 && storedMessages[0].id === 'welcome';
-    const hasUIMessages = messages.length > 1;
-    
-    // Check if store has significantly different messages (e.g., demo data loaded)
-    const hasStoreDifferentMessages = storeMessageIds.length !== currentMessageIds.length ||
-      !storeMessageIds.every((id, index) => id === currentMessageIds[index]);
-    
-    if (isStoreCleared && hasUIMessages) {
-      // Store was cleared, sync UI to show only welcome message
-      const welcomeMessage = storedMessages[0];
-      setMessages([{
-        id: welcomeMessage.id,
-        role: welcomeMessage.role,
-        content: welcomeMessage.content
-      }]);
-    } else if (hasStoreDifferentMessages && storedMessages.length > 1) {
-      // Store has different messages (like demo data), sync UI to match store
-      const syncedMessages = storedMessages.map(msg => ({
-        id: msg.id,
-        role: msg.role,
-        content: msg.content
-      }));
-      setMessages(syncedMessages);
-    }
-  }, [storedMessages, messages, setMessages]);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
-  // Simple message sync - only save new user messages
-  const lastMessageRef = useRef<string | null>(null);
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    
-    if (lastMessage && 
-        lastMessage.role === 'user' && 
-        lastMessage.id !== lastMessageRef.current) {
+      const data = await response.json();
       
-      lastMessageRef.current = lastMessage.id;
-      addMessage({
-        id: lastMessage.id,
-        role: 'user',
-        content: lastMessage.content
-      });
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Add assistant response to store
+      const assistantMessage = {
+        id: generateId(),
+        role: 'assistant' as const,
+        content: data.response
+      };
+      
+      addMessage(assistantMessage);
+
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      
+      if (error.name === 'AbortError') {
+        console.log('Request aborted');
+      }
+      
+      // Mark user message as failed for retry (for any error)
+      setMessageFailed(userMessage.id, true);
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
     }
-  }, [messages, addMessage]);
+  };
+
+  // Handle input submission
+  const handleSubmit = () => {
+    sendMessage(input);
+  };
+
+  // Retry function for failed messages
+  const handleRetry = (messageId: string) => {
+    // Don't retry if already sending a message
+    if (isLoading) return;
+    
+    const failedMessage = messages.find(msg => msg.id === messageId);
+    if (failedMessage && failedMessage.role === 'user' && failedMessage.failed) {
+      // Remove the failed message from store first to avoid duplicates
+      const { removeMessage } = useChatStore.getState();
+      removeMessage(messageId);
+      
+      // Trigger haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Resend the message content (this will create a new message with new ID)
+      sendMessage(failedMessage.content);
+    }
+  };
+
+  // App state handling - abort requests when app goes to background
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        // Abort any ongoing requests
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    
+    // Cleanup function - abort any ongoing requests when component unmounts
+    return () => {
+      subscription?.remove();
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -140,17 +195,6 @@ export default function ChatScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/voice-call');
   };
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.errorContainer}>
-        <Text style={styles.errorText}>
-          Something went wrong. Please try again later.
-        </Text>
-        <Text style={styles.errorDetail}>{error.message}</Text>
-      </SafeAreaView>
-    );
-  }
 
   const VoiceCallButton = () => (
     <TouchableOpacity 
@@ -193,19 +237,17 @@ export default function ChatScreen() {
               content={message.content}
               role={message.role as 'user' | 'assistant'}
               id={message.id}
+              error={message.failed || false}
+              onRetry={message.failed ? () => handleRetry(message.id) : undefined}
             />
           ))}
           
-          {isLoading && (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
-          )}
+          {isLoading && <TypingIndicator />}
         </ScrollView>
         
         <ChatInput
           value={input}
-          onChange={handleInputChange}
+          onChange={(e: any) => setInput(e.target.value)}
           onSubmit={handleSubmit}
           isLoading={isLoading}
         />
@@ -229,29 +271,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingVertical: 20,
     paddingBottom: 10,
-  },
-  loadingContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: 'flex-start',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: colors.background,
-  },
-  errorText: {
-    fontSize: 16,
-    color: colors.danger,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  errorDetail: {
-    fontSize: 14,
-    color: colors.textMuted,
-    textAlign: 'center',
   },
   voiceCallButton: {
     width: 44,

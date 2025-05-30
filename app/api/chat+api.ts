@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import { generateText } from 'ai';
 
 export async function POST(req: Request) {
   const { messages, sobrietyContext } = await req.json();
@@ -21,6 +21,20 @@ export async function POST(req: Request) {
   - If the user is experiencing a crisis, suggest using the SOS button in the app.
   - Never encourage or normalize alcohol or substance use.
   - Reference their specific progress and context when relevant.
+
+On Insights:
+
+Keep the insight responses light, short, and conversational — like a friend texting.
+
+When asked for insights, mention 1–2 casual observations, not a full summary.
+
+No structured breakdowns.
+
+Sound natural.
+
+It's okay to combine signals (journals, moods, progress) — but pick just what feels most relevant in the moment.
+
+No need to mention everything or prove you read the whole context.
   `;
 
   // Add personalized context if available
@@ -109,17 +123,22 @@ export async function POST(req: Request) {
     systemPrompt += `\nUse this context to provide more personalized support and acknowledge their specific journey and achievements.`;
   }
 
-  const result = streamText({
-    model: openai('gpt-4o'),
-    messages,
-    temperature: 0.7,
-    system: systemPrompt
-  });
+  try {
+    const result = await generateText({
+      model: openai('gpt-4o'),
+      messages,
+      temperature: 0.7,
+      system: systemPrompt
+    });
 
-  return result.toDataStreamResponse({
-    headers: {
-      'Content-Type': 'application/octet-stream',
-      'Content-Encoding': 'none',
-    },
-  });
+    return Response.json({ 
+      response: result.text 
+    });
+  } catch (error) {
+    console.error('Chat API error:', error);
+    return Response.json(
+      { error: 'Failed to generate response' },
+      { status: 500 }
+    );
+  }
 } 

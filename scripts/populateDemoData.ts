@@ -3,6 +3,7 @@ import { useMoodStore } from '@/store/moodStore';
 import { useJournalStore } from '@/store/journalStore';
 import { useChatStore } from '@/store/chatStore';
 import { useChecklistStore } from '@/store/checklistStore';
+import { useActivityStore } from '@/store/activityStore';
 
 // Helper function to get date string N days ago
 const getDaysAgo = (daysAgo: number): string => {
@@ -37,6 +38,14 @@ export const populateDemoData = () => {
   const moodStoreForClearing = useMoodStore.getState();
   useMoodStore.setState({ entries: [], hasLoggedToday: false });
   
+  // Clear activity stats
+  const activityStoreForClearing = useActivityStore.getState();
+  useActivityStore.setState({ 
+    breathingExercises: 0, 
+    journalEntries: 0, 
+    cravingsOvercome: 0 
+  });
+  
   // Reset checklist to default state
   const checklistStoreForClearing = useChecklistStore.getState();
   checklistStoreForClearing.checkAndResetIfNewDay(); // This will reset all items to uncompleted
@@ -65,50 +74,60 @@ export const populateDemoData = () => {
   // Set sobriety start date to 45 days ago for impressive streak
   const sobrietyStartDate = getTimestampDaysAgo(45);
   
-  // Generate daily XP data for the past 45 days (reduced for lower level)
+  // Generate daily XP data for the past 45 days with reasonable amounts
   const dailyXP: Record<string, number> = {};
   for (let i = 0; i < 45; i++) {
     const dateStr = getDaysAgo(i);
-    // Mix of XP amounts: mostly 20-40, but some high days (60-80) for darker heatmap spots
+    // XP amounts in multiples of 5 with LOTS of darkest blue days (need >60 XP for intensity 1.0)
     let xpAmount = 0;
     const rand = Math.random();
     
-    if (rand > 0.8) {
-      // 20% chance of high XP day (60-80) - creates darker blue spots
-      xpAmount = Math.floor(Math.random() * 20) + 60;
-    } else if (rand > 0.2) {
-      // 60% chance of normal XP day (20-40)
-      xpAmount = Math.floor(Math.random() * 20) + 20;
+    if (rand > 0.65) {
+      // 35% chance of very high XP day (65-85) - darkest blue (intensity 1.0)
+      const options = [65, 70, 75, 80, 85];
+      xpAmount = options[Math.floor(Math.random() * options.length)];
+    } else if (rand > 0.35) {
+      // 30% chance of high XP day (40-65) - darker blue, some crossing into darkest
+      const options = [40, 45, 50, 55, 60, 65];
+      xpAmount = options[Math.floor(Math.random() * options.length)];
+    } else if (rand > 0.05) {
+      // 30% chance of normal XP day (20-35) - medium blue
+      const options = [20, 25, 30, 35];
+      xpAmount = options[Math.floor(Math.random() * options.length)];
     }
-    // 20% chance of no XP (missed day)
+    // 5% chance of no XP (missed day)
     
     if (xpAmount > 0) {
       dailyXP[dateStr] = xpAmount;
     }
   }
   
-  // Calculate total XP and proper level distribution
-  const totalXP = Object.values(dailyXP).reduce((sum, xp) => sum + xp, 0);
-  
-  // Calculate proper level and current XP using actual game logic
+  // Calculate proper level progression using the actual game formula
+  // Level 1: 0-100 XP, Level 2: 100-250 XP (100+150), Level 3: 250-450 XP (100+150+200), etc.
   let currentLevel = 1;
-  let remainingXP = totalXP;
+  let totalXPEarned = Object.values(dailyXP).reduce((sum, xp) => sum + xp, 0);
+  let currentXP = totalXPEarned;
   
-  while (remainingXP >= (100 + (currentLevel - 1) * 50) && currentLevel < 4) {
-    remainingXP -= (100 + (currentLevel - 1) * 50);
+  // Use the actual game formula: 100 + (level - 1) * 50
+  const getXPForLevel = (level: number) => 100 + (level - 1) * 50;
+  
+  // Calculate which level they should be at and current XP within that level
+  let totalXPSpent = 0;
+  while (currentLevel < 10 && currentXP >= getXPForLevel(currentLevel)) {
+    const xpNeededForThisLevel = getXPForLevel(currentLevel);
+    totalXPSpent += xpNeededForThisLevel;
+    currentXP -= xpNeededForThisLevel;
     currentLevel++;
   }
   
-  const level = Math.min(currentLevel, 4); // Cap at level 4
-  const xpInCurrentLevel = remainingXP;
-  const xpToNextLevel = 100 + (level - 1) * 50;
+  const xpToNextLevel = getXPForLevel(currentLevel);
   
-  // Update sobriety store directly
+  // Update sobriety store directly with corrected XP values
   useSobrietyStore.setState({
     startDate: sobrietyStartDate,
     firstAppUseDate: sobrietyStartDate,
-    xp: xpInCurrentLevel,
-    level: level,
+    xp: currentXP, // Current XP within the level (should be less than xpToNextLevel)
+    level: currentLevel,
     xpToNextLevel: xpToNextLevel,
     dailyXP: dailyXP,
     milestonesReached: [1, 3, 7, 14, 30], // 45 days means these milestones are reached
@@ -282,9 +301,18 @@ Maybe I need to just be honest with him. Or find new friends who don't revolve e
     // Leave items[1] "Note a Craving" and items[3] "Take a Walk Outside" for demo
   }
   
+  // === ACTIVITY STATS ===
+  const activityStore = useActivityStore.getState();
+  
+  // Set realistic activity stats that match the demo content
+  activityStore.setBreathingExercises(12); // 12 breathing exercises completed
+  activityStore.setJournalEntries(5); // 5 journal entries (matches the entries we're adding)
+  activityStore.setCravingsOvercome(3); // 3 cravings successfully overcome
+  
   console.log('✅ Demo data populated successfully!');
-  console.log(`📊 Stats: ${level} level, 45-day streak, ${Object.keys(dailyXP).length} active days`);
+  console.log(`📊 Stats: ${currentLevel} level, 45-day streak, ${Object.keys(dailyXP).length} active days`);
   console.log(`📝 Added ${sampleEntries.length} journal entries`);
   console.log(`💬 Added ${sampleMessages.length} chat messages`);
   console.log(`😊 Added 30 days of mood tracking`);
+  console.log(`🎯 Activity Stats: ${12} breathing exercises, ${5} journal entries, ${3} cravings overcome`);
 }; 

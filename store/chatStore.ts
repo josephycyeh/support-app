@@ -7,11 +7,15 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string; // ISO string
+  failed?: boolean; // Track if message failed to send
 }
 
 interface ChatStore {
   messages: ChatMessage[];
   addMessage: (message: Omit<ChatMessage, 'timestamp'>) => void;
+  removeMessage: (messageId: string) => void;
+  setMessageFailed: (messageId: string, failed: boolean) => void;
+  removeAllFailedMessages: () => void;
   clearHistory: () => void;
   getMessages: () => ChatMessage[];
   // Limit history to prevent memory issues
@@ -49,6 +53,23 @@ export const useChatStore = create<ChatStore>()(
           
           return { messages: updatedMessages };
         }),
+      
+      removeMessage: (messageId: string) =>
+        set((state) => ({
+          messages: state.messages.filter(msg => msg.id !== messageId)
+        })),
+      
+      setMessageFailed: (messageId: string, failed: boolean) =>
+        set((state) => ({
+          messages: state.messages.map(msg =>
+            msg.id === messageId ? { ...msg, failed } : msg
+          )
+        })),
+      
+      removeAllFailedMessages: () =>
+        set((state) => ({
+          messages: state.messages.filter(msg => !msg.failed)
+        })),
       
       clearHistory: () => 
         set(() => ({

@@ -64,7 +64,7 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
         }, 1800); // Animation is 43 frames at 24fps ≈ 1800ms
       }
     }
-  }, [animationTrigger, showLevelUpMessage, isAnimating]);
+  }, [animationTrigger, showLevelUpMessage]);
 
   const handleChatPress = () => {
     router.push('/chat');

@@ -17,7 +17,7 @@ const defaultItems: ChecklistItem[] = [
   { id: '2', title: "Note a Craving", completed: false, xpReward: 20 },
   { id: '3', title: "Log Your Thoughts", completed: false, xpReward: 20 },
   { id: '4', title: "Take a Walk Outside", completed: false, xpReward: 15 },
-  { id: '5', title: "Call a Supportive Friend", completed: false, xpReward: 20 },
+  { id: '5', title: "Call a Supportive Friend", completed: false, xpReward: 25 },
 ];
 
 // Helper to get today's date as a string in YYYY-MM-DD format

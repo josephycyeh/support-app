@@ -1,17 +1,44 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { RefreshCw, AlertCircle } from 'lucide-react-native';
 import colors from '@/constants/colors';
 
 interface ChatMessageProps {
   content: string;
   role: 'user' | 'assistant';
   id: string;
+  error?: boolean;
+  onRetry?: () => void;
 }
 
-export const ChatMessage = ({ content, role, id }: ChatMessageProps) => {
+export const ChatMessage = ({ content, role, id, error = false, onRetry }: ChatMessageProps) => {
   const isUser = role === 'user';
+
+  // For failed user messages, show subtle error state
+  if (error && isUser && onRetry) {
+    return (
+      <View style={[styles.container, styles.userContainer]}>
+        <TouchableOpacity onPress={onRetry} style={styles.tappableMessage}>
+          <View style={styles.messageRow}>
+            <LinearGradient
+              colors={['#7BA4CA', '#6B98C2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.bubble, styles.userBubble, styles.failedMessage]}
+            >
+              <Text style={[styles.messageText, styles.userMessageText]}>{content}</Text>
+            </LinearGradient>
+            <View style={styles.errorIcon}>
+              <AlertCircle size={16} color="#E74C3C" />
+            </View>
+          </View>
+          <Text style={styles.retryHintBelow}>Not delivered, tap to retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, isUser ? styles.userContainer : styles.assistantContainer]}>
@@ -98,5 +125,26 @@ const styles = StyleSheet.create({
   assistantMessageText: {
     color: colors.text,
     fontWeight: '400',
+  },
+  failedMessage: {
+    opacity: 0.7,
+  },
+  tappableMessage: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    maxWidth: '85%',
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  errorIcon: {
+    marginLeft: 8,
+  },
+  retryHintBelow: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#E74C3C',
   },
 }); 

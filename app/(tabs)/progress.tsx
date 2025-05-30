@@ -10,7 +10,7 @@ import { useActivityStore } from '@/store/activityStore';
 const screenWidth = Dimensions.get('window').width;
 
 export default function ProgressScreen() {
-  const { startDate, level, xp } = useSobrietyStore();
+  const { startDate, level, xp, dailyXP } = useSobrietyStore();
   const { breathingExercises, journalEntries, cravingsOvercome } = useActivityStore();
   
   // Calculate days sober more accurately
@@ -20,6 +20,9 @@ export default function ProgressScreen() {
   now.setHours(0, 0, 0, 0);
   start.setHours(0, 0, 0, 0);
   const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  
+  // Calculate total XP earned (sum of all daily XP)
+  const totalXPEarned = Object.values(dailyXP).reduce((sum, xp) => sum + xp, 0);
   
   // Define milestone thresholds for better tracking
   const milestones = [
@@ -55,7 +58,7 @@ export default function ProgressScreen() {
   const streakWarriorProgress = Math.min(daysSober, 7) * (100/7); // 7 days streak
   const craveConquerorProgress = Math.min(cravingsOvercome * 25, 100); // 4 cravings overcome
   const levelUpProgress = Math.min(level * 25, 100); // Reach level 4
-  const xpCollectorProgress = Math.min((xp / 500) * 100, 100); // Collect 500 XP
+  const xpCollectorProgress = Math.min((totalXPEarned / 500) * 100, 100); // Collect 500 XP
   const consistencyProgress = Math.min(daysSober >= 30 ? 100 : 0, 100); // 30 days consistent
   
   return (
@@ -308,7 +311,7 @@ export default function ProgressScreen() {
             />
             <StatCard 
               title="XP Earned"
-              value={xp.toString()}
+              value={totalXPEarned.toString()}
               icon={<Award size={20} color={colors.primary} />}
             />
           </View>
