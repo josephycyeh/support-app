@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "idk yet",
+    "name": "Sushi - Sobriety Companion",
     "slug": "sushi-support-app",
     "version": "1.0.9",
     "orientation": "portrait",
@@ -59,6 +59,12 @@
       "eas": {
         "projectId": "3787133c-fd8e-41bb-8ae5-aa25155a5349"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3787133c-fd8e-41bb-8ae5-aa25155a5349"
     }
   }
 }

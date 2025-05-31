@@ -388,12 +388,12 @@ const MilestoneNode = ({ title, description, icon, color, completed, current, xp
       ]}>
         {description}
       </Text>
-      <Text style={[
+        <Text style={[
         styles.milestoneScienceInfo,
         { color: completed || current ? colors.primary : colors.textMuted }
-      ]}>
+        ]}>
         {scienceInfo}
-      </Text>
+        </Text>
       <Text style={[
         styles.milestoneXP,
         { 

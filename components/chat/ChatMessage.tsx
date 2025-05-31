@@ -63,7 +63,7 @@ export const ChatMessage = ({ content, role, id, error = false, onRetry }: ChatM
       ) : (
         <View style={[styles.bubble, styles.assistantBubble]}>
           <Text style={[styles.messageText, styles.assistantMessageText]}>{content}</Text>
-        </View>
+      </View>
       )}
     </View>
   );

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Check, Trophy } from 'lucide-react-native';
+import { Check, Trophy, Target } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
@@ -41,26 +41,52 @@ export const DailyChecklist = ({ onTaskCompleted }: DailyChecklistProps) => {
   // Check if all items are completed
   const allCompleted = items.every(item => item.completed);
   const incompleteItems = items.filter(item => !item.completed);
+  const completedCount = items.filter(item => item.completed).length;
+  const totalCount = items.length;
 
   return (
     <Card key={renderKey}>
       <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>Daily Checklist</Text>
+        <View style={styles.titleSection}>
+          <View style={styles.titleRow}>
+            <Target size={20} color={colors.primary} />
+            <Text style={styles.headerTitle}>Daily Goals</Text>
+          </View>
+          <Text style={styles.headerSubtitle}>
+            Complete these healthy habits to earn XP and strengthen your recovery
+          </Text>
+        </View>
+        
+        {!allCompleted && (
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressText}>
+              {completedCount} of {totalCount} completed
+            </Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${(completedCount / totalCount) * 100}%` }
+                ]} 
+              />
+            </View>
+          </View>
+        )}
       </View>
       
       {allCompleted ? (
         <CompletionState />
       ) : (
-      <View style={styles.itemsContainer}>
+        <View style={styles.itemsContainer}>
           {incompleteItems.map((item, index) => (
-          <ChecklistItem 
+            <ChecklistItem 
               key={`${item.id}-${renderKey}`}
-            item={item}
-            onToggle={handleToggle}
-            index={index}
-          />
-        ))}
-      </View>
+              item={item}
+              onToggle={handleToggle}
+              index={index}
+            />
+          ))}
+        </View>
       )}
     </Card>
   );
@@ -70,11 +96,11 @@ const CompletionState = () => {
   return (
     <View style={styles.completionContainer}>
       <View style={styles.completionIcon}>
-        <Trophy size={32} color={colors.primary} />
+        <Trophy size={28} color={colors.primary} />
       </View>
-      <Text style={styles.completionTitle}>All Done!</Text>
+      <Text style={styles.completionTitle}>All Goals Completed!</Text>
       <Text style={styles.completionMessage}>
-        You've completed all your daily tasks. Great job staying committed to your journey!
+        Excellent work! You've completed all your daily goals. Your commitment to recovery is inspiring.
       </Text>
     </View>
   );
@@ -105,7 +131,7 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
         styles.checkbox,
         item.completed && styles.checkboxCompleted
       ]}>
-        {item.completed && <Check size={14} color="#fff" strokeWidth={3} />}
+        {item.completed && <Check size={16} color="#fff" strokeWidth={2.5} />}
       </View>
       <Text style={[
         styles.itemText,
@@ -114,7 +140,7 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
         {item.title}
       </Text>
       <View style={styles.xpBadge}>
-        <Text style={styles.xpText}>+{item.xpReward}</Text>
+        <Text style={styles.xpText}>+{item.xpReward} XP</Text>
       </View>
     </TouchableOpacity>
   );
@@ -122,16 +148,53 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
 
 const styles = StyleSheet.create({
   headerContainer: {
+    marginBottom: 20,
+  },
+  titleSection: {
     marginBottom: 16,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: colors.text,
-    marginBottom: 4,
+    marginLeft: 8,
+    lineHeight: 24,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.textLight,
+    lineHeight: 20,
+    marginTop: 2,
+  },
+  progressContainer: {
+    marginTop: 4,
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textLight,
+    marginBottom: 8,
+    textAlign: 'right',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
   },
   itemsContainer: {
-    gap: 12,
+    gap: 10,
   },
   itemButton: {
     flexDirection: 'row',
@@ -142,15 +205,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
     elevation: 2,
   },
   itemButtonCompleted: {
     backgroundColor: colors.background,
     borderColor: colors.border,
-    opacity: 0.8,
+    opacity: 0.7,
   },
   checkbox: {
     width: 24,
@@ -158,7 +221,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.primary,
-    marginRight: 16,
+    marginRight: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -171,6 +234,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     flex: 1,
     fontWeight: '500',
+    lineHeight: 22,
   },
   itemTextCompleted: {
     color: colors.textMuted,
@@ -178,27 +242,28 @@ const styles = StyleSheet.create({
     textDecorationStyle: 'solid',
   },
   xpBadge: {
-    backgroundColor: 'rgba(107, 152, 194, 0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginLeft: 8,
+    backgroundColor: 'rgba(107, 152, 194, 0.12)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 10,
   },
   xpText: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   completionContainer: {
     alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
   },
   completionIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(107, 152, 194, 0.15)',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(107, 152, 194, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -208,11 +273,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
+    lineHeight: 26,
   },
   completionMessage: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textLight,
     textAlign: 'center',
     lineHeight: 22,
+    fontWeight: '500',
   },
 });

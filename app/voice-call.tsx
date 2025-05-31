@@ -20,7 +20,7 @@ import {
   useTrackTranscription,
   useVoiceAssistant,
 } from '@livekit/react-native';
-import { useConnectionDetails } from '@/hooks/useConnectionDetails';
+import { useConnectionDetails, deleteRoom } from '@/hooks/useConnectionDetails';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Track } from 'livekit-client';
 import { useRouter, Stack } from 'expo-router';
@@ -37,12 +37,14 @@ import { useSobrietyContext } from '@/hooks/useSobrietyContext';
 import { registerGlobals } from '@livekit/react-native';
 registerGlobals();
 
-
 export default function VoiceCallScreen() {
   const [shouldConnect, setShouldConnect] = useState(false);
 
   // Get comprehensive sobriety context using shared hook
   const userContext = useSobrietyContext();
+
+  // Use the connection details hook
+  const { details: connectionDetails, loading: isConnecting, fetchConnectionDetails, clearDetails } = useConnectionDetails();
 
   // Start the audio session first.
   useEffect(() => {
@@ -56,16 +58,35 @@ export default function VoiceCallScreen() {
     };
   }, []);
 
-  const connectionDetails = useConnectionDetails(userContext);
-  console.log('connectionDetails', connectionDetails);
-
-  const handleStartCall = () => {
-    setShouldConnect(true);
+  const handleStartCall = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    // Fetch fresh connection details
+    const details = await fetchConnectionDetails(userContext);
+    
+    if (details) {
+      setShouldConnect(true);
+    } else {
+      // Handle error - could show an alert or error state
+      console.error('Failed to get connection details');
+    }
   };
 
   const handleCallEnded = () => {
     setShouldConnect(false);
+    clearDetails();
+  };
+
+  const handleBackPress = async () => {
+    const router = useRouter();
+    
+    // If we're in a call, clean up the room first
+    if (shouldConnect && connectionDetails?.roomName) {
+      console.log('🔄 Back pressed during call, cleaning up room...');
+      await deleteRoom(connectionDetails.roomName);
+    }
+    
+    router.back();
   };
 
   return (
@@ -78,31 +99,27 @@ export default function VoiceCallScreen() {
       
       <Header 
         title="Voice Call" 
-        onBack={() => {
-          // Handle back navigation properly
-          const router = useRouter();
-          router.back();
-        }} 
+        onBack={handleBackPress} 
       />
 
       {shouldConnect && connectionDetails ? (
         <LiveKitRoom
-          serverUrl={connectionDetails?.url}
-          token={connectionDetails?.token}
+          serverUrl={connectionDetails.url}
+          token={connectionDetails.token}
           connect={true}
           audio={true}
           video={false}
         >
-          <RoomView onCallEnded={handleCallEnded} />
+          <RoomView onCallEnded={handleCallEnded} roomName={connectionDetails.roomName} />
         </LiveKitRoom>
       ) : (
-        <CallSetupView onStartCall={handleStartCall} />
+        <CallSetupView onStartCall={handleStartCall} isConnecting={isConnecting} />
       )}
     </SafeAreaView>
   );
 }
 
-const CallSetupView = ({ onStartCall }: { onStartCall: () => void }) => {
+const CallSetupView = ({ onStartCall, isConnecting }: { onStartCall: () => void, isConnecting: boolean }) => {
   return (
     <View style={styles.container}>
       {/* Sushi Avatar Section */}
@@ -115,32 +132,39 @@ const CallSetupView = ({ onStartCall }: { onStartCall: () => void }) => {
           />
         </View>
         <Text style={styles.companionName}>Sushi</Text>
-        <Text style={styles.callStatus}>Ready to talk</Text>
+        <Text style={styles.callStatus}>
+          {isConnecting ? 'Setting up call...' : 'Ready to talk'}
+        </Text>
       </View>
 
       {/* Call Button */}
       <View style={styles.callButtonContainer}>
         <TouchableOpacity
-          style={styles.startCallButton}
+          style={[styles.startCallButton, isConnecting && styles.startCallButtonDisabled]}
           onPress={onStartCall}
+          disabled={isConnecting}
         >
           <Phone size={32} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.callButtonText}>Tap to start voice call</Text>
+        <Text style={styles.callButtonText}>
+          {isConnecting ? 'Setting up call...' : 'Tap to start voice call'}
+        </Text>
       </View>
 
       {/* Instructions */}
       <View style={styles.instructionsContainer}>
         <Text style={styles.instructionsText}>
-          Start a voice conversation with Sushi about your recovery journey. 
-          Sushi will listen and respond with supportive guidance.
+          {isConnecting 
+            ? "Creating a secure voice connection with Sushi..."
+            : "Start a voice conversation with Sushi about your recovery journey. Sushi will listen and respond with supportive guidance."
+          }
         </Text>
       </View>
     </View>
   );
 };
 
-const RoomView = ({ onCallEnded }: { onCallEnded: () => void }) => {
+const RoomView = ({ onCallEnded, roomName }: { onCallEnded: () => void, roomName: string }) => {
   const [callDuration, setCallDuration] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const talkingAnimationRef = useRef<LottieView>(null);
@@ -149,6 +173,13 @@ const RoomView = ({ onCallEnded }: { onCallEnded: () => void }) => {
   useIOSAudioManagement(room, true);
 
   const { isMicrophoneEnabled, localParticipant } = useLocalParticipant();
+
+  // Mute microphone by default when connected
+  useEffect(() => {
+    if (isConnected && localParticipant) {
+      localParticipant.setMicrophoneEnabled(false);
+    }
+  }, [isConnected, localParticipant]);
 
   // Transcriptions
   const localTracks = useParticipantTracks(
@@ -228,10 +259,18 @@ const RoomView = ({ onCallEnded }: { onCallEnded: () => void }) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    room?.disconnect();
-    // onCallEnded will be called by the disconnected event
+    
+    // Delete the room (this will automatically disconnect all participants)
+    console.log('🔄 Ending call and cleaning up room...');
+    const deleteSuccess = await deleteRoom(roomName);
+    if (!deleteSuccess) {
+      console.warn('⚠️ Failed to delete room, but continuing...');
+    }
+    
+    // No need to manually disconnect - room deletion handles this
+    // The 'disconnected' event will fire automatically and call onCallEnded
   };
 
   const toggleMute = () => {
@@ -410,6 +449,10 @@ const styles = StyleSheet.create({
     elevation: 8,
     marginBottom: 16,
   },
+  startCallButtonDisabled: {
+    backgroundColor: colors.textMuted,
+    opacity: 0.6,
+  },
   callButtonText: {
     fontSize: 16,
     color: colors.textLight,
@@ -520,3 +563,4 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+ 

@@ -36,9 +36,9 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
       }
       
       // When animation is done, reset flags
-      setTimeout(() => {
-        setShowLevelUpMessage(false);
-        setLevelUpComplete();
+        setTimeout(() => {
+          setShowLevelUpMessage(false);
+          setLevelUpComplete();
       }, 2000); // Shortened to 2 seconds total
     }
   }, [levelUp, setLevelUpComplete]);
@@ -149,12 +149,12 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
           
           {/* Journal button positioned to the right of companion */}
           <View style={[styles.actionButtonContainer, styles.rightButtonContainer]}>
-            <TouchableOpacity 
+          <TouchableOpacity 
               style={styles.actionButton}
-              onPress={handleJournalPress}
-            >
-              <BookOpen size={24} color={colors.primary} />
-            </TouchableOpacity>
+            onPress={handleJournalPress}
+          >
+            <BookOpen size={24} color={colors.primary} />
+          </TouchableOpacity>
             <Text style={styles.actionButtonLabel}>Journal</Text>
           </View>
         </View>
