@@ -80,7 +80,7 @@ const TimeUnit = ({ value, unit }: { value: number; unit: string }) => (
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+
   },
   title: {
     fontSize: 18,

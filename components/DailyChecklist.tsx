@@ -41,8 +41,6 @@ export const DailyChecklist = ({ onTaskCompleted }: DailyChecklistProps) => {
   // Check if all items are completed
   const allCompleted = items.every(item => item.completed);
   const incompleteItems = items.filter(item => !item.completed);
-  const completedCount = items.filter(item => item.completed).length;
-  const totalCount = items.length;
 
   return (
     <Card key={renderKey}>
@@ -56,22 +54,6 @@ export const DailyChecklist = ({ onTaskCompleted }: DailyChecklistProps) => {
             Complete these healthy habits to earn XP and strengthen your recovery
           </Text>
         </View>
-        
-        {!allCompleted && (
-          <View style={styles.progressContainer}>
-            <Text style={styles.progressText}>
-              {completedCount} of {totalCount} completed
-            </Text>
-            <View style={styles.progressBar}>
-              <View 
-                style={[
-                  styles.progressFill, 
-                  { width: `${(completedCount / totalCount) * 100}%` }
-                ]} 
-              />
-            </View>
-          </View>
-        )}
       </View>
       
       {allCompleted ? (
@@ -148,7 +130,7 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    marginBottom: 20,
+    marginBottom: 4,
   },
   titleSection: {
     marginBottom: 16,
@@ -156,7 +138,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   headerTitle: {
     fontSize: 18,
@@ -170,31 +152,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textLight,
     lineHeight: 20,
-    marginTop: 2,
-  },
-  progressContainer: {
     marginTop: 4,
   },
-  progressText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textLight,
-    marginBottom: 8,
-    textAlign: 'right',
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 2,
-  },
   itemsContainer: {
-    gap: 10,
+    gap: 12,
   },
   itemButton: {
     flexDirection: 'row',
@@ -205,10 +166,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   itemButtonCompleted: {
     backgroundColor: colors.background,

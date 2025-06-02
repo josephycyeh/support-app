@@ -316,26 +316,6 @@ export default function ProgressScreen() {
             />
           </View>
         </View>
-        
-        {/* Next Challenges */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Next Challenges</Text>
-          <Text style={styles.sectionSubtitle}>Complete these to earn XP and level up</Text>
-          <View style={styles.challengesContainer}>
-            <ChallengeCard 
-              title="Complete 3 breathing exercises"
-              xpReward={30}
-              progress={Math.min(breathingExercises, 3)}
-              total={3}
-            />
-            <ChallengeCard 
-              title="Log your thoughts for 5 days"
-              xpReward={50}
-              progress={Math.min(journalEntries, 5)}
-              total={5}
-            />
-          </View>
-        </View>
       </ScrollView>
     </View>
   );
@@ -451,33 +431,6 @@ const StatCard = ({ title, value, icon }: StatProps) => (
     </View>
     <Text style={styles.statValue}>{value}</Text>
     <Text style={styles.statTitle}>{title}</Text>
-  </View>
-);
-
-interface ChallengeProps {
-  title: string;
-  xpReward: number;
-  progress: number;
-  total: number;
-}
-
-const ChallengeCard = ({ title, xpReward, progress, total }: ChallengeProps) => (
-  <View style={styles.challengeCard}>
-    <View style={styles.challengeHeader}>
-      <Text style={styles.challengeTitle}>{title}</Text>
-      <Text style={styles.challengeXP}>+{xpReward} XP</Text>
-    </View>
-    <View style={styles.challengeProgressContainer}>
-      <View 
-        style={[
-          styles.challengeProgress, 
-          { width: `${(progress / total) * 100}%` }
-        ]} 
-      />
-    </View>
-    <Text style={styles.challengeProgressText}>
-      {progress} of {total} completed
-    </Text>
   </View>
 );
 
@@ -724,54 +677,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textLight,
     textAlign: 'center',
-  },
-  challengesContainer: {
-    gap: 12,
-  },
-  challengeCard: {
-    backgroundColor: colors.background,
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  challengeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  challengeTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-    flex: 1,
-  },
-  challengeXP: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  challengeProgressContainer: {
-    height: 6,
-    backgroundColor: colors.progressBackground,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  challengeProgress: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 3,
-  },
-  challengeProgressText: {
-    fontSize: 13,
-    color: colors.textLight,
   },
   currentMilestoneContent: {
     backgroundColor: 'rgba(107, 152, 194, 0.08)',

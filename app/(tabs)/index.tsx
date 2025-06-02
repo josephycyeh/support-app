@@ -9,6 +9,9 @@ import { DailyChecklist } from '@/components/DailyChecklist';
 import { SOSButton } from '@/components/SOSButton';
 import { MoodTracker } from '@/components/MoodTracker';
 import { MoodButton } from '@/components/MoodButton';
+import { DailyQuote } from '@/components/DailyQuote';
+import { MilestoneCard } from '@/components/MilestoneCard';
+import { MoneySavedCard } from '@/components/MoneySavedCard';
 import { useMoodStore } from '@/store/moodStore';
 import * as Haptics from 'expo-haptics';
 import { useSobrietyStore } from '@/store/sobrietyStore';
@@ -77,11 +80,20 @@ export default function HomeScreen() {
         <Companion animationTrigger={triggerCompanionAnimation} />
         <SobrietyTimer />
         
+        <View style={styles.cardRow}>
+          <MoneySavedCard />
+          <MilestoneCard />
+        </View>
+        
         {!hasLoggedMoodToday && (
           <MoodButton onPress={handleMoodTrackerOpen} />
         )}
         
-        <DailyChecklist onTaskCompleted={handleTaskCompleted} />
+        <DailyQuote />
+        
+        <View style={styles.checklistContainer}>
+          <DailyChecklist onTaskCompleted={handleTaskCompleted} />
+        </View>
         
         {/* Temporary Demo Data Button - Remove after demo */}
         <DemoDataButton />
@@ -110,6 +122,16 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingTop: 12,
+    paddingTop: 16,
+    gap: 16,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    height: 120,
+    gap: 16,
+  },
+  checklistContainer: {
   },
 });

@@ -17,4 +17,5 @@ export interface SobrietyState {
   milestonesReached: number[]; // Track which milestone days have been rewarded (1, 7, 14, 30, 90, etc.)
   name?: string; // User's name
   age?: number; // User's age
+  onboardingCompleted?: boolean; // Track if user has completed onboarding
 }

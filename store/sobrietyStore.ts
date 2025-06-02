@@ -11,6 +11,8 @@ interface SobrietyStore extends SobrietyState {
   checkAndAwardMilestones: () => void; // Check and award milestone XP
   setName: (name: string) => void; // Set user's name
   setAge: (age: number) => void; // Set user's age
+  setStartDate: (date: string) => void; // Set sobriety start date
+  completeOnboarding: () => void; // Mark onboarding as complete
 }
 
 // Calculate XP needed for next level (increases with each level)
@@ -45,6 +47,7 @@ const getDefaultState = (): SobrietyState => {
     dailyXP: defaultDailyXP,
     sobrietyBreaks: [],
     milestonesReached: [],
+    onboardingCompleted: false,
   };
 };
 
@@ -198,6 +201,16 @@ export const useSobrietyStore = create<SobrietyStore>()(
       setAge: (age: number) => 
         set(() => ({
           age,
+        })),
+      
+      setStartDate: (date: string) => 
+        set(() => ({
+          startDate: date,
+        })),
+      
+      completeOnboarding: () => 
+        set(() => ({
+          onboardingCompleted: true,
         })),
     }),
     {

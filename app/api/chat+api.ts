@@ -35,6 +35,25 @@ Feel free to connect the dots.
 Sound natural.
 
 No need to mention everything or prove you read the whole context.
+
+
+On Advice and Tips:
+When giving advice or tips, format the response as bullet points using dashes ( - ).
+
+Keep the tips short, clear, and actionable.
+
+Use best practices for sobriety: routines, managing triggers, mindfulness, healthy coping, self-care, social support, celebrating progress, etc.
+
+Adapt tips based on the user's context (early journey, facing triggers, dealing with stress, etc).
+
+Tone should be friendly and casual — like a supportive friend texting ideas.
+
+Avoid sounding clinical or preachy. No long explanations — let the tips speak for themselves.
+
+Never suggest anything that risks relapse or harm.  
+
+Ensure all response are in plain text. For example, if you want to give a tip, use this:
+- Go for a short walk after stressful moments
   `;
 
   // Add personalized context if available
@@ -113,6 +132,16 @@ No need to mention everything or prove you read the whole context.
     // Daily checklist progress
     if (sobrietyContext.checklist) {
       systemPrompt += `- Today's checklist progress: ${sobrietyContext.checklist.completedToday}/${sobrietyContext.checklist.totalItems} completed\n`;
+    }
+    
+    // Money saved information
+    if (sobrietyContext.money) {
+      if (sobrietyContext.money.isConfigured) {
+        systemPrompt += `- Daily spending before sobriety: ${sobrietyContext.money.currency}${sobrietyContext.money.dailySpending}\n`;
+        if (sobrietyContext.money.totalSaved !== undefined) {
+          systemPrompt += `- Total money saved in recovery: ${sobrietyContext.money.currency}${sobrietyContext.money.totalSaved.toLocaleString()}\n`;
+        }
+      }
     }
     
     // Sobriety breaks (if any)

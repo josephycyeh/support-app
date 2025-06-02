@@ -22,10 +22,6 @@ export const XPProgressBar = () => {
       <View style={styles.xpTextContainer}>
         <Text style={styles.xpText}>{xp} / {xpToNextLevel}</Text>
       </View>
-      <View style={styles.unlockPreview}>
-        <Sparkles size={12} color={colors.accent} />
-        <Text style={styles.unlockText}>Next level: New Sushi animations!</Text>
-      </View>
     </View>
   );
 };

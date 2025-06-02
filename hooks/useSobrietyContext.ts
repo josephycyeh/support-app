@@ -5,6 +5,7 @@ import { useJournalStore } from '@/store/journalStore';
 import { useMoodStore } from '@/store/moodStore';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useActivityStore } from '@/store/activityStore';
+import { useMoneySavedStore } from '@/store/moneySavedStore';
 
 // TypeScript interfaces for better type safety
 export interface PersonalInfo {
@@ -52,6 +53,13 @@ export interface ChecklistInfo {
   totalItems: number;
 }
 
+export interface MoneyInfo {
+  isConfigured: boolean;
+  dailySpending: number;
+  currency: string;
+  totalSaved?: number;
+}
+
 export interface SobrietyContext {
   personal: PersonalInfo;
   progress: ProgressInfo;
@@ -59,6 +67,7 @@ export interface SobrietyContext {
   mood: MoodInfo;
   journal: JournalInfo;
   checklist: ChecklistInfo;
+  money: MoneyInfo;
   reasons: any[];
 }
 
@@ -74,12 +83,13 @@ export function useSobrietyContext(): SobrietyContext {
   const { entries: moodEntries, getAverageMood, getMoodStreak } = useMoodStore();
   const { items: checklistItems } = useChecklistStore();
   const { breathingExercises, journalEntries: journalCount, cravingsOvercome } = useActivityStore();
+  const { isConfigured, dailySpending, currency, calculateTotalSaved } = useMoneySavedStore();
   
   // Calculate days sober (memoized for performance)
   const daysSober = useMemo(() => {
     const today = new Date();
     const start = new Date(startDate); // startDate is always ISO timestamp now
-    return Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(0, Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
   }, [startDate]);
 
   // Build comprehensive sobriety context
@@ -124,6 +134,12 @@ export function useSobrietyContext(): SobrietyContext {
         completedToday: checklistItems.filter(item => item.completed).length,
         totalItems: checklistItems.length,
       },
+      money: {
+        isConfigured,
+        dailySpending,
+        currency,
+        totalSaved: isConfigured ? calculateTotalSaved(daysSober) : undefined,
+      },
       reasons,
     };
     
@@ -142,7 +158,8 @@ export function useSobrietyContext(): SobrietyContext {
     level, xp, xpToNextLevel, milestonesReached, sobrietyBreaks,
     breathingExercises, journalCount, cravingsOvercome, dailyXP,
     getAverageMood, getMoodStreak, moodEntries,
-    journalEntries, checklistItems, reasons
+    journalEntries, checklistItems, reasons,
+    isConfigured, dailySpending, currency, calculateTotalSaved
   ]);
 
   return context;

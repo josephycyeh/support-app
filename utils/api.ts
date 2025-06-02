@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 
 export const generateAPIUrl = (relativePath: string) => {
-  const origin = 'https://sushi-support-app.expo.app';
+  const origin = 'http://localhost:8081';
   const path = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
 
   if (process.env.NODE_ENV === 'development') {

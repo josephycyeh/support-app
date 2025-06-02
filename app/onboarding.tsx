@@ -1,0 +1,647 @@
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Calendar, Heart, User, Check, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import colors from '@/constants/colors';
+import { useSobrietyStore } from '@/store/sobrietyStore';
+import { useReasonsStore } from '@/store/reasonsStore';
+import * as Haptics from 'expo-haptics';
+
+enum OnboardingStep {
+  WELCOME = 0,
+  NAME = 1,
+  AGE = 2,
+  SOBRIETY_DATE = 3,
+  REASONS = 4,
+  COMPLETE = 5,
+}
+
+export default function OnboardingScreen() {
+  const router = useRouter();
+  const { setName, setStartDate, setAge, completeOnboarding } = useSobrietyStore();
+  const { addReason } = useReasonsStore();
+  
+  const [currentStep, setCurrentStep] = useState(OnboardingStep.WELCOME);
+  const [userName, setUserName] = useState('');
+  const [userAge, setUserAge] = useState('');
+  const [sobrietyDate, setSobrietyDate] = useState(new Date());
+  const [currentReason, setCurrentReason] = useState('');
+  const [reasons, setReasons] = useState<string[]>([]);
+
+  const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (currentStep < OnboardingStep.COMPLETE) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (currentStep > OnboardingStep.WELCOME) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleAddReason = () => {
+    if (currentReason.trim()) {
+      setReasons([...reasons, currentReason.trim()]);
+      setCurrentReason('');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  };
+
+  const handleRemoveReason = (index: number) => {
+    setReasons(reasons.filter((_, i) => i !== index));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleComplete = () => {
+    // Save all data to stores
+    if (userName.trim()) {
+      setName(userName.trim());
+    }
+    if (userAge.trim()) {
+      setAge(parseInt(userAge));
+    }
+    setStartDate(sobrietyDate.toISOString());
+    
+    // Add all reasons
+    reasons.forEach(reason => {
+      addReason(reason);
+    });
+
+    // Mark onboarding as complete and navigate to main app
+    completeOnboarding();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    router.replace('/(tabs)');
+  };
+
+  const canProceedFromStep = () => {
+    switch (currentStep) {
+      case OnboardingStep.WELCOME:
+        return true;
+      case OnboardingStep.NAME:
+        return userName.trim().length > 0;
+      case OnboardingStep.AGE:
+        return userAge.trim().length > 0 && parseInt(userAge) >= 13 && parseInt(userAge) <= 100;
+      case OnboardingStep.SOBRIETY_DATE:
+        return true;
+      case OnboardingStep.REASONS:
+        return reasons.length > 0;
+      default:
+        return true;
+    }
+  };
+
+  const renderProgressBar = () => (
+    <View style={styles.progressContainer}>
+      {[0, 1, 2, 3, 4].map((step) => (
+        <View
+          key={step}
+          style={[
+            styles.progressDot,
+            currentStep >= step && styles.progressDotActive
+          ]}
+        />
+      ))}
+    </View>
+  );
+
+  const renderWelcome = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.welcomeTitle}>Welcome to Sushi</Text>
+      <Text style={styles.welcomeSubtitle}>Your Sobriety Companion</Text>
+      
+      <View style={styles.welcomeContent}>
+        <Text style={styles.welcomeDescription}>
+          I'm here to support you on your recovery journey. Let's get started by setting up your profile.
+        </Text>
+        
+        <View style={styles.featureList}>
+          <FeatureItem icon={<Heart size={20} color={colors.primary} />} text="Track your progress" />
+          <FeatureItem icon={<User size={20} color={colors.primary} />} text="Personalized companion" />
+          <FeatureItem icon={<Calendar size={20} color={colors.primary} />} text="Daily goals & motivation" />
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderNameStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>What's your name?</Text>
+      <Text style={styles.stepSubtitle}>I'd love to know what to call you</Text>
+      
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          value={userName}
+          onChangeText={setUserName}
+          placeholder="Enter your name"
+          placeholderTextColor={colors.textMuted}
+          autoFocus
+          returnKeyType="next"
+          onSubmitEditing={canProceedFromStep() ? handleNext : undefined}
+        />
+      </View>
+    </View>
+  );
+
+  const renderAgeStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>How old are you?</Text>
+      <Text style={styles.stepSubtitle}>This helps me provide better support</Text>
+      
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          value={userAge}
+          onChangeText={(text) => {
+            // Only allow numbers
+            const numericText = text.replace(/[^0-9]/g, '');
+            setUserAge(numericText);
+          }}
+          placeholder="Enter your age"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="number-pad"
+          autoFocus
+          returnKeyType="next"
+          onSubmitEditing={canProceedFromStep() ? handleNext : undefined}
+        />
+        {userAge && (parseInt(userAge) < 13 || parseInt(userAge) > 100) && (
+          <Text style={styles.errorText}>Please enter a valid age (13-100)</Text>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderSobrietyDateStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>When did you start your journey?</Text>
+      <Text style={styles.stepSubtitle}>Set your sobriety start date</Text>
+      
+      <View style={styles.datePickerContainer}>
+        <DateTimePicker
+          value={sobrietyDate}
+          mode="date"
+          display="spinner"
+          onChange={(event, selectedDate) => {
+            if (selectedDate) {
+              setSobrietyDate(selectedDate);
+            }
+          }}
+          maximumDate={new Date()}
+          style={styles.datePicker}
+        />
+      </View>
+    </View>
+  );
+
+  const renderReasonsStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Why are you making this change?</Text>
+      <Text style={styles.stepSubtitle}>Your reasons will keep you motivated</Text>
+      
+      <View style={styles.reasonsInputContainer}>
+        <TextInput
+          style={styles.reasonInput}
+          value={currentReason}
+          onChangeText={setCurrentReason}
+          placeholder="Enter a reason for your recovery..."
+          placeholderTextColor={colors.textMuted}
+          multiline
+          returnKeyType="done"
+          onSubmitEditing={handleAddReason}
+        />
+        <TouchableOpacity
+          style={[styles.addReasonButton, !currentReason.trim() && styles.addReasonButtonDisabled]}
+          onPress={handleAddReason}
+          disabled={!currentReason.trim()}
+        >
+          <Text style={styles.addReasonButtonText}>Add Reason</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.reasonsList}>
+        {reasons.map((reason, index) => (
+          <View key={index} style={styles.reasonItem}>
+            <Heart size={16} color={colors.primary} />
+            <Text style={styles.reasonText}>{reason}</Text>
+            <TouchableOpacity onPress={() => handleRemoveReason(index)}>
+              <Text style={styles.removeReasonText}>Remove</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
+      </ScrollView>
+
+      {reasons.length === 0 && (
+        <View style={styles.emptyReasonsContainer}>
+          <Text style={styles.emptyReasonsText}>Add your first reason to continue</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderComplete = () => (
+    <View style={styles.stepContainer}>
+      <View style={styles.completeIcon}>
+        <Check size={40} color="#FFFFFF" />
+      </View>
+      <Text style={styles.completeTitle}>You're all set!</Text>
+      <Text style={styles.completeSubtitle}>
+        Welcome to your recovery journey, {userName}
+      </Text>
+      
+      <View style={styles.completeSummary}>
+        <Text style={styles.summaryText}>Your journey starts here:</Text>
+        <View style={styles.summaryItem}>
+          <Calendar size={16} color={colors.primary} />
+          <Text style={styles.summaryValue}>
+            Starting from {sobrietyDate.toLocaleDateString()}
+          </Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Heart size={16} color={colors.primary} />
+          <Text style={styles.summaryValue}>
+            {reasons.length} reason{reasons.length !== 1 ? 's' : ''} for change
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case OnboardingStep.WELCOME:
+        return renderWelcome();
+      case OnboardingStep.NAME:
+        return renderNameStep();
+      case OnboardingStep.AGE:
+        return renderAgeStep();
+      case OnboardingStep.SOBRIETY_DATE:
+        return renderSobrietyDateStep();
+      case OnboardingStep.REASONS:
+        return renderReasonsStep();
+      case OnboardingStep.COMPLETE:
+        return renderComplete();
+      default:
+        return renderWelcome();
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.header}>
+          {renderProgressBar()}
+        </View>
+
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          {renderCurrentStep()}
+        </ScrollView>
+
+        <View style={styles.footer}>
+          {currentStep > OnboardingStep.WELCOME && (
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <ArrowLeft size={20} color={colors.textLight} />
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+          )}
+          
+          <View style={styles.spacer} />
+          
+          {currentStep < OnboardingStep.COMPLETE ? (
+            <TouchableOpacity
+              style={[
+                styles.nextButton,
+                !canProceedFromStep() && styles.nextButtonDisabled
+              ]}
+              onPress={handleNext}
+              disabled={!canProceedFromStep()}
+            >
+              <Text style={styles.nextButtonText}>
+                {currentStep === OnboardingStep.WELCOME ? 'Get Started' : 'Continue'}
+              </Text>
+              <ArrowRight size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+              <Text style={styles.completeButtonText}>Start My Journey</Text>
+              <Check size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const FeatureItem = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
+  <View style={styles.featureItem}>
+    {icon}
+    <Text style={styles.featureText}>{text}</Text>
+  </View>
+);
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  progressDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+  },
+  progressDotActive: {
+    backgroundColor: colors.primary,
+    width: 24,
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  stepContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  welcomeTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 20,
+    color: colors.primary,
+    textAlign: 'center',
+    marginBottom: 40,
+    fontWeight: '600',
+  },
+  welcomeContent: {
+    alignItems: 'center',
+    maxWidth: 300,
+  },
+  welcomeDescription: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 40,
+  },
+  featureList: {
+    gap: 16,
+    alignSelf: 'stretch',
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  featureText: {
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  stepTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  stepSubtitle: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  inputContainer: {
+    width: '100%',
+    maxWidth: 300,
+  },
+  textInput: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    fontSize: 18,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+    textAlign: 'center',
+  },
+  datePickerContainer: {
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  datePicker: {
+    height: 200,
+    width: '100%',
+  },
+  reasonsInputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  reasonInput: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  addReasonButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  addReasonButtonDisabled: {
+    backgroundColor: colors.textMuted,
+    opacity: 0.5,
+  },
+  addReasonButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  reasonsList: {
+    width: '100%',
+    maxHeight: 200,
+  },
+  reasonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  reasonText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 12,
+  },
+  removeReasonText: {
+    fontSize: 12,
+    color: colors.danger,
+    fontWeight: '600',
+  },
+  emptyReasonsContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyReasonsText: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  completeIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.success,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  completeTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  completeSubtitle: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  completeSummary: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: colors.textLight,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  summaryValue: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: '500',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 40,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: colors.textLight,
+    fontWeight: '500',
+  },
+  spacer: {
+    flex: 1,
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  nextButtonDisabled: {
+    backgroundColor: colors.textMuted,
+    opacity: 0.5,
+  },
+  nextButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  completeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.success,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  completeButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.danger,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+}); 

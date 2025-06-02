@@ -14,10 +14,11 @@ import { EditReasonModal } from '@/components/EditReasonModal';
 import { EditNameModal } from '@/components/EditNameModal';
 import { EditAgeModal } from '@/components/EditAgeModal';
 import Modal from 'react-native-modal';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge } = useSobrietyStore();
+  const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge, setStartDate } = useSobrietyStore();
   const { reasons, addReason, updateReason, deleteReason } = useReasonsStore();
   const { clearHistory } = useChatStore();
   
@@ -25,6 +26,8 @@ export default function ProfileScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
   const [showAgeModal, setShowAgeModal] = useState(false);
+  const [showSobrietyDateModal, setShowSobrietyDateModal] = useState(false);
+  const [tempSobrietyDate, setTempSobrietyDate] = useState(new Date());
   const [selectedReason, setSelectedReason] = useState<{id: string, text: string} | null>(null);
   
   // Calculate days sober using consistent ISO timestamp format
@@ -141,6 +144,21 @@ export default function ProfileScreen() {
     );
   };
   
+  const handleEditSobrietyDate = () => {
+    setTempSobrietyDate(new Date(startDate));
+    setShowSobrietyDateModal(true);
+  };
+  
+  const handleSaveSobrietyDate = (date: Date) => {
+    // Update the sobriety start date
+    setStartDate(date.toISOString());
+    setShowSobrietyDateModal(false);
+  };
+  
+  const closeSobrietyDateModal = () => {
+    setShowSobrietyDateModal(false);
+  };
+  
   return (
     <View style={styles.container}>
       <Stack.Screen 
@@ -190,6 +208,8 @@ export default function ProfileScreen() {
               icon={<Calendar size={20} color={colors.primary} />}
               label="Sobriety Date"
               value={new Date(startDate).toLocaleDateString()}
+              isEditable
+              onEdit={handleEditSobrietyDate}
             />
           </Card>
         </View>
@@ -265,6 +285,53 @@ export default function ProfileScreen() {
         onClose={closeAgeModal}
         onSave={handleSaveAge}
       />
+      
+      {/* Sobriety Date Modal */}
+      <Modal
+        isVisible={showSobrietyDateModal}
+        onBackdropPress={closeSobrietyDateModal}
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Update Sobriety Date</Text>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={closeSobrietyDateModal}
+            >
+              <X size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.datePickerContainer}>
+            <DateTimePicker
+              value={tempSobrietyDate}
+              mode="date"
+              display="spinner"
+              onChange={(event, selectedDate) => {
+                if (selectedDate) {
+                  setTempSobrietyDate(selectedDate);
+                }
+              }}
+              maximumDate={new Date()}
+              style={{ height: 200, width: '100%' }}
+            />
+          </View>
+          
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={styles.modalActionButtonFull} onPress={closeSobrietyDateModal}>
+              <View style={styles.modalActionButton}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalActionButtonFull} onPress={() => handleSaveSobrietyDate(tempSobrietyDate)}>
+              <View style={[styles.modalActionButton, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Save</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -497,12 +564,19 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   modalActionButton: {
-    flex: 1,
-    marginHorizontal: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: colors.cardBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   modalActionButtonFull: {
     flex: 1,
-    marginHorizontal: 0,
+    marginHorizontal: 6,
   },
   modalDeleteButtonInner: {
     flexDirection: 'row',
@@ -547,5 +621,10 @@ const styles = StyleSheet.create({
   datePickerContainer: {
     marginVertical: 20,
     alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });

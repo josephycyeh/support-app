@@ -16,11 +16,7 @@ interface ReasonsStore {
 }
 
 // Initial default reasons
-const defaultReasons: Reason[] = [
-  { id: '1', text: 'To be present for my family and rebuild trust' },
-  { id: '2', text: 'To improve my physical and mental health' },
-  { id: '3', text: 'To rediscover my passions and hobbies' },
-];
+const defaultReasons: Reason[] = [];
 
 export const useReasonsStore = create<ReasonsStore>()(
   persist(
