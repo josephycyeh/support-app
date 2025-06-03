@@ -121,16 +121,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingTop: 16,
-    gap: 16,
+    padding: 20,
+    paddingTop: 20,
+    gap: 24,
   },
   cardRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    height: 120,
-    gap: 16,
+    height: 140,
+    gap: 20,
   },
   checklistContainer: {
   },

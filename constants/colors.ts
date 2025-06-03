@@ -11,7 +11,7 @@ const colors = {
   border: '#E5E0DB', // Warmer, subtle border color
   success: '#9CCFB0', // Richer mint green
   warning: '#F2D0A4', // Warm amber
-  danger: '#F0A1A1', // Softer, warmer red for SOS
+  danger: '#E89393', // Slightly more contrasted but still muted pink for SOS
   progressBackground: '#EDF1F8', // Light blue-tinted background
   progressFill: '#6B98C2', // Matches primary
   companionBlue: '#8BBAE2', // Softer blue for companion

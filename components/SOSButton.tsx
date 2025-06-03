@@ -3,6 +3,7 @@ import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Heart } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import * as Haptics from 'expo-haptics';
 
 export const SOSButton = () => {
@@ -32,7 +33,7 @@ export const SOSButton = () => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 28,
+    bottom: 12,
     right: 28,
     zIndex: 100,
   },
@@ -52,8 +53,8 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   buttonText: {
+    ...typography.caption,
     color: '#FFFFFF',
-    fontSize: 12,
     fontWeight: '700',
     marginTop: 2,
   },

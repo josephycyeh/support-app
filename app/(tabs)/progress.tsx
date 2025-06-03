@@ -293,6 +293,7 @@ export default function ProgressScreen() {
         {/* Stats Section */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Your Stats</Text>
+          <Text style={styles.sectionSubtitle}>Track your recovery activities</Text>
           <View style={styles.statsGrid}>
             <StatCard 
               title="Breathing Exercises"

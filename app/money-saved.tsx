@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Sta
 import { Stack, useRouter } from 'expo-router';
 import { ArrowLeft, DollarSign, Edit3, TrendingUp, Calendar, Clock, Target } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { MoneyProjectionChart } from '@/components/MoneyProjectionChart';
@@ -185,14 +186,11 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
+    ...typography.h1,
     marginBottom: 6,
   },
   headerSubtitle: {
-    fontSize: 17,
-    color: colors.textLight,
+    ...typography.bodySecondary,
     fontWeight: '500',
   },
   // Total saved card
@@ -303,9 +301,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.h2,
   },
   breakdownContent: {
     padding: 24,

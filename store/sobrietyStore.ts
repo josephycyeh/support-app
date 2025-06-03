@@ -46,7 +46,6 @@ const getDefaultState = (): SobrietyState => {
     levelUp: false,
     dailyXP: defaultDailyXP,
     sobrietyBreaks: [],
-    milestonesReached: [],
     onboardingCompleted: false,
   };
 };
@@ -58,29 +57,30 @@ export const useSobrietyStore = create<SobrietyStore>()(
       
       addXP: (amount: number) => 
         set((state) => {
-          const newXP = state.xp + amount;
+          let newXP = state.xp + amount;
+          let newLevel = state.level;
+          let newXpToNextLevel = state.xpToNextLevel;
+          let leveledUp = false;
           const today = getTodayDateStr();
           
           // Update daily XP record
           const newDailyXP = { ...state.dailyXP };
           newDailyXP[today] = (newDailyXP[today] || 0) + amount;
           
-          // Check if user leveled up
-          if (newXP >= state.xpToNextLevel) {
-            const newLevel = state.level + 1;
-            return {
-              ...state, // Preserve all existing state
-              xp: newXP - state.xpToNextLevel, // Carry over excess XP
-              level: newLevel,
-              xpToNextLevel: calculateXpForNextLevel(newLevel),
-              levelUp: true, // Set the level up flag
-              dailyXP: newDailyXP,
-            };
+          // Handle multiple level-ups if the XP amount is large enough
+          while (newXP >= newXpToNextLevel) {
+            newXP -= newXpToNextLevel; // Subtract the XP needed for current level
+            newLevel++; // Level up!
+            newXpToNextLevel = calculateXpForNextLevel(newLevel); // Calculate XP needed for next level
+            leveledUp = true;
           }
           
           return { 
             ...state, // Preserve all existing state
             xp: newXP,
+            level: newLevel,
+            xpToNextLevel: newXpToNextLevel,
+            levelUp: leveledUp,
             dailyXP: newDailyXP,
           };
         }),
@@ -147,50 +147,54 @@ export const useSobrietyStore = create<SobrietyStore>()(
             { days: 1825, xp: 2500 },
           ];
           
-          let totalXPAwarded = 0;
-          const newMilestonesReached = [...state.milestonesReached];
-          
-          // Check each milestone
+          // Find the highest milestone reached
+          let milestoneToAward = null;
           for (const milestone of milestones) {
-            if (daysSober >= milestone.days && !state.milestonesReached.includes(milestone.days)) {
-              totalXPAwarded += milestone.xp;
-              newMilestonesReached.push(milestone.days);
+            if (daysSober >= milestone.days) {
+              milestoneToAward = milestone;
             }
           }
           
-          // If no new milestones, return current state
-          if (totalXPAwarded === 0) {
-            return state;
+          // Check if we should award this milestone
+          if (milestoneToAward) {
+            const today = getTodayDateStr();
+            const todaysXP = state.dailyXP[today] || 0;
+            
+            // Check if we've already awarded this specific milestone by looking for large XP amounts
+            // that match milestone rewards (crude but effective)
+            const hasAlreadyAwardedThisMilestone = todaysXP >= milestoneToAward.xp;
+            
+            if (!hasAlreadyAwardedThisMilestone) {
+              // Calculate new XP and level with proper multiple level-up handling
+              let newXP = state.xp + milestoneToAward.xp;
+              let newLevel = state.level;
+              let newXpToNextLevel = state.xpToNextLevel;
+              let leveledUp = false;
+              
+              // Handle multiple level-ups if the XP award is large enough
+              while (newXP >= newXpToNextLevel) {
+                newXP -= newXpToNextLevel; // Subtract the XP needed for current level
+                newLevel++; // Level up!
+                newXpToNextLevel = calculateXpForNextLevel(newLevel); // Calculate XP needed for next level
+                leveledUp = true;
+              }
+              
+              // Update daily XP record
+              const newDailyXP = { ...state.dailyXP };
+              newDailyXP[today] = (newDailyXP[today] || 0) + milestoneToAward.xp;
+              
+              return {
+                ...state,
+                xp: newXP,
+                level: newLevel,
+                xpToNextLevel: newXpToNextLevel,
+                levelUp: leveledUp,
+                dailyXP: newDailyXP,
+              };
+            }
           }
           
-          // Calculate new XP and level
-          const newXP = state.xp + totalXPAwarded;
-          const today = getTodayDateStr();
-          
-          // Update daily XP record
-          const newDailyXP = { ...state.dailyXP };
-          newDailyXP[today] = (newDailyXP[today] || 0) + totalXPAwarded;
-          
-          // Check if user leveled up
-          if (newXP >= state.xpToNextLevel) {
-            const newLevel = state.level + 1;
-            return {
-              ...state,
-              xp: newXP - state.xpToNextLevel,
-              level: newLevel,
-              xpToNextLevel: calculateXpForNextLevel(newLevel),
-              levelUp: true,
-              dailyXP: newDailyXP,
-              milestonesReached: newMilestonesReached,
-            };
-          }
-          
-          return {
-            ...state,
-            xp: newXP,
-            dailyXP: newDailyXP,
-            milestonesReached: newMilestonesReached,
-          };
+          return state; // No milestone to award
         }),
       
       setName: (name: string) => 
@@ -204,9 +208,26 @@ export const useSobrietyStore = create<SobrietyStore>()(
         })),
       
       setStartDate: (date: string) => 
-        set(() => ({
-          startDate: date,
-        })),
+        set((state) => {
+          // When manually setting start date, completely reset all progression data
+          // This is like starting completely fresh from that date
+          const newStartDate = date;
+          const today = getTodayDateStr();
+          const resetDailyXP: Record<string, number> = {};
+          resetDailyXP[today] = 0; // Initialize today with 0 XP
+          
+          return {
+            ...state, // Preserve personal info (name, age, onboarding status)
+            startDate: newStartDate,
+            xp: 0, // Reset XP to 0
+            level: 1, // Reset level to 1
+            xpToNextLevel: calculateXpForNextLevel(1), // Reset XP needed for next level
+            levelUp: false, // Clear any level up flags
+            dailyXP: resetDailyXP, // Clear all daily XP history
+            sobrietyBreaks: [], // Clear sobriety break history (fresh start)
+            // Keep firstAppUseDate unchanged - this should never change
+          };
+        }),
       
       completeOnboarding: () => 
         set(() => ({

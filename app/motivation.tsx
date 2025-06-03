@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, Sta
 import { Stack, useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { useMotivationStore, MOTIVATION_PACKS, MotivationPack, Quote } from '@/store/motivationStore';
 import * as Haptics from 'expo-haptics';
 
@@ -173,14 +174,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.h1,
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: colors.textLight,
+    ...typography.bodySecondary,
   },
   packsContainer: {
     gap: 16,
@@ -224,19 +222,18 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.cardBackground,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    marginHorizontal: 16,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   packHeaderContent: {
     alignItems: 'center',

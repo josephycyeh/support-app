@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Modal } from 'react-na
 import { MessageSquare, Wind, BookOpen } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { Button } from '@/components/ui/Button';
 import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
@@ -114,7 +115,7 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
               style={styles.actionButton}
               onPress={handleBreathingPress}
             >
-              <Wind size={24} color={colors.primary} />
+              <Wind size={28} color={colors.primary} />
             </TouchableOpacity>
             <Text style={styles.actionButtonLabel}>Breathing</Text>
           </View>
@@ -134,7 +135,7 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
                 resizeMode="cover"
               />
               <View style={styles.lottieContainer}>
-                {/* Petting animation */}
+         
                 <LottieView
                   ref={lottieRef}
                   source={require('@/assets/images/getting petted_opt.json')}
@@ -153,7 +154,7 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
               style={styles.actionButton}
             onPress={handleJournalPress}
           >
-            <BookOpen size={24} color={colors.primary} />
+            <BookOpen size={28} color={colors.primary} />
           </TouchableOpacity>
             <Text style={styles.actionButtonLabel}>Journal</Text>
           </View>
@@ -205,8 +206,8 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'center', 
+    marginBottom: 8
   },
   companionContainer: {
     alignItems: 'center',
@@ -255,6 +256,8 @@ const styles = StyleSheet.create({
   },
   actionButtonContainer: {
     alignItems: 'center',
+    paddingTop: 16,
+    gap: 8,
   },
   leftButtonContainer: {
     position: 'absolute',
@@ -266,20 +269,25 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 30,
-    padding: 12,
+    borderRadius: 28,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-    marginBottom: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   actionButtonLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors.primary,
+    ...typography.caption,
+    color: colors.text,
     textAlign: 'center',
+    fontWeight: '600',
   },
   // Level Up Modal Styles
   levelUpOverlay: {

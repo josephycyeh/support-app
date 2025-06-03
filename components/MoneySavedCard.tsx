@@ -76,10 +76,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     flex: 1,
-    height: 120,
+    height: 140,
   },
   gradientBackground: {
-    backgroundColor: colors.success,
+    backgroundColor: '#6B9B77',
     borderRadius: 16,
     padding: 20,
     overflow: 'hidden',
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   titleLabel: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.95)',
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   amountContainer: {
-    height: 42,
+    height: 72,
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 4,
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.95)',
     fontWeight: '500',
     textAlign: 'center',
   },

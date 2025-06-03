@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 
 interface HeaderProps {
   title?: string;
@@ -81,9 +83,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.h2,
   },
   headerRight: {
     width: 44,

@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Trophy, Clock, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import * as Haptics from 'expo-haptics';
+import typography from '@/constants/typography';
 
 const MILESTONES = [
   { days: 1, title: "First Day", icon: Clock, color: colors.primary },
@@ -21,16 +23,16 @@ const MILESTONES = [
 
 export const MilestoneCard = () => {
   const router = useRouter();
-  const { startDate, milestonesReached } = useSobrietyStore();
+  const { startDate } = useSobrietyStore();
 
   // Calculate days sober
   const now = new Date();
   const start = new Date(startDate);
   const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
 
-  // Find next milestone
+  // Find next milestone based purely on current streak (consistent with Progress screen)
   const nextMilestone = MILESTONES.find(milestone => 
-    daysSober < milestone.days && !milestonesReached.includes(milestone.days)
+    daysSober < milestone.days
   );
 
   // If no next milestone found, show the highest one
@@ -39,16 +41,8 @@ export const MilestoneCard = () => {
   const daysToGo = Math.max(0, milestone.days - daysSober);
   const isCompleted = daysSober >= milestone.days;
 
-  // Calculate progress for progress bar
-  const previousMilestone = MILESTONES.find((m, index) => {
-    const nextIndex = MILESTONES.findIndex(mil => mil.days === milestone.days);
-    return index === nextIndex - 1;
-  });
-  
-  const startDays = previousMilestone ? previousMilestone.days : 0;
-  const totalDaysNeeded = milestone.days - startDays;
-  const currentProgress = daysSober - startDays;
-  const progressPercentage = Math.min(Math.max((currentProgress / totalDaysNeeded) * 100, 0), 100);
+  // Calculate progress for progress bar (simple: progress toward milestone from day 0)
+  const progressPercentage = Math.min(Math.max((daysSober / milestone.days) * 100, 0), 100);
 
   const handlePress = () => {
     router.push('/(tabs)/progress');
@@ -74,10 +68,14 @@ export const MilestoneCard = () => {
               <Text style={styles.nextLabel}>Next Milestone</Text>
               <Text style={styles.milestoneTitle}>{milestone.title}</Text>
               
-              {/* Progress Bar */}
+              {/* Progress Visualization */}
               <View style={styles.progressContainer}>
                 <View style={styles.progressTrack}>
                   <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+                  <View style={styles.progressGlow} />
+                </View>
+                <View style={styles.progressPercentage}>
+                  <Text style={styles.progressPercentageText}>{Math.round(progressPercentage)}%</Text>
                 </View>
               </View>
               
@@ -99,7 +97,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     flex: 1,
-    height: 120,
+    height: 140,
   },
   gradientBackground: {
     borderRadius: 16,
@@ -116,47 +114,82 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   nextLabel: {
-    fontSize: 10,
+    ...typography.label,
     color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
     marginBottom: 6,
   },
   milestoneTitle: {
-    fontSize: 18,
+    ...typography.h3,
     color: '#FFFFFF',
-    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 12,
     lineHeight: 22,
   },
   daysToGo: {
-    fontSize: 13,
+    ...typography.bodySmall,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
     marginTop: 8,
   },
   achievedText: {
-    fontSize: 16,
+    ...typography.body,
     fontWeight: '700',
     color: '#FFFFFF',
     textAlign: 'center',
   },
   progressContainer: {
     width: '100%',
-    marginVertical: 4,
+    marginVertical: 8,
+    position: 'relative',
   },
   progressTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 2,
+    height: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    shadowColor: '#FFFFFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  progressGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 2,
+  },
+  progressPercentage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  progressPercentageText: {
+    ...typography.caption,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 }); 

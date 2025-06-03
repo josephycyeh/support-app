@@ -58,7 +58,6 @@ export const populateDemoData = () => {
     levelUp: false,
     dailyXP: {},
     sobrietyBreaks: [],
-    milestonesReached: [],
     // We'll set startDate and other data below
   });
   
@@ -130,7 +129,6 @@ export const populateDemoData = () => {
     level: currentLevel,
     xpToNextLevel: xpToNextLevel,
     dailyXP: dailyXP,
-    milestonesReached: [1, 3, 7, 14, 30], // 45 days means these milestones are reached
     sobrietyBreaks: [], // Clean streak
   });
   

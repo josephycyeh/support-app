@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, View } from 'react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 
 interface ButtonProps {
   onPress: () => void;
@@ -86,8 +87,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   text: {
-    fontWeight: '600',
-    fontSize: 16,
+    ...typography.button,
   },
   primaryText: {
     color: '#FFFFFF',

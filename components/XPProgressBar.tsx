@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Sparkles } from 'lucide-react-native';
+import { Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
 export const XPProgressBar = () => {
@@ -13,8 +14,11 @@ export const XPProgressBar = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.xpLabel}>XP</Text>
-        <Text style={styles.levelText}>Lvl {level}</Text>
+        <Text style={styles.xpLabel}>XP Progress</Text>
+        <View style={styles.levelBadge}>
+          <Star size={12} color="#FFFFFF" />
+          <Text style={styles.levelText}>Lvl {level}</Text>
+        </View>
       </View>
       <View style={styles.progressBarContainer}>
         <View style={[styles.progressBar, { width: `${progressPercentage}%` }]} />
@@ -29,56 +33,58 @@ export const XPProgressBar = () => {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginBottom: 14,
-    marginTop: 4,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 10,
   },
   xpLabel: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...typography.h4,
     color: colors.text,
   },
+  levelBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    gap: 4,
+  },
   levelText: {
-    fontSize: 14,
-    color: colors.textLight,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   progressBarContainer: {
-    height: 12,
+    height: 14,
     backgroundColor: colors.progressBackground,
-    borderRadius: 6,
+    borderRadius: 7,
     overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   progressBar: {
     height: '100%',
-    backgroundColor: colors.progressFill,
-    borderRadius: 6,
+    backgroundColor: colors.primary,
+    borderRadius: 7,
   },
   xpTextContainer: {
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 10,
   },
   xpText: {
-    fontSize: 12,
-    color: colors.textLight,
-    fontWeight: '500',
-  },
-  unlockPreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-    gap: 4,
-  },
-  unlockText: {
-    fontSize: 11,
-    color: colors.accent,
+    ...typography.bodySmall,
     fontWeight: '600',
-    fontStyle: 'italic',
+    color: colors.text,
   },
 });

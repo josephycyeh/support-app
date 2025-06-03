@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 
 interface SectionHeaderProps {
   title: string;
@@ -22,13 +23,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.h2,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 14,
-    color: colors.textLight,
+    ...typography.bodySmall,
   },
 });

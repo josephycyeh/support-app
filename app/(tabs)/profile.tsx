@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert,
 import { Stack, useRouter } from 'expo-router';
 import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2, User, MessageSquare } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
 import { useChatStore } from '@/store/chatStore';
@@ -150,8 +151,12 @@ export default function ProfileScreen() {
   };
   
   const handleSaveSobrietyDate = (date: Date) => {
+    // Set the time to the beginning of the day (00:00:00) 
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
     // Update the sobriety start date
-    setStartDate(date.toISOString());
+    setStartDate(startOfDay.toISOString());
     setShowSobrietyDateModal(false);
   };
   
@@ -237,17 +242,17 @@ export default function ProfileScreen() {
           onPress={handleResetSobriety}
           variant="outline"
           style={styles.resetButton}
-          icon={<LogOut size={18} color={colors.danger} />}
+          icon={<LogOut size={18} color="#8B0000" />}
           textStyle={styles.resetButtonText}
         >
-          Reset Sobriety Counter
-        </Button>
+I Relapsed        
+</Button>
         
         <Button
           onPress={handleClearChatHistory}
           variant="secondary"
           style={styles.clearChatHistoryButton}
-          icon={<MessageSquare size={18} color={colors.primary} />}
+          icon={<MessageSquare size={18} color="#FFFFFF" />}
           textStyle={styles.clearChatHistoryButtonText}
         >
           Clear Chat History
@@ -378,14 +383,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.h1,
     marginBottom: 6,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: colors.textLight,
+    ...typography.bodySecondary,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -412,8 +414,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statLabel: {
-    fontSize: 14,
-    color: colors.textLight,
+    ...typography.bodySmall,
   },
   statDivider: {
     width: 1,
@@ -447,13 +448,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoLabel: {
-    fontSize: 14,
-    color: colors.textLight,
+    ...typography.bodySmall,
     marginBottom: 4,
   },
   infoValue: {
-    fontSize: 16,
-    color: colors.text,
+    ...typography.body,
     fontWeight: '500',
   },
   infoEditButton: {
@@ -463,7 +462,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   infoEditText: {
-    fontSize: 12,
+    ...typography.caption,
     color: colors.primary,
     fontWeight: '600',
   },
@@ -479,8 +478,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   reasonText: {
-    fontSize: 15,
-    color: colors.text,
+    ...typography.body,
     marginLeft: 16,
     flex: 1,
   },
@@ -490,25 +488,25 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   addReasonText: {
-    fontSize: 14,
+    ...typography.bodySmall,
     color: colors.primary,
     fontWeight: '600',
   },
   resetButton: {
     marginTop: 20,
-    backgroundColor: 'rgba(240, 161, 161, 0.15)',
-    borderColor: 'rgba(240, 161, 161, 0.3)',
+    backgroundColor: '#f0a1a1',
+    borderColor: '#e08888',
   },
   resetButtonText: {
-    color: colors.danger,
+    color: '#8B0000',
   },
   clearChatHistoryButton: {
     marginTop: 12,
-    backgroundColor: 'rgba(107, 152, 194, 0.15)',
-    borderColor: 'rgba(107, 152, 194, 0.3)',
+    backgroundColor: '#6b98c2',
+    borderColor: '#5a86ab',
   },
   clearChatHistoryButtonText: {
-    color: colors.primary,
+    color: '#FFFFFF',
   },
   modal: {
     margin: 0,
@@ -539,9 +537,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
+    ...typography.h3,
   },
   modalCloseButton: {
     padding: 5,
@@ -623,8 +619,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.button,
     color: colors.primary,
   },
 });

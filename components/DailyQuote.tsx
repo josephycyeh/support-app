@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Quote, RefreshCw } from 'lucide-react-native';
+import { Sparkles, RefreshCw } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { MOTIVATION_PACKS } from '@/store/motivationStore';
 import * as Haptics from 'expo-haptics';
 
@@ -36,8 +37,8 @@ export const DailyQuote = () => {
       activeOpacity={0.9}
     >
       <View style={styles.titleContainer}>
-        <Quote size={20} color={colors.primary} />
-        <Text style={styles.title}>Daily Quote</Text>
+        <Sparkles size={20} color={colors.primary} />
+        <Text style={styles.title}>Daily Motivation</Text>
       </View>
       <View style={styles.content}>
         <View style={styles.quoteContainer}>
@@ -54,7 +55,7 @@ export const DailyQuote = () => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -63,54 +64,57 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: colors.border,
+    position: 'relative',
+    overflow: 'hidden',
   },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    marginBottom: 16,
+    gap: 10,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...typography.h3,
     color: colors.text,
   },
   content: {
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
+    position: 'relative',
   },
   quoteContainer: {
     position: 'relative',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(248, 250, 252, 0.5)',
+    borderRadius: 16,
+    marginVertical: 8,
   },
   openQuote: {
     fontSize: 32,
     color: colors.primary,
-    fontWeight: '300',
+    fontWeight: '200',
     position: 'absolute',
     top: -8,
-    left: 0,
-    opacity: 0.8,
+    left: 8,
+    opacity: 0.6,
   },
   quoteText: {
+    ...typography.quote,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     fontSize: 16,
     lineHeight: 24,
     color: colors.text,
-    fontStyle: 'italic',
-    fontWeight: '500',
-    textAlign: 'center',
-    paddingHorizontal: 8,
-    letterSpacing: 0.3,
   },
   closeQuote: {
     fontSize: 32,
     color: colors.primary,
-    fontWeight: '300',
+    fontWeight: '200',
     position: 'absolute',
     bottom: -8,
-    right: 0,
-    opacity: 0.8,
+    right: 8,
+    opacity: 0.6,
   },
   quoteIcon: {
     marginRight: 12,
@@ -128,10 +132,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   tapHint: {
-    fontSize: 12,
-    color: colors.textMuted,
-    fontWeight: '600',
+    ...typography.caption,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 12,
+    color: colors.primary,
+    fontStyle: 'italic',
   },
 }); 

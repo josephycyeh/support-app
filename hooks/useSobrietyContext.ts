@@ -20,7 +20,6 @@ export interface ProgressInfo {
   level: number;
   xp: number;
   xpToNextLevel: number;
-  milestonesReached: number[];
   sobrietyBreaks: string[];
 }
 
@@ -77,7 +76,7 @@ export interface SobrietyContext {
  */
 export function useSobrietyContext(): SobrietyContext {
   // Get data from all stores
-  const { startDate, level, xp, xpToNextLevel, milestonesReached, firstAppUseDate, sobrietyBreaks, dailyXP, name, age } = useSobrietyStore();
+  const { startDate, level, xp, xpToNextLevel, firstAppUseDate, sobrietyBreaks, dailyXP, name, age } = useSobrietyStore();
   const { reasons } = useReasonsStore();
   const { entries: journalEntries } = useJournalStore();
   const { entries: moodEntries, getAverageMood, getMoodStreak } = useMoodStore();
@@ -106,7 +105,6 @@ export function useSobrietyContext(): SobrietyContext {
         level,
         xp,
         xpToNextLevel,
-        milestonesReached,
         sobrietyBreaks,
       },
       recentActivity: {
@@ -155,7 +153,7 @@ export function useSobrietyContext(): SobrietyContext {
     return sobrietyContext;
   }, [
     name, age, daysSober, startDate, firstAppUseDate,
-    level, xp, xpToNextLevel, milestonesReached, sobrietyBreaks,
+    level, xp, xpToNextLevel, sobrietyBreaks,
     breathingExercises, journalCount, cravingsOvercome, dailyXP,
     getAverageMood, getMoodStreak, moodEntries,
     journalEntries, checklistItems, reasons,

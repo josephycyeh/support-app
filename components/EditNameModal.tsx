@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, TextInput } from 'react-nativ
 import { X, Save } from 'lucide-react-native';
 import Modal from 'react-native-modal';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 
 interface EditNameModalProps {
   visible: boolean;
@@ -109,9 +110,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.h2,
   },
   modalCloseButton: {
     position: 'absolute',
@@ -157,8 +156,7 @@ const styles = StyleSheet.create({
   },
   modalSaveText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.button,
     marginLeft: 8,
   },
 }); 

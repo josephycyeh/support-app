@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { Card } from '@/components/ui/Card';
 import { createFadeInAnimation, createSafeAnimation } from '@/utils/animations';
@@ -8,6 +9,8 @@ import { createFadeInAnimation, createSafeAnimation } from '@/utils/animations';
 export const SobrietyTimer = () => {
   const { startDate } = useSobrietyStore();
   const [timeElapsed, setTimeElapsed] = useState({
+    years: 0,
+    months: 0,
     days: 0,
     hours: 0,
     minutes: 0,
@@ -28,18 +31,70 @@ export const SobrietyTimer = () => {
 
   useEffect(() => {
     const calculateTimeElapsed = () => {
-      // startDate is always an ISO timestamp now - consistent across all components
-      const start = new Date(startDate).getTime();
-      const now = new Date().getTime();
-      const difference = now - start;
+      const start = new Date(startDate);
+      const now = new Date();
       
-      // Convert to days, hours, minutes, seconds
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+      // Calculate years, months, and remaining days
+      let years = now.getFullYear() - start.getFullYear();
+      let months = now.getMonth() - start.getMonth();
       
-      setTimeElapsed({ days, hours, minutes, seconds });
+      // Adjust for negative months
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+      
+      // Calculate days within the current month
+      const startDay = start.getDate();
+      const nowDay = now.getDate();
+      let days = nowDay - startDay;
+      
+      // If current day is less than start day, subtract a month and add days from previous month
+      if (days < 0) {
+        months--;
+        if (months < 0) {
+          years--;
+          months += 12;
+        }
+        const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        days += prevMonth.getDate();
+      }
+      
+      // Calculate remaining time within the current day
+      let hours = now.getHours() - start.getHours();
+      let minutes = now.getMinutes() - start.getMinutes();
+      let seconds = now.getSeconds() - start.getSeconds();
+      
+      // Adjust for negative seconds
+      if (seconds < 0) {
+        minutes--;
+        seconds += 60;
+      }
+      
+      // Adjust for negative minutes
+      if (minutes < 0) {
+        hours--;
+        minutes += 60;
+      }
+      
+      // Adjust for negative hours
+      if (hours < 0) {
+        days--;
+        hours += 24;
+        
+        // If days becomes negative, adjust months and years
+        if (days < 0) {
+          months--;
+          if (months < 0) {
+            years--;
+            months += 12;
+          }
+          const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+          days += prevMonth.getDate();
+        }
+      }
+      
+      setTimeElapsed({ years, months, days, hours, minutes, seconds });
     };
 
     // Calculate immediately and then every second
@@ -49,20 +104,52 @@ export const SobrietyTimer = () => {
     return () => clearInterval(interval);
   }, [startDate]);
 
+  // Determine which time units to display based on duration
+  const getDisplayUnits = () => {
+    const { years, months, days, hours, minutes, seconds } = timeElapsed;
+    
+    if (years > 0) {
+      // Show years, months, days, hours for long-term sobriety
+      return [
+        { value: years, unit: years === 1 ? 'year' : 'years' },
+        { value: months, unit: months === 1 ? 'month' : 'months' },
+        { value: days, unit: 'days' },
+        { value: hours, unit: 'hours' }
+      ];
+    } else if (months > 0) {
+      // Show months, days, hours, minutes for medium-term sobriety
+      return [
+        { value: months, unit: months === 1 ? 'month' : 'months' },
+        { value: days, unit: 'days' },
+        { value: hours, unit: 'hours' },
+        { value: minutes, unit: 'min' }
+      ];
+    } else {
+      // Show days, hours, minutes, seconds for early sobriety
+      return [
+        { value: days, unit: 'days' },
+        { value: hours, unit: 'hours' },
+        { value: minutes, unit: 'min' },
+        { value: seconds, unit: 'sec' }
+      ];
+    }
+  };
+
   const animationStyle = {
         opacity: fadeAnim,
         transform: [{ scale: scaleAnim }]
       };
+
+  const displayUnits = getDisplayUnits();
 
   return (
     <Animated.View style={[animationStyle, styles.container]}>
       <Card>
         <Text style={styles.title}>You've been sober for</Text>
         <View style={styles.timerContainer}>
-          <TimeUnit value={timeElapsed.days} unit="days" />
-          <TimeUnit value={timeElapsed.hours} unit="hours" />
-          <TimeUnit value={timeElapsed.minutes} unit="min" />
-          <TimeUnit value={timeElapsed.seconds} unit="sec" />
+          {displayUnits.map((unit, index) => (
+            <TimeUnit key={index} value={unit.value} unit={unit.unit} />
+          ))}
         </View>
       </Card>
     </Animated.View>
@@ -83,9 +170,7 @@ const styles = StyleSheet.create({
 
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
+    ...typography.h3,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -117,8 +202,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   unitLabel: {
-    fontSize: 14,
-    color: colors.textLight,
+    ...typography.bodySmall,
     fontWeight: '500',
   },
 });

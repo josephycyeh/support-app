@@ -2,9 +2,11 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Check, Trophy, Target } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import typography from '@/constants/typography';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { Card } from '@/components/ui/Card';
+import * as Haptics from 'expo-haptics';
 
 interface DailyChecklistProps {
   onTaskCompleted?: () => void;
@@ -130,39 +132,33 @@ const ChecklistItem = ({ item, onToggle, index }: ChecklistItemProps) => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    marginBottom: 4,
+    marginBottom: 8,
   },
   titleSection: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
+    ...typography.h3,
     marginLeft: 8,
-    lineHeight: 24,
   },
   headerSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textLight,
-    lineHeight: 20,
+    ...typography.bodySmall,
     marginTop: 4,
   },
   itemsContainer: {
-    gap: 12,
+    gap: 16,
   },
   itemButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.background,
     borderRadius: 16,
-    padding: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: '#000',
@@ -182,7 +178,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.primary,
-    marginRight: 14,
+    marginRight: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -207,7 +203,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    marginLeft: 10,
+    marginLeft: 12,
   },
   xpText: {
     fontSize: 12,
@@ -217,8 +213,8 @@ const styles = StyleSheet.create({
   },
   completionContainer: {
     alignItems: 'center',
-    paddingVertical: 28,
-    paddingHorizontal: 20,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
   },
   completionIcon: {
     width: 56,
@@ -227,20 +223,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(107, 152, 194, 0.12)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   completionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
-    lineHeight: 26,
+    ...typography.h2,
+    marginBottom: 12,
   },
   completionMessage: {
-    fontSize: 15,
-    color: colors.textLight,
+    ...typography.bodySecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    fontWeight: '500',
   },
 });
