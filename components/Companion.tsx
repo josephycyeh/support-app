@@ -11,13 +11,16 @@ import { useSobrietyStore } from '@/store/sobrietyStore';
 
 interface CompanionProps {
   animationTrigger?: number;
+  stopAnimations?: boolean;
 }
 
-export const Companion = ({ animationTrigger }: CompanionProps) => {
+export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showLevelUpMessage, setShowLevelUpMessage] = useState(false);
   const lottieRef = useRef<LottieView>(null);
   const modalWalkingRef = useRef<LottieView>(null);
+  const animationTimeoutRef = useRef<number | null>(null);
+  const levelUpTimeoutRef = useRef<number | null>(null);
   const router = useRouter();
   const { levelUp, level, setLevelUpComplete } = useSobrietyStore();
 
@@ -37,9 +40,10 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
       }
       
       // When animation is done, reset flags
-        setTimeout(() => {
-          setShowLevelUpMessage(false);
-          setLevelUpComplete();
+      levelUpTimeoutRef.current = setTimeout(() => {
+        setShowLevelUpMessage(false);
+        setLevelUpComplete();
+        levelUpTimeoutRef.current = null;
       }, 2000); // Shortened to 2 seconds total
     }
   }, [levelUp, setLevelUpComplete]);
@@ -60,12 +64,52 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
         lottieRef.current.play();
         
         // Reset animation state after it completes
-        setTimeout(() => {
+        animationTimeoutRef.current = setTimeout(() => {
           setIsAnimating(false);
+          animationTimeoutRef.current = null;
         }, 1800); // Animation is 43 frames at 24fps ≈ 1800ms
       }
     }
   }, [animationTrigger, showLevelUpMessage]);
+
+  // Stop animations when component should stop (e.g. screen loses focus)
+  useEffect(() => {
+    if (stopAnimations) {
+      // Clear any running timeouts
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+        animationTimeoutRef.current = null;
+      }
+      if (levelUpTimeoutRef.current) {
+        clearTimeout(levelUpTimeoutRef.current);
+        levelUpTimeoutRef.current = null;
+      }
+
+      // Stop Lottie animations
+      if (lottieRef.current) {
+        lottieRef.current.reset();
+      }
+      if (modalWalkingRef.current) {
+        modalWalkingRef.current.reset();
+      }
+
+      // Reset states
+      setIsAnimating(false);
+      setShowLevelUpMessage(false);
+    }
+  }, [stopAnimations]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      if (levelUpTimeoutRef.current) {
+        clearTimeout(levelUpTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleChatPress = () => {
     router.push('/chat');
@@ -91,8 +135,9 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
       lottieRef.current.play();
       
       // Reset animation state after it completes
-      setTimeout(() => {
+      animationTimeoutRef.current = setTimeout(() => {
         setIsAnimating(false);
+        animationTimeoutRef.current = null;
       }, 1800); // Animation is 43 frames at 24fps ≈ 1800ms
     }
   };
@@ -165,6 +210,7 @@ export const Companion = ({ animationTrigger }: CompanionProps) => {
         onPress={handleChatPress}
         variant="secondary"
         style={styles.talkButton}
+        textStyle={styles.talkButtonText}
       >
         Talk with Sushi
       </Button>
@@ -228,8 +274,8 @@ const styles = StyleSheet.create({
   companionImageContainer: {
     borderRadius: 60,
     borderWidth: 0,
-    width: 120,
-    height: 120,
+    width: 125,
+    height: 125,
     overflow: 'hidden',
     backgroundColor: 'transparent',
     position: 'relative',
@@ -251,8 +297,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   talkButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  talkButtonText: {
+    ...typography.h4,
+    color: colors.text,
   },
   actionButtonContainer: {
     alignItems: 'center',

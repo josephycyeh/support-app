@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { ArrowLeft, DollarSign, Edit3, TrendingUp, Calendar, Clock, Target } from 'lucide-react-native';
+import { ArrowLeft, DollarSign, Edit3, Calendar, Clock, Target } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
@@ -11,8 +11,8 @@ import * as Haptics from 'expo-haptics';
 
 export default function MoneySavedScreen() {
   const router = useRouter();
-  const { dailySpending, isConfigured, setDailySpending, calculateTotalSaved, currency } = useMoneySavedStore();
-  const { startDate, addXP } = useSobrietyStore();
+  const { dailySpending, isConfigured, calculateTotalSaved, currency } = useMoneySavedStore();
+  const { startDate } = useSobrietyStore();
 
   // Calculate days sober
   const now = new Date();

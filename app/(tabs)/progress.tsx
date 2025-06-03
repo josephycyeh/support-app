@@ -13,30 +13,107 @@ export default function ProgressScreen() {
   const { startDate, level, xp, dailyXP } = useSobrietyStore();
   const { breathingExercises, journalEntries, cravingsOvercome } = useActivityStore();
   
-  // Calculate days sober more accurately
+  // Calculate days sober consistently with the rest of the app
   const now = new Date();
   const start = new Date(startDate);
-  // Reset hours to avoid timezone issues
-  now.setHours(0, 0, 0, 0);
-  start.setHours(0, 0, 0, 0);
   const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
   
   // Calculate total XP earned (sum of all daily XP)
   const totalXPEarned = Object.values(dailyXP).reduce((sum, xp) => sum + xp, 0);
   
-  // Define milestone thresholds for better tracking
-  const milestones = [
-    { days: 1, title: "First Day", key: "first" },
-    { days: 3, title: "Three Days", key: "three" },
-    { days: 7, title: "One Week", key: "week" },
-    { days: 14, title: "Two Weeks", key: "twoWeeks" },
-    { days: 30, title: "One Month", key: "month" },
-    { days: 90, title: "Three Months", key: "threeMonths" },
-    { days: 180, title: "Six Months", key: "sixMonths" },
-    { days: 365, title: "One Year", key: "year" },
-    { days: 730, title: "Two Years", key: "twoYears" },
-    { days: 1825, title: "Five Years", key: "fiveYears" },
-  ];
+  const milestoneData = [
+    {
+      days: 1,
+      title: "First Day",
+      description: "Your recovery journey begins",
+      icon: <Clock size={20} color="#fff" />,
+      color: colors.primary,
+      xpReward: 50,
+      scienceInfo: "Brain enters acute withdrawal, stress hormones spike as it adjusts to absence of substances"
+    },
+    {
+      days: 3,
+      title: "Three Days",
+      description: "Peak withdrawal phase",
+      icon: <Star size={20} color="#fff" />,
+      color: "#FFA726",
+      xpReward: 75,
+      scienceInfo: "Body hits peak withdrawal, brain chemistry is highly imbalanced, driving strong cravings and mood swings"
+    },
+    {
+      days: 7,
+      title: "One Week",
+      description: "Initial brain rebalancing",
+      icon: <Calendar size={20} color="#fff" />,
+      color: colors.accent,
+      xpReward: 100,
+      scienceInfo: "Acute withdrawal fades, brain begins early stages of chemical recalibration"
+    },
+    {
+      days: 14,
+      title: "Two Weeks",
+      description: "Sleep patterns improving",
+      icon: <Wind size={20} color="#fff" />,
+      color: "#66BB6A",
+      xpReward: 150,
+      scienceInfo: "Sleep and mood begin improving, early brain healing underway"
+    },
+    {
+      days: 30,
+      title: "One Month",
+      description: "Significant brain changes",
+      icon: <Trophy size={20} color="#fff" />,
+      color: "#5E72E4",
+      xpReward: 300,
+      scienceInfo: "Neural pathways start rewiring, cognitive function improves"
+    },
+    {
+      days: 90,
+      title: "Three Months",
+      description: "Neuroplasticity acceleration",
+      icon: <Award size={20} color="#fff" />,
+      color: "#11CDEF",
+      xpReward: 500,
+      scienceInfo: "Brain forms new healthy neural pathways, willpower strengthens"
+    },
+    {
+      days: 180,
+      title: "Six Months",
+      description: "Emotional regulation restored",
+      icon: <Heart size={20} color="#fff" />,
+      color: "#E91E63",
+      xpReward: 750,
+      scienceInfo: "Emotional centers of brain show significant healing"
+    },
+    {
+      days: 365,
+      title: "One Year",
+      description: "Major milestone achievement",
+      icon: <Star size={20} color="#fff" />,
+      color: "#FFD700",
+      xpReward: 1000,
+      scienceInfo: "Brain structure and function show remarkable recovery"
+    },
+    {
+      days: 730,
+      title: "Two Years",
+      description: "Long-term transformation",
+      icon: <Award size={20} color="#fff" />,
+      color: "#8E24AA",
+      xpReward: 1500,
+      scienceInfo: "Brain fully adapted to substance-free life, relapse risk drops significantly"
+    },
+    {
+      days: 1825,
+      title: "Five Years",
+      description: "Thriving in recovery",
+      icon: <Trophy size={20} color="#fff" />,
+      color: "#FF6F00",
+      xpReward: 2500,
+      scienceInfo: "Brain function stable and resilient, long-term recovery well established"
+    }
+  ]
+  
   
   // Helper function to determine milestone state
   const getMilestoneState = (targetDays: number, index: number) => {
@@ -45,7 +122,7 @@ export default function ProgressScreen() {
     }
     
     // Current milestone is the next one to achieve
-    const previousMilestone = index > 0 ? milestones[index - 1] : null;
+    const previousMilestone = index > 0 ? milestoneData[index - 1] : null;
     const isNext = !previousMilestone || daysSober >= previousMilestone.days;
     
     return { completed: false, current: isNext };
@@ -85,125 +162,19 @@ export default function ProgressScreen() {
           <View style={styles.journeyPath}>
             <View style={styles.journeyLine} />
             
-            {/* Milestone 1 - First Day */}
-            <MilestoneNode 
-              title="First Day"
-              description="Your recovery journey begins"
-              icon={<Clock size={20} color="#fff" />}
-              color={colors.primary}
-              completed={getMilestoneState(1, 0).completed}
-              current={getMilestoneState(1, 0).current}
-              xpReward={50}
-              scienceInfo="Your brain starts adjusting to life without substances"
-            />
-            
-            {/* Milestone 2 - Three Days */}
-            <MilestoneNode 
-              title="Three Days"
-              description="Peak withdrawal phase"
-              icon={<Star size={20} color="#fff" />}
-              color="#FFA726" // Orange
-              completed={getMilestoneState(3, 1).completed}
-              current={getMilestoneState(3, 1).current}
-              xpReward={75}
-              scienceInfo="Physical withdrawal symptoms often peak around this time"
-            />
-            
-            {/* Milestone 3 - One Week */}
-            <MilestoneNode 
-              title="One Week"
-              description="Initial brain rebalancing"
-              icon={<Calendar size={20} color="#fff" />}
-              color={colors.accent}
-              completed={getMilestoneState(7, 2).completed}
-              current={getMilestoneState(7, 2).current}
-              xpReward={100}
-              scienceInfo="Dopamine and serotonin systems begin to stabilize"
-            />
-            
-            {/* Milestone 4 - Two Weeks */}
-            <MilestoneNode 
-              title="Two Weeks"
-              description="Sleep patterns improving"
-              icon={<Wind size={20} color="#fff" />}
-              color="#66BB6A" // Green
-              completed={getMilestoneState(14, 3).completed}
-              current={getMilestoneState(14, 3).current}
-              xpReward={150}
-              scienceInfo="Many people report better sleep quality and mood stability"
-            />
-            
-            {/* Milestone 5 - One Month */}
-            <MilestoneNode 
-              title="One Month"
-              description="Significant brain changes"
-              icon={<Trophy size={20} color="#fff" />}
-              color="#5E72E4" // Indigo
-              completed={getMilestoneState(30, 4).completed}
-              current={getMilestoneState(30, 4).current}
-              xpReward={300}
-              scienceInfo="Neural pathways start rewiring, cognitive function improves"
-            />
-            
-            {/* Milestone 6 - Three Months */}
-            <MilestoneNode 
-              title="Three Months"
-              description="Neuroplasticity acceleration"
-              icon={<Award size={20} color="#fff" />}
-              color="#11CDEF" // Cyan
-              completed={getMilestoneState(90, 5).completed}
-              current={getMilestoneState(90, 5).current}
-              xpReward={500}
-              scienceInfo="Brain forms new healthy neural pathways, willpower strengthens"
-            />
-            
-            {/* Milestone 7 - Six Months */}
-            <MilestoneNode 
-              title="Six Months"
-              description="Emotional regulation restored"
-              icon={<Heart size={20} color="#fff" />}
-              color="#E91E63" // Pink
-              completed={getMilestoneState(180, 6).completed}
-              current={getMilestoneState(180, 6).current}
-              xpReward={750}
-              scienceInfo="Emotional centers of brain show significant healing"
-            />
-            
-            {/* Milestone 8 - One Year */}
-            <MilestoneNode 
-              title="One Year"
-              description="Major milestone achievement"
-              icon={<Star size={20} color="#fff" />}
-              color="#FFD700" // Gold
-              completed={getMilestoneState(365, 7).completed}
-              current={getMilestoneState(365, 7).current}
-              xpReward={1000}
-              scienceInfo="Brain structure and function show remarkable recovery"
-            />
-            
-            {/* Milestone 9 - Two Years */}
-            <MilestoneNode 
-              title="Two Years"
-              description="Long-term transformation"
-              icon={<Award size={20} color="#fff" />}
-              color="#8E24AA" // Purple
-              completed={getMilestoneState(730, 8).completed}
-              current={getMilestoneState(730, 8).current}
-              xpReward={1500}
-              scienceInfo="Continued neural growth, reduced relapse risk"
-            />
-            
-            {/* Milestone 10 - Five Years */}
-            <MilestoneNode 
-              title="Five Years"
-              description="Recovery mastery"
-              icon={<Trophy size={20} color="#fff" />}
-              color="#FF6F00" // Deep Orange
-              completed={getMilestoneState(1825, 9).completed}
-              current={getMilestoneState(1825, 9).current}
-              xpReward={2500}
-              scienceInfo="Brain health fully restored, inspiring others on their journey"
-            />
+            {milestoneData.map((milestone, index) => (
+              <MilestoneNode 
+                key={milestone.days}
+                title={milestone.title}
+                description={milestone.description}
+                icon={milestone.icon}
+                color={milestone.color}
+                completed={getMilestoneState(milestone.days, index).completed}
+                current={getMilestoneState(milestone.days, index).current}
+                xpReward={milestone.xpReward}
+                scienceInfo={milestone.scienceInfo}
+              />
+            ))}
           </View>
         </View>
         

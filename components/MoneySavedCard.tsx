@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   },
   setupSubtitle: {
     fontSize: 13,
-    color: colors.textLight,
+    color: colors.text,
     fontWeight: '500',
     textAlign: 'center',
     marginTop: 8,

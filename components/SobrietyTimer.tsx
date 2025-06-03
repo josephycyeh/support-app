@@ -144,7 +144,7 @@ export const SobrietyTimer = () => {
 
   return (
     <Animated.View style={[animationStyle, styles.container]}>
-      <Card>
+      <Card style={styles.cardContainer}>
         <Text style={styles.title}>You've been sober for</Text>
         <View style={styles.timerContainer}>
           {displayUnits.map((unit, index) => (
@@ -169,10 +169,20 @@ const styles = StyleSheet.create({
   container: {
 
   },
+  cardContainer: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+  },
   title: {
-    ...typography.h3,
-    marginBottom: 16,
+    ...typography.h2,
+    marginBottom: 20,
     textAlign: 'center',
+    fontWeight: '700',
   },
   timerContainer: {
     flexDirection: 'row',
@@ -204,5 +214,6 @@ const styles = StyleSheet.create({
   unitLabel: {
     ...typography.bodySmall,
     fontWeight: '500',
+    color: colors.text,
   },
 });

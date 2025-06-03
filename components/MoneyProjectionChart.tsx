@@ -157,7 +157,7 @@ export const MoneyProjectionChart = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+
   },
   card: {
     backgroundColor: colors.cardBackground,

@@ -24,6 +24,7 @@ export default function HomeScreen() {
   const [showMoodTracker, setShowMoodTracker] = useState(false);
   const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
   const [triggerCompanionAnimation, setTriggerCompanionAnimation] = useState(0);
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
 
   // Check mood status immediately on mount to prevent flickering
   useEffect(() => {
@@ -34,6 +35,9 @@ export default function HomeScreen() {
   // Check if mood tracker should be shown on app open
   useFocusEffect(
     React.useCallback(() => {
+      // Set screen as focused
+      setIsScreenFocused(true);
+      
       // Check for milestone achievements immediately
       checkAndAwardMilestones();
       
@@ -46,7 +50,11 @@ export default function HomeScreen() {
         }
       }, 1000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        // Set screen as not focused when leaving
+        setIsScreenFocused(false);
+        clearTimeout(timer);
+      };
     }, [])
   );
 
@@ -77,7 +85,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <XPProgressBar />
-        <Companion animationTrigger={triggerCompanionAnimation} />
+        <Companion animationTrigger={triggerCompanionAnimation} stopAnimations={!isScreenFocused} />
         <SobrietyTimer />
         
         <View style={styles.cardRow}>
@@ -123,7 +131,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingTop: 20,
-    gap: 24,
+    gap: 28,
   },
   cardRow: {
     flexDirection: 'row',

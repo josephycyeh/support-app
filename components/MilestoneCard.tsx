@@ -25,10 +25,12 @@ export const MilestoneCard = () => {
   const router = useRouter();
   const { startDate } = useSobrietyStore();
 
-  // Calculate days sober
+  // Calculate granular time elapsed (including hours and minutes)
   const now = new Date();
   const start = new Date(startDate);
-  const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  const totalMilliseconds = now.getTime() - start.getTime();
+  const totalDays = Math.max(0, totalMilliseconds / (1000 * 60 * 60 * 24));
+  const daysSober = Math.floor(totalDays);
 
   // Find next milestone based purely on current streak (consistent with Progress screen)
   const nextMilestone = MILESTONES.find(milestone => 
@@ -39,10 +41,10 @@ export const MilestoneCard = () => {
   const milestone = nextMilestone || MILESTONES[MILESTONES.length - 1];
   const Icon = milestone.icon;
   const daysToGo = Math.max(0, milestone.days - daysSober);
-  const isCompleted = daysSober >= milestone.days;
+  const isCompleted = totalDays >= milestone.days;
 
-  // Calculate progress for progress bar (simple: progress toward milestone from day 0)
-  const progressPercentage = Math.min(Math.max((daysSober / milestone.days) * 100, 0), 100);
+  // Calculate granular progress including hours and minutes
+  const progressPercentage = Math.min(Math.max((totalDays / milestone.days) * 100, 0), 100);
 
   const handlePress = () => {
     router.push('/(tabs)/progress');

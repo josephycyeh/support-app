@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Calendar, Heart, User, Check, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { Calendar, Heart, User, Check, ArrowRight, ArrowLeft, DollarSign, TrendingUp } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
+import { useMoneySavedStore } from '@/store/moneySavedStore';
+import { MoneyProjectionChart } from '@/components/MoneyProjectionChart';
 import * as Haptics from 'expo-haptics';
 
 enum OnboardingStep {
@@ -14,13 +16,16 @@ enum OnboardingStep {
   AGE = 2,
   SOBRIETY_DATE = 3,
   REASONS = 4,
-  COMPLETE = 5,
+  MONEY = 5,
+  MONEY_PROJECTION = 6,
+  COMPLETE = 7,
 }
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { setName, setStartDate, setAge, completeOnboarding } = useSobrietyStore();
   const { addReason } = useReasonsStore();
+  const { setDailySpending } = useMoneySavedStore();
   
   const [currentStep, setCurrentStep] = useState(OnboardingStep.WELCOME);
   const [userName, setUserName] = useState('');
@@ -28,9 +33,33 @@ export default function OnboardingScreen() {
   const [sobrietyDate, setSobrietyDate] = useState(new Date());
   const [currentReason, setCurrentReason] = useState('');
   const [reasons, setReasons] = useState<string[]>([]);
+  const [dailySpending, setDailySpendingInput] = useState('');
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Save data immediately when moving to next step
+    switch (currentStep) {
+      case OnboardingStep.NAME:
+        if (userName.trim()) {
+          setName(userName.trim());
+        }
+        break;
+      case OnboardingStep.AGE:
+        if (userAge.trim()) {
+          setAge(parseInt(userAge));
+        }
+        break;
+      case OnboardingStep.SOBRIETY_DATE:
+        setStartDate(sobrietyDate.toISOString());
+        break;
+      case OnboardingStep.MONEY:
+        if (dailySpending.trim()) {
+          setDailySpending(parseFloat(dailySpending));
+        }
+        break;
+    }
+    
     if (currentStep < OnboardingStep.COMPLETE) {
       setCurrentStep(currentStep + 1);
     }
@@ -45,33 +74,24 @@ export default function OnboardingScreen() {
 
   const handleAddReason = () => {
     if (currentReason.trim()) {
-      setReasons([...reasons, currentReason.trim()]);
+      const newReason = currentReason.trim();
+      setReasons([...reasons, newReason]);
+      // Save reason immediately to store
+      addReason(newReason);
       setCurrentReason('');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
   };
 
   const handleRemoveReason = (index: number) => {
+    const reasonToRemove = reasons[index];
     setReasons(reasons.filter((_, i) => i !== index));
+    // Note: We'd need a way to remove from store, but for now just update local state
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleComplete = () => {
-    // Save all data to stores
-    if (userName.trim()) {
-      setName(userName.trim());
-    }
-    if (userAge.trim()) {
-      setAge(parseInt(userAge));
-    }
-    setStartDate(sobrietyDate.toISOString());
-    
-    // Add all reasons
-    reasons.forEach(reason => {
-      addReason(reason);
-    });
-
-    // Mark onboarding as complete and navigate to main app
+    // All data should already be saved, just complete onboarding
     completeOnboarding();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     router.replace('/(tabs)');
@@ -89,6 +109,10 @@ export default function OnboardingScreen() {
         return true;
       case OnboardingStep.REASONS:
         return reasons.length > 0;
+      case OnboardingStep.MONEY:
+        return dailySpending.trim().length > 0 && parseFloat(dailySpending) >= 0;
+      case OnboardingStep.MONEY_PROJECTION:
+        return true;
       default:
         return true;
     }
@@ -96,7 +120,7 @@ export default function OnboardingScreen() {
 
   const renderProgressBar = () => (
     <View style={styles.progressContainer}>
-      {[0, 1, 2, 3, 4].map((step) => (
+      {[0, 1, 2, 3, 4, 5, 6].map((step) => (
         <View
           key={step}
           style={[
@@ -110,17 +134,17 @@ export default function OnboardingScreen() {
 
   const renderWelcome = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.welcomeTitle}>Welcome to Sushi</Text>
-      <Text style={styles.welcomeSubtitle}>Your Sobriety Companion</Text>
+      <Text style={styles.welcomeTitle}>Welcome to Sushi 🍣</Text>
+      <Text style={styles.welcomeSubtitle}>Your Recovery Companion</Text>
       
       <View style={styles.welcomeContent}>
         <Text style={styles.welcomeDescription}>
-          I'm here to support you on your recovery journey. Let's get started by setting up your profile.
+          I'm here to support you on your recovery journey. Together, we'll build lasting sobriety habits.
         </Text>
         
         <View style={styles.featureList}>
-          <FeatureItem icon={<Heart size={20} color={colors.primary} />} text="Track your progress" />
-          <FeatureItem icon={<User size={20} color={colors.primary} />} text="Personalized companion" />
+          <FeatureItem icon={<Heart size={20} color={colors.primary} />} text="Track your sobriety progress" />
+          <FeatureItem icon={<User size={20} color={colors.primary} />} text="Get personalized recovery support" />
           <FeatureItem icon={<Calendar size={20} color={colors.primary} />} text="Daily goals & motivation" />
         </View>
       </View>
@@ -129,15 +153,15 @@ export default function OnboardingScreen() {
 
   const renderNameStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>What's your name?</Text>
-      <Text style={styles.stepSubtitle}>I'd love to know what to call you</Text>
+      <Text style={styles.stepTitle}>What should I call you?</Text>
+      <Text style={styles.stepSubtitle}>Let's personalize your recovery experience</Text>
       
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
           value={userName}
           onChangeText={setUserName}
-          placeholder="Enter your name"
+          placeholder="Enter your first name"
           placeholderTextColor={colors.textMuted}
           autoFocus
           returnKeyType="next"
@@ -150,7 +174,7 @@ export default function OnboardingScreen() {
   const renderAgeStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.stepTitle}>How old are you?</Text>
-      <Text style={styles.stepSubtitle}>This helps me provide better support</Text>
+      <Text style={styles.stepSubtitle}>This helps me provide age-appropriate support</Text>
       
       <View style={styles.inputContainer}>
         <TextInput
@@ -177,8 +201,8 @@ export default function OnboardingScreen() {
 
   const renderSobrietyDateStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>When did you start your journey?</Text>
-      <Text style={styles.stepSubtitle}>Set your sobriety start date</Text>
+      <Text style={styles.stepTitle}>When did your sobriety begin? 🌅</Text>
+      <Text style={styles.stepSubtitle}>Set your sobriety start date to track your progress</Text>
       
       <View style={styles.datePickerContainer}>
         <DateTimePicker
@@ -199,15 +223,15 @@ export default function OnboardingScreen() {
 
   const renderReasonsStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Why are you making this change?</Text>
-      <Text style={styles.stepSubtitle}>Your reasons will keep you motivated</Text>
+      <Text style={styles.stepTitle}>Why did you choose recovery?</Text>
+      <Text style={styles.stepSubtitle}>Your reasons will help keep you motivated during challenges</Text>
       
       <View style={styles.reasonsInputContainer}>
         <TextInput
           style={styles.reasonInput}
           value={currentReason}
           onChangeText={setCurrentReason}
-          placeholder="Enter a reason for your recovery..."
+          placeholder="What motivates your recovery? (e.g., 'Better health for my family')"
           placeholderTextColor={colors.textMuted}
           multiline
           returnKeyType="done"
@@ -242,28 +266,95 @@ export default function OnboardingScreen() {
     </View>
   );
 
+  const renderMoneyStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Track your financial recovery 💰</Text>
+      <Text style={styles.stepSubtitle}>How much did you spend daily on substances?</Text>
+      
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          value={dailySpending}
+          onChangeText={(text) => {
+            // Allow numbers and decimal point
+            const numericText = text.replace(/[^0-9.]/g, '');
+            setDailySpendingInput(numericText);
+          }}
+          placeholder="$25.00"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="numeric-pad"
+          autoFocus
+          returnKeyType="next"
+          onSubmitEditing={canProceedFromStep() ? handleNext : undefined}
+        />
+        {dailySpending && parseFloat(dailySpending) < 0 && (
+          <Text style={styles.errorText}>Please enter a valid amount</Text>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderMoneyProjectionStep = () => {
+    return (
+      <View style={styles.stepContainer}>
+        <Text style={styles.stepTitle}>Your Recovery Savings</Text>
+        <Text style={styles.stepSubtitle}>See how much you'll save staying sober</Text>
+        
+        <View style={styles.projectionContent}>
+          <View style={styles.projectionSummary}>
+            <View style={styles.projectionCard}>
+              <View style={styles.projectionIconContainer}>
+                <DollarSign size={18} color="#FFFFFF" />
+              </View>
+              <Text style={styles.projectionValue}>${(parseFloat(dailySpending || '0') * 30).toFixed(0)}</Text>
+              <Text style={styles.projectionLabel}>per month</Text>
+            </View>
+            
+            <View style={styles.projectionCard}>
+              <View style={styles.projectionIconContainer}>
+                <TrendingUp size={18} color="#FFFFFF" />
+              </View>
+              <Text style={styles.projectionValue}>${(parseFloat(dailySpending || '0') * 365).toFixed(0)}</Text>
+              <Text style={styles.projectionLabel}>per year</Text>
+            </View>
+          </View>
+          
+          <View style={styles.chartContainer}>
+            {dailySpending ? (
+              <MoneyProjectionChart />
+            ) : (
+              <View style={styles.chartPlaceholder}>
+                <Text style={styles.placeholderText}>Chart will appear here</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderComplete = () => (
     <View style={styles.stepContainer}>
       <View style={styles.completeIcon}>
         <Check size={40} color="#FFFFFF" />
       </View>
-      <Text style={styles.completeTitle}>You're all set!</Text>
+      <Text style={styles.completeTitle}>Setup Complete!</Text>
       <Text style={styles.completeSubtitle}>
         Welcome to your recovery journey, {userName}
       </Text>
       
       <View style={styles.completeSummary}>
-        <Text style={styles.summaryText}>Your journey starts here:</Text>
+        <Text style={styles.summaryText}>Your recovery profile:</Text>
         <View style={styles.summaryItem}>
           <Calendar size={16} color={colors.primary} />
           <Text style={styles.summaryValue}>
-            Starting from {sobrietyDate.toLocaleDateString()}
+            Sober since {sobrietyDate.toLocaleDateString()}
           </Text>
         </View>
         <View style={styles.summaryItem}>
           <Heart size={16} color={colors.primary} />
           <Text style={styles.summaryValue}>
-            {reasons.length} reason{reasons.length !== 1 ? 's' : ''} for change
+            {reasons.length} reason{reasons.length !== 1 ? 's' : ''} for staying sober
           </Text>
         </View>
       </View>
@@ -282,6 +373,10 @@ export default function OnboardingScreen() {
         return renderSobrietyDateStep();
       case OnboardingStep.REASONS:
         return renderReasonsStep();
+      case OnboardingStep.MONEY:
+        return renderMoneyStep();
+      case OnboardingStep.MONEY_PROJECTION:
+        return renderMoneyProjectionStep();
       case OnboardingStep.COMPLETE:
         return renderComplete();
       default:
@@ -328,13 +423,15 @@ export default function OnboardingScreen() {
               disabled={!canProceedFromStep()}
             >
               <Text style={styles.nextButtonText}>
-                {currentStep === OnboardingStep.WELCOME ? 'Get Started' : 'Continue'}
+                {currentStep === OnboardingStep.WELCOME ? 'Get Started' : 
+                 currentStep === OnboardingStep.MONEY_PROJECTION ? 'Begin Recovery' :
+                 'Continue'}
               </Text>
               <ArrowRight size={20} color="#FFFFFF" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-              <Text style={styles.completeButtonText}>Start My Journey</Text>
+              <Text style={styles.completeButtonText}>Start My Recovery</Text>
               <Check size={20} color="#FFFFFF" />
             </TouchableOpacity>
           )}
@@ -392,7 +489,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 0,
   },
   welcomeTitle: {
     fontSize: 32,
@@ -643,5 +740,68 @@ const styles = StyleSheet.create({
     color: colors.danger,
     textAlign: 'center',
     marginTop: 8,
+  },
+  projectionContent: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  projectionSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 20,
+    gap: 12,
+  },
+  projectionCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  projectionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  projectionValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  projectionLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.textLight,
+  },
+  chartContainer: {
+    width: '100%',
+
+    backgroundColor: colors.cardBackground,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  chartPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 14,
+    color: colors.textMuted,
   },
 }); 

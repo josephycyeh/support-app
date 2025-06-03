@@ -33,7 +33,7 @@ export const XPProgressBar = () => {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginBottom: 8,
+    marginBottom: 4,
     paddingHorizontal: 4,
   },
   headerRow: {
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   xpText: {
-    ...typography.bodySmall,
-    fontWeight: '600',
+    ...typography.caption,
+    fontWeight: '500',
     color: colors.text,
   },
 });
