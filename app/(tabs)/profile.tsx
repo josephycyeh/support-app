@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert,  } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, Linking } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2, User, MessageSquare } from 'lucide-react-native';
+import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2, User, MessageSquare, Shield, FileText } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
 import { useSobrietyStore } from '@/store/sobrietyStore';
@@ -127,6 +128,34 @@ export default function ProfileScreen() {
     );
   };
   
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to permanently delete your account? This will erase all your data including your sobriety progress, reasons, and chat history. This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Delete Account", 
+          onPress: async () => {
+            try {
+              // Clear all AsyncStorage data
+              await AsyncStorage.clear();
+              // Navigate back to onboarding
+              router.replace('/onboarding');
+            } catch (error) {
+              console.error('Error clearing storage:', error);
+              Alert.alert('Error', 'Failed to delete account data. Please try again.');
+            }
+          },
+          style: "destructive"
+        }
+      ]
+    );
+  };
+  
   const handleResetSobriety = () => {
     Alert.alert(
       "Reset Sobriety Counter",
@@ -238,6 +267,35 @@ export default function ProfileScreen() {
           </Card>
         </View>
         
+        <View style={styles.sectionContainer}>
+          <SectionHeader title="Legal & Privacy" />
+          <Card style={styles.legalContainer}>
+            <TouchableOpacity 
+              style={styles.legalItem}
+              onPress={() => Linking.openURL('https://example.com/privacy-policy')}
+            >
+              <View style={styles.legalIconContainer}>
+                <Shield size={20} color={colors.primary} />
+              </View>
+              <View style={styles.legalContent}>
+                <Text style={styles.legalLabel}>Privacy Policy</Text>
+              </View>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.legalItem}
+              onPress={() => Linking.openURL('https://example.com/terms-of-use')}
+            >
+              <View style={styles.legalIconContainer}>
+                <FileText size={20} color={colors.primary} />
+              </View>
+              <View style={styles.legalContent}>
+                <Text style={styles.legalLabel}>Terms of Use</Text>
+              </View>
+            </TouchableOpacity>
+          </Card>
+        </View>
+        
         <Button
           onPress={handleResetSobriety}
           variant="outline"
@@ -256,6 +314,16 @@ I Relapsed
           textStyle={styles.clearChatHistoryButtonText}
         >
           Clear Chat History
+        </Button>
+
+        <Button
+          onPress={handleDeleteAccount}
+          variant="outline"
+          style={styles.deleteAccountButton}
+          icon={<Trash2 size={18} color="#B91C1C" />}
+          textStyle={styles.deleteAccountButtonText}
+        >
+          Delete Account
         </Button>
       </ScrollView>
       
@@ -508,6 +576,14 @@ const styles = StyleSheet.create({
   clearChatHistoryButtonText: {
     color: '#FFFFFF',
   },
+  deleteAccountButton: {
+    marginTop: 12,
+    backgroundColor: '#FEE2E2',
+    borderColor: '#B91C1C',
+  },
+  deleteAccountButtonText: {
+    color: '#B91C1C',
+  },
   modal: {
     margin: 0,
     justifyContent: 'flex-end',
@@ -621,5 +697,36 @@ const styles = StyleSheet.create({
   modalButtonText: {
     ...typography.button,
     color: colors.primary,
+  },
+  legalContainer: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  legalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  legalIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(107, 152, 194, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  legalContent: {
+    flex: 1,
+  },
+  legalLabel: {
+    ...typography.body,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  legalDescription: {
+    ...typography.bodySmall,
   },
 });

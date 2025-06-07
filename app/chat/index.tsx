@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Text, KeyboardAvoidingView, Platform, Keyboard, TouchableOpacity, AppState } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, KeyboardAvoidingView, Platform, Keyboard, TouchableOpacity, AppState, Alert } from 'react-native';
 import { fetch as expoFetch } from 'expo/fetch';
 import { Stack, router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -193,7 +193,7 @@ export default function ChatScreen() {
 
   const handleVoiceCall = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/voice-call');
+    Alert.alert('Coming Soon', 'This feature is coming soon!');
   };
 
   const VoiceCallButton = () => (

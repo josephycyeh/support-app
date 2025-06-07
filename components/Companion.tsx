@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
+import Rive from 'rive-react-native';
 
 interface CompanionProps {
   animationTrigger?: number;
@@ -172,7 +173,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
           >
             <View style={styles.companionImageContainer}>
               <Image 
-                source={require('@/assets/images/Character_PNG.png')}
+                source={require('@/assets/images/bird.riv')}
                 style={[
                   styles.companionImage,
                   isAnimating && { opacity: 0 } 
@@ -211,6 +212,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
         variant="secondary"
         style={styles.talkButton}
         textStyle={styles.talkButtonText}
+        icon={<MessageSquare size={18} color={colors.text} />}
       >
         Talk with Sushi
       </Button>
@@ -297,18 +299,23 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   talkButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    marginTop: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    marginTop: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E8C088',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     elevation: 6,
   },
   talkButtonText: {
-    ...typography.h4,
+    fontSize: 16,
+    fontWeight: '700',
     color: colors.text,
+    letterSpacing: 0.3,
   },
   actionButtonContainer: {
     alignItems: 'center',

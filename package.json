@@ -53,11 +53,13 @@
     "react-native-gesture-handler": "^2.25.0",
     "react-native-gifted-charts": "^1.4.61",
     "react-native-modal": "^14.0.0-rc.1",
+    "react-native-progress": "^5.0.1",
     "react-native-reanimated": "^3.18.0",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
     "react-native-svg": "15.11.2",
     "react-native-web": "^0.20.0",
+    "rive-react-native": "^9.3.4",
     "victory-native": "^41.17.3",
     "zod": "^3.25.31",
     "zustand": "^5.0.5"
