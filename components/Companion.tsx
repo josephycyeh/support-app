@@ -172,8 +172,11 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
             style={styles.companionTouchable}
           >
             <View style={styles.companionImageContainer}>
+            {/* <Rive
+           url="https://image-gen-styles.s3.us-east-2.amazonaws.com/bird_joseph+(1).riv"  
+           /> */}
               <Image 
-                source={require('@/assets/images/bird.riv')}
+                source={require('@/assets/images/Character_PNG.png')}
                 style={[
                   styles.companionImage,
                   isAnimating && { opacity: 0 } 

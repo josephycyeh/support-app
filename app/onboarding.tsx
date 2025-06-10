@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, Image, Animated, Easing } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Calendar, Heart, ArrowRight, ArrowLeft, Check } from 'lucide-react-native';
+import { Calendar, Heart, ArrowRight, ArrowLeft, Check, Sparkles, Star } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Progress from 'react-native-progress';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as StoreReview from 'expo-store-review';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
@@ -23,11 +25,13 @@ enum OnboardingStep {
   GOALS = 8,   
   SOBRIETY_IMPORTANCE = 9, 
   REASONS = 10,             
-  MONEY = 11,                
-  MONEY_PROJECTION = 12,    
-  STRUGGLE_TIMES = 13,    
-  LOADING_PLAN = 14,         // Loading screen - tailoring their plan
-  ENGAGEMENT_READY = 15      // "Ready to begin" engagement screen - final step               
+  MONEY_INTEREST = 11,       // Ask if they want to track money             
+  MONEY = 12,                
+  MONEY_PROJECTION = 13,    
+  STRUGGLE_TIMES = 14,    
+  LOADING_PLAN = 15,         // Loading screen - tailoring their plan
+  REVIEW_REQUEST = 16,       // Ask for app store review
+  ENGAGEMENT_READY = 17      // "Ready to begin" engagement screen - final step               
 }
 
 export default function OnboardingScreen() {
@@ -52,6 +56,92 @@ export default function OnboardingScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Analyzing your responses...');
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [interestedInMoney, setInterestedInMoney] = useState<boolean | null>(null);
+
+  // Animation values for welcome screen
+  const [fadeAnim] = useState(new Animated.Value(0));
+  
+  // Animation values for engagement screen testimonials
+  const [testimonial1Anim] = useState(new Animated.Value(-30));
+  const [testimonial2Anim] = useState(new Animated.Value(30));
+  const [testimonial3Anim] = useState(new Animated.Value(-30));
+  const [testimonial1Opacity] = useState(new Animated.Value(0));
+  const [testimonial2Opacity] = useState(new Animated.Value(0));
+  const [testimonial3Opacity] = useState(new Animated.Value(0));
+
+  // Animate welcome screen on mount
+  useEffect(() => {
+    if (currentStep === OnboardingStep.WELCOME) {
+      // Reset animation
+      fadeAnim.setValue(0);
+
+      // Simple fade in animation
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [currentStep]);
+
+  // Animate engagement screen testimonials
+  useEffect(() => {
+    if (currentStep === OnboardingStep.ENGAGEMENT_SUPPORT) {
+      // Reset animations
+      testimonial1Anim.setValue(-30);
+      testimonial2Anim.setValue(30);
+      testimonial3Anim.setValue(-30);
+      testimonial1Opacity.setValue(0);
+      testimonial2Opacity.setValue(0);
+      testimonial3Opacity.setValue(0);
+
+      // Soft staggered slide-in animations
+      Animated.stagger(300, [
+        Animated.parallel([
+          Animated.timing(testimonial1Anim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(testimonial1Opacity, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(testimonial2Anim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(testimonial2Opacity, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(testimonial3Anim, {
+            toValue: 0,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(testimonial3Opacity, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+    }
+  }, [currentStep]);
 
   useEffect(() => {
     if (currentStep === OnboardingStep.LOADING_PLAN) {
@@ -71,30 +161,63 @@ export default function OnboardingScreen() {
       ];
 
       let currentLoadingStep = -1;
+      const timeouts: number[] = [];
+      let isCancelled = false;
       
       const executeStep = () => {
+        if (isCancelled) return;
+        
         if (currentLoadingStep < loadingSteps.length - 1) {
           currentLoadingStep++;
           const step = loadingSteps[currentLoadingStep];
           setLoadingText(step.text);
           setLoadingProgress(step.progress);
           
-          setTimeout(executeStep, step.duration);
+          const timeout = setTimeout(executeStep, step.duration);
+          timeouts.push(timeout);
         } else {
           setIsLoading(false);
           // Automatically proceed to next step after a brief delay
-          setTimeout(() => {
-            handleNext();
+          const finalTimeout = setTimeout(() => {
+            if (!isCancelled) {
+              handleNext();
+            }
           }, 800);
+          timeouts.push(finalTimeout);
         }
       };
       
       // Start immediately with first step
       const initialTimeout = setTimeout(executeStep, 500);
+      timeouts.push(initialTimeout);
       
       return () => {
-        clearTimeout(initialTimeout);
+        isCancelled = true;
+        timeouts.forEach(timeout => clearTimeout(timeout));
+        setIsLoading(false);
+        setLoadingProgress(0);
+        setLoadingText('Analyzing your responses...');
       };
+    }
+  }, [currentStep]);
+
+  // Automatically request review when reaching review screen
+  useEffect(() => {
+    if (currentStep === OnboardingStep.REVIEW_REQUEST) {
+      const requestReview = async () => {
+        try {
+          // Small delay to let the screen render
+          setTimeout(async () => {
+            if (await StoreReview.hasAction()) {
+              await StoreReview.requestReview();
+            }
+          }, 1000);
+        } catch (error) {
+          console.log('Review request failed:', error);
+        }
+      };
+      
+      requestReview();
     }
   }, [currentStep]);
 
@@ -126,6 +249,14 @@ export default function OnboardingScreen() {
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStep > OnboardingStep.WELCOME) {
+      // Special handling for backing out of struggle times
+      // If user is on struggle times and had selected "No" for money interest,
+      // go back to money interest screen instead of money projection
+      if (currentStep === OnboardingStep.STRUGGLE_TIMES && interestedInMoney === false) {
+        setCurrentStep(OnboardingStep.MONEY_INTEREST);
+        return;
+      }
+      
       setCurrentStep(currentStep - 1);
     }
   };
@@ -177,6 +308,8 @@ export default function OnboardingScreen() {
         return selectedGoals.length > 0;
       case OnboardingStep.REASONS:
         return reasons.length > 0;
+      case OnboardingStep.MONEY_INTEREST:
+        return interestedInMoney !== null;
       case OnboardingStep.MONEY:
         return dailySpending.trim().length > 0 && parseFloat(dailySpending) >= 0;
       case OnboardingStep.MONEY_PROJECTION:
@@ -187,6 +320,8 @@ export default function OnboardingScreen() {
         return struggleTimes.length > 0;
       case OnboardingStep.LOADING_PLAN:
         return !isLoading;
+      case OnboardingStep.REVIEW_REQUEST:
+        return true;
       case OnboardingStep.ENGAGEMENT_READY:
         return true;
       default:
@@ -213,28 +348,49 @@ export default function OnboardingScreen() {
   };
 
   const renderWelcome = () => (
-    <View style={styles.stepContainer}>
-      <Text style={styles.welcomeTitle}>Welcome to Sushi 🍣</Text>
-      <Text style={styles.welcomeSubtitle}>Your Recovery Companion</Text>
-      
-      <View style={styles.welcomeContent}>
-        <Text style={styles.welcomeDescription}>
-          I'm here to support you on your recovery journey. Together, we'll build lasting sobriety habits.
-        </Text>
+    <Animated.View style={[styles.stepContainer, {
+      opacity: fadeAnim,
+    }]}>
+      {/* Hero Section with Character */}
+      <View style={styles.welcomeHeroContainer}>
+        <View style={styles.welcomeCharacterContainer}>
+          <LinearGradient
+            colors={[colors.primary + '15', colors.secondary + '10', 'transparent']}
+            style={styles.welcomeCharacterGradient}
+          />
+          <Image 
+            source={require('@/assets/images/Character_PNG.png')}
+            style={styles.welcomeCharacterImage}
+            resizeMode="contain"
+          />
+        </View>
         
-        <View style={styles.featureList}>
-          <FeatureItem icon={<Heart size={20} color={colors.primary} />} text="Track your sobriety progress" />
-          <FeatureItem icon={<Heart size={20} color={colors.primary} />} text="Get personalized recovery support" />
-          <FeatureItem icon={<Calendar size={20} color={colors.primary} />} text="Daily goals & motivation" />
+        <View style={styles.welcomeTitleContainer}>
+          <Text style={styles.welcomeTitle}>Meet Sobi 🌟</Text>
+          <Text style={styles.welcomeSubtitle}>Your Recovery Companion</Text>
+        </View>
+
+        {/* Encouragement moved here */}
+        <View style={styles.welcomeEncouragementInline}>
+          <Text style={styles.welcomeEncouragementText}>
+            ✨ You're not alone in this.
+          </Text>
         </View>
       </View>
-    </View>
+
+      {/* Simple Message */}
+      <View style={styles.welcomeMessageContainer}>
+        <Text style={styles.welcomeMainMessage}>
+          Ready to start your recovery journey?
+        </Text>
+      </View>
+    </Animated.View>
   );
 
   const renderNameStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>What should I call you?</Text>
-      <Text style={styles.stepSubtitle}>Let's personalize your recovery experience</Text>
+      <Text style={styles.onboardingTitle}>What should I call you?</Text>
+      <Text style={styles.onboardingSubtitle}>Let's personalize your recovery experience</Text>
       
       <View style={styles.inputContainer}>
         <TextInput
@@ -253,8 +409,7 @@ export default function OnboardingScreen() {
 
   const renderSobrietyDateStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>When did your sobriety begin? 🌅</Text>
-      <Text style={styles.stepSubtitle}>Set your sobriety start date to track your progress</Text>
+      <Text style={styles.onboardingTitle}>When did your sobriety begin?</Text>
       
       <View style={styles.datePickerContainer}>
         <DateTimePicker
@@ -275,15 +430,15 @@ export default function OnboardingScreen() {
 
   const renderReasonsStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Why did you choose recovery?</Text>
-      <Text style={styles.stepSubtitle}>Your reasons will help keep you motivated during challenges</Text>
+      <Text style={styles.onboardingTitle}>Why did you choose recovery?</Text>
+      <Text style={styles.onboardingSubtitle}>Your reasons will help keep you motivated during challenges</Text>
       
       <View style={styles.reasonsInputContainer}>
         <TextInput
           style={styles.reasonInput}
           value={currentReason}
           onChangeText={setCurrentReason}
-          placeholder="What motivates your recovery? (e.g., 'Better health for my family')"
+          placeholder="For example: 'Being present for my family', 'My daughter'"
           placeholderTextColor={colors.textMuted}
           multiline
           returnKeyType="done"
@@ -344,8 +499,7 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>How important is sobriety to you right now?</Text>
-        <Text style={styles.stepSubtitleMuted}>This helps me understand your current motivation level</Text>
+        <Text style={styles.onboardingTitle}>How important is sobriety to you right now?</Text>
         
         <View style={styles.optionsContainer}>
           {importanceLevels.map((item, index) => (
@@ -404,8 +558,7 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>What are you working on?</Text>
-        <Text style={styles.stepSubtitleMuted}>Select the main substance or behavior you're addressing</Text>
+        <Text style={styles.onboardingTitle}>What are you working on?</Text>
         
         <View style={styles.optionsContainer}>
           {commonSubstances.map((substance, index) => (
@@ -445,8 +598,7 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>How often do you use {selectedSubstance.toLowerCase()}?</Text>
-        <Text style={styles.stepSubtitleMuted}>This helps us understand your current usage pattern</Text>
+        <Text style={styles.onboardingTitle}>How often do you use {selectedSubstance.toLowerCase()}?</Text>
         
         <View style={styles.optionsContainer}>
           {frequencies.map((frequency, index) => (
@@ -501,8 +653,8 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>What are your main triggers?</Text>
-        <Text style={styles.stepSubtitleMuted}>Select all situations that commonly trigger you</Text>
+        <Text style={styles.onboardingTitle}>What are your main triggers?</Text>
+        <Text style={styles.onboardingSubtitle}>Select all situations that commonly trigger you</Text>
         
         <View style={styles.optionsContainer}>
           {triggers.map((trigger, index) => (
@@ -547,8 +699,8 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>When do you struggle the most?</Text>
-        <Text style={styles.stepSubtitleMuted}>We'll check in with you during these times</Text>
+        <Text style={styles.onboardingTitle}>When do you struggle the most?</Text>
+        <Text style={styles.onboardingSubtitle}>We'll check in with you during these times</Text>
         
         <View style={styles.optionsContainer}>
           {times.map((time, index) => (
@@ -584,8 +736,7 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>What's been the hardest part for you so far?</Text>
-        <Text style={styles.stepSubtitleMuted}>Understanding your challenges helps us provide better support</Text>
+        <Text style={styles.onboardingTitle}>What's been the hardest part for you so far?</Text>
         
         <View style={styles.optionsContainer}>
           {challenges.map((challenge, index) => (
@@ -636,8 +787,8 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>What are your recovery goals?</Text>
-        <Text style={styles.stepSubtitleMuted}>Select all that apply to you</Text>
+        <Text style={styles.onboardingTitle}>What are your recovery goals?</Text>
+        <Text style={styles.onboardingSubtitle}>Select all that apply to you</Text>
         
         <View style={styles.optionsContainer}>
           {goals.map((goal, index) => (
@@ -666,56 +817,41 @@ export default function OnboardingScreen() {
     <View style={styles.stepContainer}>
       <View style={styles.engagementHeader}>
         <Text style={styles.engagementTitle}>You're Not Alone 💙</Text>
-        <Text style={styles.engagementSubtitle}>Join thousands transforming their lives with Sushi</Text>
+        <Text style={styles.engagementSubtitle}>Join thousands transforming their lives with Sobi</Text>
       </View>
       
       <View style={styles.engagementContent}>
-        
-        <View style={styles.successMetrics}>
-          <View style={styles.metricRow}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricEmoji}>💪</Text>
-              <Text style={styles.metricNumber}>94%</Text>
-              <Text style={styles.metricLabel}>feel more confident</Text>
-            </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricEmoji}>😴</Text>
-              <Text style={styles.metricNumber}>86%</Text>
-              <Text style={styles.metricLabel}>report sleeping better</Text>
-            </View>
-          </View>
-          
-          <View style={styles.metricRow}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricEmoji}>💰</Text>
-              <Text style={styles.metricNumber}>78%</Text>
-              <Text style={styles.metricLabel}>save money</Text>
-            </View>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricEmoji}>❤️</Text>
-              <Text style={styles.metricNumber}>92%</Text>
-              <Text style={styles.metricLabel}>stronger relationships</Text>
-            </View>
-          </View>
-        </View>
-        
         <View style={styles.testimonialsSection}>
-          <View style={styles.testimonialCard}>
+          <Animated.View style={[styles.testimonialCard, {
+            transform: [{ translateX: testimonial1Anim }],
+            opacity: testimonial1Opacity
+          }]}>
             <Text style={styles.testimonialText}>
-              "Sushi helped me understand my triggers and gave me tools that actually work."
+              "Sobi helped me understand my triggers and gave me tools that actually work."
             </Text>
             <Text style={styles.testimonialAuthor}>— Sarah, 6 months sober</Text>
-          </View>
+          </Animated.View>
           
-          <View style={styles.testimonialCard}>
+          <Animated.View style={[styles.testimonialCard, {
+            transform: [{ translateX: testimonial2Anim }],
+            opacity: testimonial2Opacity
+          }]}>
             <Text style={styles.testimonialText}>
               "The daily check-ins keep me accountable. I finally feel in control."
             </Text>
             <Text style={styles.testimonialAuthor}>— Mike, 1 year sober</Text>
-          </View>
+          </Animated.View>
+
+          <Animated.View style={[styles.testimonialCard, {
+            transform: [{ translateX: testimonial3Anim }],
+            opacity: testimonial3Opacity
+          }]}>
+            <Text style={styles.testimonialText}>
+              "I thought I had to do this alone. Having Sobi as my companion changed everything."
+            </Text>
+            <Text style={styles.testimonialAuthor}>— Alex, 3 months sober</Text>
+          </Animated.View>
         </View>
-        
-      
       </View>
     </View>
   );
@@ -785,8 +921,8 @@ export default function OnboardingScreen() {
 
   const renderMoneyStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.stepTitle}>Track your financial recovery 💰</Text>
-      <Text style={styles.stepSubtitle}>How much did you spend daily on substances?</Text>
+      <Text style={styles.onboardingTitle}>Track your financial recovery 💰</Text>
+      <Text style={styles.onboardingSubtitle}>How much did you spend daily on substances?</Text>
       
       <View style={styles.inputContainer}>
         <TextInput
@@ -816,8 +952,7 @@ export default function OnboardingScreen() {
     
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.stepTitle}>Your Recovery Savings</Text>
-        <Text style={styles.stepSubtitle}>See how much you'll save staying sober</Text>
+        <Text style={styles.onboardingTitle}>Your Recovery Savings</Text>
         
         <View style={styles.projectionContent}>
           <View style={styles.heroSavingsCard}>
@@ -842,8 +977,8 @@ export default function OnboardingScreen() {
   const renderLoadingPlanScreen = () => {
     return (
       <View style={styles.stepContainer}>
-        <Text style={styles.welcomeTitle}>Creating Your Plan ✨</Text>
-        <Text style={styles.welcomeSubtitle}>Just a moment while we personalize everything</Text>
+        <Text style={styles.onboardingTitle}>Creating Your Plan ✨</Text>
+        <Text style={styles.onboardingSubtitle}>Just a moment while we personalize everything</Text>
         
         <View style={styles.loadingContent}>
           <Progress.Circle
@@ -867,6 +1002,74 @@ export default function OnboardingScreen() {
     );
   };
 
+  const renderMoneyInterestStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.onboardingTitle}>Track your financial progress? 💰</Text>
+      <Text style={styles.onboardingSubtitle}>See how much money you save by staying sober</Text>
+      
+      <View style={styles.optionsContainer}>
+        <TouchableOpacity
+          style={[
+            styles.optionButton,
+            interestedInMoney === true && styles.optionButtonSelected
+          ]}
+          onPress={() => {
+            setInterestedInMoney(true);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setTimeout(() => {
+              setCurrentStep(OnboardingStep.MONEY);
+            }, 500);
+          }}
+        >
+          <Text style={[
+            styles.optionText,
+            interestedInMoney === true && styles.optionTextSelected
+          ]}>
+            Yes, I'd like to track my savings
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.optionButton,
+            interestedInMoney === false && styles.optionButtonSelected
+          ]}
+          onPress={() => {
+            setInterestedInMoney(false);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setTimeout(() => {
+              setCurrentStep(OnboardingStep.STRUGGLE_TIMES);
+            }, 500);
+          }}
+        >
+          <Text style={[
+            styles.optionText,
+            interestedInMoney === false && styles.optionTextSelected
+          ]}>
+            No, skip financial tracking
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderReviewRequestScreen = () => (
+    <View style={styles.stepContainer}>
+      <View style={styles.engagementHeader}>
+        <Text style={styles.engagementTitle}>Help Others Find Hope 💙</Text>
+        <Text style={styles.engagementSubtitle}>Your journey can inspire someone else to start theirs</Text>
+      </View>
+      
+      <View style={styles.engagementContent}>
+        <Text style={styles.reviewSimpleText}>
+          Thank you for choosing Sobi as your recovery companion. 
+          {'\n\n'}
+          Together, we're building a supportive community for everyone on their recovery journey.
+        </Text>
+      </View>
+    </View>
+  );
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case OnboardingStep.WELCOME:
@@ -889,6 +1092,8 @@ export default function OnboardingScreen() {
         return renderGoalsStep();
       case OnboardingStep.REASONS:
         return renderReasonsStep();
+      case OnboardingStep.MONEY_INTEREST:
+        return renderMoneyInterestStep();
       case OnboardingStep.MONEY:
         return renderMoneyStep();
       case OnboardingStep.MONEY_PROJECTION:
@@ -899,6 +1104,8 @@ export default function OnboardingScreen() {
         return renderStruggleTimesStep();
       case OnboardingStep.LOADING_PLAN:
         return renderLoadingPlanScreen();
+      case OnboardingStep.REVIEW_REQUEST:
+        return renderReviewRequestScreen();
       case OnboardingStep.ENGAGEMENT_READY:
         return renderEngagementReadyScreen();
       default:
@@ -906,17 +1113,33 @@ export default function OnboardingScreen() {
     }
   };
 
+  // Enhanced "Get Started" button for welcome screen
+  const renderWelcomeFooter = () => (
+    <View style={styles.welcomeFooter}>
+      <TouchableOpacity
+        style={styles.getStartedButton}
+        onPress={handleNext}
+        activeOpacity={0.8}
+      >
+        <Sparkles size={20} color="#FFFFFF" />
+        <Text style={styles.getStartedButtonText}>Get Started</Text>
+        <ArrowRight size={20} color="#FFFFFF" />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      
       <KeyboardAvoidingView 
-        style={styles.keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoid}
       >
         <View style={styles.header}>
-          {currentStep !== OnboardingStep.WELCOME && renderProgressBar()}
+          {currentStep > OnboardingStep.WELCOME && renderProgressBar()}
         </View>
-
+        
         <ScrollView 
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
@@ -924,45 +1147,42 @@ export default function OnboardingScreen() {
         >
           {renderCurrentStep()}
         </ScrollView>
-
-        <View style={styles.footer}>
-          {currentStep > OnboardingStep.WELCOME && (
-            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <ArrowLeft size={20} color={colors.textLight} />
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-          )}
-          
-          <View style={styles.spacer} />
-          
-          {/* Hide Continue button for single-select steps that auto-advance */}
-          {currentStep !== OnboardingStep.SUBSTANCES &&
-           currentStep !== OnboardingStep.SUBSTANCE_FREQUENCY &&
-           currentStep !== OnboardingStep.HARDEST_PART &&
-           currentStep !== OnboardingStep.SOBRIETY_IMPORTANCE &&
-           currentStep !== OnboardingStep.LOADING_PLAN &&
-           currentStep < OnboardingStep.ENGAGEMENT_READY ? (
-            <TouchableOpacity
-              style={[
-                styles.nextButton,
-                !canProceedFromStep() && styles.nextButtonDisabled
-              ]}
-              onPress={handleNext}
-              disabled={!canProceedFromStep()}
-            >
-              <Text style={styles.nextButtonText}>
-                {currentStep === OnboardingStep.WELCOME ? 'Get Started' :
-                 'Continue'}
-              </Text>
-              <ArrowRight size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          ) : currentStep === OnboardingStep.ENGAGEMENT_READY ? (
-            <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-              <Text style={styles.completeButtonText}>Start My Recovery</Text>
-              <Check size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          ) : null}
-        </View>
+        
+        {currentStep === OnboardingStep.WELCOME ? renderWelcomeFooter() : (
+          <View style={styles.footer}>
+            {currentStep > OnboardingStep.WELCOME && (
+              <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+                <ArrowLeft size={20} color={colors.textLight} />
+                <Text style={styles.backButtonText}>Back</Text>
+              </TouchableOpacity>
+            )}
+            
+            <View style={styles.spacer} />
+            
+            {/* Hide Continue button for auto-advancing screens */}
+            {currentStep !== OnboardingStep.SUBSTANCES &&
+             currentStep !== OnboardingStep.SUBSTANCE_FREQUENCY &&
+             currentStep !== OnboardingStep.SOBRIETY_IMPORTANCE &&
+             currentStep !== OnboardingStep.HARDEST_PART &&
+             currentStep !== OnboardingStep.MONEY_INTEREST &&
+             currentStep !== OnboardingStep.LOADING_PLAN &&
+             currentStep < OnboardingStep.ENGAGEMENT_READY ? (
+              <TouchableOpacity
+                style={[styles.nextButton, !canProceedFromStep() && styles.nextButtonDisabled]}
+                onPress={handleNext}
+                disabled={!canProceedFromStep()}
+              >
+                <Text style={styles.nextButtonText}>Continue</Text>
+                <ArrowRight size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            ) : currentStep === OnboardingStep.ENGAGEMENT_READY ? (
+              <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                <Text style={styles.completeButtonText}>Get Started</Text>
+                <Check size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1003,7 +1223,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 0,
+    paddingTop: 20,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+    gap: 30,
+  },
+  onboardingTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  onboardingSubtitle: {
+    fontSize: 16,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 10,
+  },
+  onboardingSubtitleMuted: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 40,
+    lineHeight: 20,
+    paddingHorizontal: 10,
   },
   welcomeTitle: {
     fontSize: 32,
@@ -1043,19 +1288,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
     fontWeight: '500',
-  },
-  stepTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  stepSubtitle: {
-    fontSize: 16,
-    color: colors.textLight,
-    textAlign: 'center',
-    marginBottom: 40,
   },
   inputContainer: {
     width: '100%',
@@ -1278,54 +1510,6 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: '#FFFFFF',
   },
-  stepSubtitleMuted: {
-    fontSize: 14,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: 40,
-  },
-  optionButtonWithIcon: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'flex-start',
-  },
-  optionButtonWithIconSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  optionContentWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-  },
-  optionEmoji: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  optionTextContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 2,
-  },
-  optionTitleSelected: {
-    color: '#FFFFFF',
-  },
-  optionDescription: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.textLight,
-  },
-  optionDescriptionSelected: {
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
   engagementContent: {
     alignItems: 'center',
     width: '100%',
@@ -1343,7 +1527,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     maxWidth: 380,
     paddingHorizontal: 16,
-    marginBottom: 30,
+    marginBottom: 0,
   },
   engagementTitle: {
     fontSize: 28,
@@ -1358,7 +1542,6 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
     fontWeight: '500',
-    lineHeight: 22,
   },
   successMetrics: {
     width: '100%',
@@ -1553,5 +1736,180 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     letterSpacing: -1,
     textAlign: 'center',
+  },
+  welcomeHeroContainer: {
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  welcomeCharacterContainer: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  welcomeCharacterImage: {
+    width: 140,
+    height: 140,
+    zIndex: 2,
+  },
+  welcomeCharacterGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 70,
+    zIndex: 1,
+  },
+  welcomeTitleContainer: {
+    alignItems: 'center',
+  },
+  welcomeMessageContainer: {
+    alignItems: 'center',
+    marginBottom: 0,
+    paddingHorizontal: 20,
+  },
+  welcomeMainMessage: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  welcomeSecondaryMessage: {
+    fontSize: 15,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  welcomeFeatureGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 32,
+    gap: 12,
+  },
+  welcomeFeatureCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  welcomeFeatureIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  welcomeFeatureTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  welcomeFeatureDescription: {
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  welcomeEncouragementContainer: {
+    alignItems: 'center',
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    marginHorizontal: 0,
+    width: '100%',
+    maxWidth: 320,
+  },
+  welcomeEncouragementText: {
+    fontSize: 16,
+    color: colors.primary,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  welcomeFooter: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  getStartedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 40,
+    width: '80%',
+    maxWidth: 280,
+  },
+  getStartedButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  welcomeEncouragementInline: {
+    alignItems: 'center',
+    padding: 16,
+  },
+  // Option styles with icons (for importance step)
+  optionButtonWithIcon: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'flex-start',
+  },
+  optionButtonWithIconSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  optionContentWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  optionEmoji: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  optionTextContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  optionTitleSelected: {
+    color: '#FFFFFF',
+  },
+  optionDescription: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.textLight,
+  },
+  optionDescriptionSelected: {
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  reviewSimpleText: {
+    fontSize: 16,
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 }); 

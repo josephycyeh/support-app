@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Sushi - Sobriety Companion",
+    "name": "Sobi - Stay Sober",
     "slug": "sushi-support-app",
     "version": "1.0.9",
     "orientation": "portrait",
@@ -17,11 +17,6 @@
       "supportsTablet": false,
       "bitcode": false,
       "bundleIdentifier": "com.caladanapps.myro",
-      "infoPlist": {
-        "UIBackgroundModes": [
-          "voip"
-        ]
-      },
       "appleTeamId": "FJ8TN5K3MB"
     },
     "android": {
