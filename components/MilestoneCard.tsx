@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Trophy, Clock, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { TIME_CONSTANTS } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import * as Haptics from 'expo-haptics';
 import typography from '@/constants/typography';
@@ -29,7 +30,7 @@ export const MilestoneCard = () => {
   const now = new Date();
   const start = new Date(startDate);
   const totalMilliseconds = now.getTime() - start.getTime();
-  const totalDays = Math.max(0, totalMilliseconds / (1000 * 60 * 60 * 24));
+  const totalDays = Math.max(0, totalMilliseconds / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
   const daysSober = Math.floor(totalDays);
 
   // Find next milestone based purely on current streak (consistent with Progress screen)

@@ -1,3 +1,4 @@
+import { getDaysAgoStr, formatDateToISOString, getDaysAgo } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useMoodStore } from '@/store/moodStore';
 import { useJournalStore } from '@/store/journalStore';
@@ -5,18 +6,9 @@ import { useChatStore } from '@/store/chatStore';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useActivityStore } from '@/store/activityStore';
 
-// Helper function to get date string N days ago
-const getDaysAgo = (daysAgo: number): string => {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString().split('T')[0];
-};
-
 // Helper function to get ISO timestamp N days ago
 const getTimestampDaysAgo = (daysAgo: number): string => {
-  const date = new Date();
-  date.setDate(date.getDate() - daysAgo);
-  return date.toISOString();
+  return formatDateToISOString(getDaysAgo(daysAgo));
 };
 
 export const populateDemoData = () => {
@@ -76,7 +68,7 @@ export const populateDemoData = () => {
   // Generate daily XP data for the past 45 days with reasonable amounts
   const dailyXP: Record<string, number> = {};
   for (let i = 0; i < 45; i++) {
-    const dateStr = getDaysAgo(i);
+    const dateStr = getDaysAgoStr(i);
     // XP amounts in multiples of 5 with LOTS of darkest blue days (need >60 XP for intensity 1.0)
     let xpAmount = 0;
     const rand = Math.random();
@@ -142,7 +134,7 @@ export const populateDemoData = () => {
   for (let i = 29; i >= 0; i--) { // Start from 29 days ago, work forward
     const mood = Math.floor(Math.random() * 3) + 3; // Mostly good moods (3-5)
     const timestamp = getTimestampDaysAgo(i);
-    const date = getDaysAgo(i);
+    const date = getDaysAgoStr(i);
     
     // Create proper MoodEntry with all required fields
     const moodEntry = {

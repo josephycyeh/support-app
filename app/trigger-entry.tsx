@@ -481,9 +481,6 @@ const styles = StyleSheet.create({
   outcomeTextActive: {
     color: '#FFFFFF',
   },
-  bottomPadding: {
-    height: 24,
-  },
   logButton: {
     backgroundColor: colors.danger,
     paddingHorizontal: 20,

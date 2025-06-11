@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import colors from '@/constants/colors';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { calculateDaysSober, formatDateToYYYYMMDD, isFuture, isToday } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
 interface HeatmapCalendarProps {
@@ -17,10 +18,7 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
   const { dailyXP, sobrietyBreaks, firstAppUseDate } = useSobrietyStore();
   
   // Calculate days since sobriety start
-  const today = new Date();
-  const sobrietyStart = new Date(startDate);
-  const firstAppUse = new Date(firstAppUseDate || startDate); // Fallback to startDate for existing users
-  const daysSinceSobrietyStart = Math.floor((today.getTime() - sobrietyStart.getTime()) / (1000 * 60 * 60 * 24));
+  const daysSinceSobrietyStart = calculateDaysSober(startDate);
   
   // Generate calendar data (memoized for performance)
   const calendarData = useMemo(() => 
@@ -53,6 +51,7 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
   
   // Check if previous month navigation should be disabled
   const isPrevMonthDisabled = () => {
+    const firstAppUse = new Date(firstAppUseDate || startDate); // Fallback to startDate for existing users
     const startMonth = firstAppUse.getMonth();
     const startYear = firstAppUse.getFullYear();
     
@@ -61,6 +60,7 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
   
   // Check if next month navigation should be disabled
   const isNextMonthDisabled = () => {
+    const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
@@ -200,10 +200,7 @@ const CalendarDay = ({ day, intensity, isToday, isEmpty, isSobrietyBreak, xpEarn
   );
 };
 
-// Helper function to format date to YYYY-MM-DD
-const formatDateToYYYYMMDD = (date: Date) => {
-  return date.toISOString().split('T')[0];
-};
+// Date utility functions are now imported from @/utils/dateUtils
 
 // Helper function to generate calendar data
 const generateCalendarData = (

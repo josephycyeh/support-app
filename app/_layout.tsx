@@ -7,7 +7,8 @@ import { useEffect } from "react";
 import { useSobrietyStore } from "@/store/sobrietyStore";
 
 import { ErrorBoundary } from "./error-boundary";
-
+import { Platform } from "react-native"
+import Superwall from "expo-superwall/compat"
 // Register LiveKit globals
 
 export const unstable_settings = {
@@ -19,6 +20,14 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  
+  useEffect(() => {
+    const apiKey = "pk_4466f136753fc81464d39d37803e9adefacc3123519e55fd"
+    Superwall.configure({
+      apiKey: apiKey,
+    })
+  }, [])
+
   const [loaded, error] = useFonts({
     ...FontAwesome.font,
   });

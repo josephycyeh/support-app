@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, Linking } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Calendar, Heart, Target, BookOpen, LogOut, Edit, X, Save, Trash2, User, MessageSquare, Shield, FileText } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Calendar, Heart, LogOut, Edit, X, User, Settings } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
+import { calculateDaysSober, getStartOfDay, formatDateToISOString } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
-import { useChatStore } from '@/store/chatStore';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
@@ -22,7 +21,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge, setStartDate } = useSobrietyStore();
   const { reasons, addReason, updateReason, deleteReason } = useReasonsStore();
-  const { clearHistory } = useChatStore();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -32,10 +30,8 @@ export default function ProfileScreen() {
   const [tempSobrietyDate, setTempSobrietyDate] = useState(new Date());
   const [selectedReason, setSelectedReason] = useState<{id: string, text: string} | null>(null);
   
-  // Calculate days sober using consistent ISO timestamp format
-  const today = new Date();
-  const sobrietyDate = new Date(startDate); // startDate is always ISO timestamp now
-  const daysSober = Math.floor((today.getTime() - sobrietyDate.getTime()) / (1000 * 60 * 60 * 24));
+  // Calculate days sober using utility function
+  const daysSober = calculateDaysSober(startDate);
   
   // Calculate XP progress
   const progressPercentage = (xp / xpToNextLevel) * 100;
@@ -110,51 +106,7 @@ export default function ProfileScreen() {
     setShowAgeModal(false);
   };
   
-  const handleClearChatHistory = () => {
-    Alert.alert(
-      "Clear Chat History",
-      "Are you sure you want to delete all your conversations with Sushi? This action cannot be undone.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { 
-          text: "Clear History", 
-          onPress: () => clearHistory(),
-          style: "destructive"
-        }
-      ]
-    );
-  };
-  
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      "Are you sure you want to permanently delete your account? This will erase all your data including your sobriety progress, reasons, and chat history. This action cannot be undone.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        { 
-          text: "Delete Account", 
-          onPress: async () => {
-            try {
-              // Clear all AsyncStorage data
-              await AsyncStorage.clear();
-              // Navigate back to onboarding
-              router.replace('/onboarding');
-            } catch (error) {
-              console.error('Error clearing storage:', error);
-              Alert.alert('Error', 'Failed to delete account data. Please try again.');
-            }
-          },
-          style: "destructive"
-        }
-      ]
-    );
-  };
+
   
   const handleResetSobriety = () => {
     Alert.alert(
@@ -180,12 +132,8 @@ export default function ProfileScreen() {
   };
   
   const handleSaveSobrietyDate = (date: Date) => {
-    // Set the time to the beginning of the day (00:00:00) 
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    // Update the sobriety start date
-    setStartDate(startOfDay.toISOString());
+    // Set the time to the beginning of the day (00:00:00) and update sobriety start date
+    setStartDate(formatDateToISOString(getStartOfDay(date)));
     setShowSobrietyDateModal(false);
   };
   
@@ -198,13 +146,31 @@ export default function ProfileScreen() {
       <Stack.Screen 
         options={{
           title: "Profile",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/settings')}
+              style={styles.settingsButton}
+            >
+              <Settings size={24} color={colors.primary} />
+            </TouchableOpacity>
+          ),
         }} 
       />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <View style={styles.headerTextContainer}>
           <Text style={styles.headerTitle}>Your Profile</Text>
           <Text style={styles.headerSubtitle}>Level {level} • {daysSober} days sober</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/settings')}
+              style={styles.settingsButton}
+            >
+              <Settings size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
             </View>
             
             <View style={styles.statsContainer}>
@@ -267,34 +233,7 @@ export default function ProfileScreen() {
           </Card>
         </View>
         
-        <View style={styles.sectionContainer}>
-          <SectionHeader title="Legal & Privacy" />
-          <Card style={styles.legalContainer}>
-            <TouchableOpacity 
-              style={styles.legalItem}
-              onPress={() => Linking.openURL('https://example.com/privacy-policy')}
-            >
-              <View style={styles.legalIconContainer}>
-                <Shield size={20} color={colors.primary} />
-              </View>
-              <View style={styles.legalContent}>
-                <Text style={styles.legalLabel}>Privacy Policy</Text>
-              </View>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.legalItem}
-              onPress={() => Linking.openURL('https://example.com/terms-of-use')}
-            >
-              <View style={styles.legalIconContainer}>
-                <FileText size={20} color={colors.primary} />
-              </View>
-              <View style={styles.legalContent}>
-                <Text style={styles.legalLabel}>Terms of Use</Text>
-              </View>
-            </TouchableOpacity>
-          </Card>
-        </View>
+
         
         <Button
           onPress={handleResetSobriety}
@@ -306,25 +245,6 @@ export default function ProfileScreen() {
 I Relapsed        
 </Button>
         
-        <Button
-          onPress={handleClearChatHistory}
-          variant="secondary"
-          style={styles.clearChatHistoryButton}
-          icon={<MessageSquare size={18} color="#FFFFFF" />}
-          textStyle={styles.clearChatHistoryButtonText}
-        >
-          Clear Chat History
-        </Button>
-
-        <Button
-          onPress={handleDeleteAccount}
-          variant="outline"
-          style={styles.deleteAccountButton}
-          icon={<Trash2 size={18} color="#B91C1C" />}
-          textStyle={styles.deleteAccountButtonText}
-        >
-          Delete Account
-        </Button>
       </ScrollView>
       
       {/* Add Reason Modal */}
@@ -568,22 +488,7 @@ const styles = StyleSheet.create({
   resetButtonText: {
     color: '#8B0000',
   },
-  clearChatHistoryButton: {
-    marginTop: 12,
-    backgroundColor: '#6b98c2',
-    borderColor: '#5a86ab',
-  },
-  clearChatHistoryButtonText: {
-    color: '#FFFFFF',
-  },
-  deleteAccountButton: {
-    marginTop: 12,
-    backgroundColor: '#FEE2E2',
-    borderColor: '#B91C1C',
-  },
-  deleteAccountButtonText: {
-    color: '#B91C1C',
-  },
+
   modal: {
     margin: 0,
     justifyContent: 'flex-end',
@@ -698,35 +603,16 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.primary,
   },
-  legalContainer: {
-    padding: 0,
-    overflow: 'hidden',
+
+  settingsButton: {
+    padding: 10,
   },
-  legalItem: {
+  headerContent: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  legalIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(107, 152, 194, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  legalContent: {
+  headerTextContainer: {
     flex: 1,
-  },
-  legalLabel: {
-    ...typography.body,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  legalDescription: {
-    ...typography.bodySmall,
   },
 });

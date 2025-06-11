@@ -6,40 +6,55 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Progress from 'react-native-progress';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as StoreReview from 'expo-store-review';
+import Superwall from 'expo-superwall/compat';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 import { MoneyProjectionChart } from '@/components/MoneyProjectionChart';
 import * as Haptics from 'expo-haptics';
+import { OnboardingStep as OnboardingStepComponent } from '@/components/onboarding/OnboardingStep';
+import { OptionButton, OptionsContainer } from '@/components/onboarding/OptionButton';
+import { SingleSelectOptions, MultiSelectOptions } from '@/components/onboarding/MultiSelectOptions';
 
 enum OnboardingStep {
-  WELCOME = 0,             
-  NAME = 1,                  
-  SUBSTANCES = 2,           
-  SUBSTANCE_FREQUENCY = 3,   
-  SOBRIETY_DATE = 4,        
-  TRIGGERS = 5,            
-  HARDEST_PART = 6,      
+  WELCOME = 0,
+  NAME = 1,
+  SUBSTANCES = 2,
+  SUBSTANCE_FREQUENCY = 3,
+  SOBRIETY_DATE = 4,
+  TRIGGERS = 5,
+  HARDEST_PART = 6,
   ENGAGEMENT_SUPPORT = 7,    // "You're not alone" engagement screen
-  GOALS = 8,   
-  SOBRIETY_IMPORTANCE = 9, 
-  REASONS = 10,             
+  GOALS = 8,
+  SOBRIETY_IMPORTANCE = 9,
+  REASONS = 10,
   MONEY_INTEREST = 11,       // Ask if they want to track money             
-  MONEY = 12,                
-  MONEY_PROJECTION = 13,    
-  STRUGGLE_TIMES = 14,    
-  LOADING_PLAN = 15,         // Loading screen - tailoring their plan
-  REVIEW_REQUEST = 16,       // Ask for app store review
+  MONEY = 12,
+  MONEY_PROJECTION = 13,
+  STRUGGLE_TIMES = 14,
+  REVIEW_REQUEST = 15,       // Ask for app store review
+  LOADING_PLAN = 16,         // Loading screen - tailoring their plan
   ENGAGEMENT_READY = 17      // "Ready to begin" engagement screen - final step               
 }
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { setName, setStartDate, completeOnboarding } = useSobrietyStore();
+  const { 
+    setName, 
+    setStartDate, 
+    completeOnboarding,
+    setSubstance: saveSubstance,
+    setSubstanceFrequency: saveSubstanceFrequency,
+    setTriggers: saveTriggers,
+    setRecoveryGoals: saveRecoveryGoals,
+    setHardestChallenge: saveHardestChallenge,
+    setSobrietyImportance: saveSobrietyImportance,
+    setStruggleTimes: saveStruggleTimes
+  } = useSobrietyStore();
   const { addReason } = useReasonsStore();
   const { setDailySpending } = useMoneySavedStore();
-  
+
   const [currentStep, setCurrentStep] = useState(OnboardingStep.WELCOME);
   const [userName, setUserName] = useState('');
   const [sobrietyDate, setSobrietyDate] = useState(new Date());
@@ -60,7 +75,7 @@ export default function OnboardingScreen() {
 
   // Animation values for welcome screen
   const [fadeAnim] = useState(new Animated.Value(0));
-  
+
   // Animation values for engagement screen testimonials
   const [testimonial1Anim] = useState(new Animated.Value(-30));
   const [testimonial2Anim] = useState(new Animated.Value(30));
@@ -148,7 +163,7 @@ export default function OnboardingScreen() {
       setIsLoading(true);
       setLoadingProgress(0);
       setLoadingText('Analyzing your responses...');
-      
+
       const loadingSteps = [
         { text: 'Analyzing your responses...', progress: 12, duration: 2500 },
         { text: 'Processing your goals...', progress: 25, duration: 2000 },
@@ -163,16 +178,16 @@ export default function OnboardingScreen() {
       let currentLoadingStep = -1;
       const timeouts: number[] = [];
       let isCancelled = false;
-      
+
       const executeStep = () => {
         if (isCancelled) return;
-        
+
         if (currentLoadingStep < loadingSteps.length - 1) {
           currentLoadingStep++;
           const step = loadingSteps[currentLoadingStep];
           setLoadingText(step.text);
           setLoadingProgress(step.progress);
-          
+
           const timeout = setTimeout(executeStep, step.duration);
           timeouts.push(timeout);
         } else {
@@ -186,11 +201,11 @@ export default function OnboardingScreen() {
           timeouts.push(finalTimeout);
         }
       };
-      
+
       // Start immediately with first step
       const initialTimeout = setTimeout(executeStep, 500);
       timeouts.push(initialTimeout);
-      
+
       return () => {
         isCancelled = true;
         timeouts.forEach(timeout => clearTimeout(timeout));
@@ -216,14 +231,14 @@ export default function OnboardingScreen() {
           console.log('Review request failed:', error);
         }
       };
-      
+
       requestReview();
     }
   }, [currentStep]);
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
+
     // Save data immediately when moving to next step
     switch (currentStep) {
       case OnboardingStep.NAME:
@@ -231,8 +246,43 @@ export default function OnboardingScreen() {
           setName(userName.trim());
         }
         break;
+      case OnboardingStep.SUBSTANCES:
+        if (selectedSubstance.trim()) {
+          saveSubstance(selectedSubstance);
+        }
+        break;
+      case OnboardingStep.SUBSTANCE_FREQUENCY:
+        if (substanceFrequency.trim()) {
+          saveSubstanceFrequency(substanceFrequency);
+        }
+        break;
       case OnboardingStep.SOBRIETY_DATE:
         setStartDate(sobrietyDate.toISOString());
+        break;
+      case OnboardingStep.TRIGGERS:
+        if (selectedTriggers.length > 0) {
+          saveTriggers(selectedTriggers);
+        }
+        break;
+      case OnboardingStep.HARDEST_PART:
+        if (hardestPart.trim()) {
+          saveHardestChallenge(hardestPart);
+        }
+        break;
+      case OnboardingStep.GOALS:
+        if (selectedGoals.length > 0) {
+          saveRecoveryGoals(selectedGoals);
+        }
+        break;
+      case OnboardingStep.SOBRIETY_IMPORTANCE:
+        if (sobrietyImportance.trim()) {
+          saveSobrietyImportance(sobrietyImportance);
+        }
+        break;
+      case OnboardingStep.STRUGGLE_TIMES:
+        if (struggleTimes.length > 0) {
+          saveStruggleTimes(struggleTimes);
+        }
         break;
       case OnboardingStep.MONEY:
         if (dailySpending.trim()) {
@@ -240,7 +290,17 @@ export default function OnboardingScreen() {
         }
         break;
     }
-    
+
+    // Handle conditional navigation
+    if (currentStep === OnboardingStep.MONEY_INTEREST) {
+      if (interestedInMoney === true) {
+        setCurrentStep(OnboardingStep.MONEY);
+      } else if (interestedInMoney === false) {
+        setCurrentStep(OnboardingStep.STRUGGLE_TIMES);
+      }
+      return;
+    }
+
     if (currentStep < OnboardingStep.ENGAGEMENT_READY) {
       setCurrentStep(currentStep + 1);
     }
@@ -256,7 +316,7 @@ export default function OnboardingScreen() {
         setCurrentStep(OnboardingStep.MONEY_INTEREST);
         return;
       }
-      
+
       setCurrentStep(currentStep - 1);
     }
   };
@@ -283,6 +343,46 @@ export default function OnboardingScreen() {
     // All data should already be saved, just complete onboarding
     completeOnboarding();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    
+    // Register and launch Superwall paywall
+    Superwall.shared.register({
+      placement: 'onboarding_complete',
+      feature: () => {
+        // This runs when user has access (premium user or after payment)
+        router.replace('/(tabs)');
+      }
+    });
+  };
+
+  const handleSkipOnboarding = () => {
+    // Only for development/testing - populate with mock data
+    const mockDate = new Date();
+    mockDate.setDate(mockDate.getDate() - 7); // 7 days sober
+    
+    // Set mock sobriety data
+    setName('Test User');
+    setStartDate(mockDate.toISOString());
+    
+    // Set mock onboarding data
+    saveSubstance('Alcohol');
+    saveSubstanceFrequency('Daily');
+    saveTriggers(['Stress or anxiety', 'Social situations']);
+    saveRecoveryGoals(['🎯 Stay completely sober', '💪 Build healthy habits']);
+    saveHardestChallenge('Cravings and urges');
+    saveSobrietyImportance('🔥 Extremely important - my top priority');
+    saveStruggleTimes(['🌆 Evening (4-8 PM)', '🌙 Night (8 PM-12 AM)']);
+    
+    // Add mock reasons
+    addReason('Testing the app');
+    addReason('For my family');
+    
+    // Set mock money spending
+    setDailySpending(25);
+    
+    // Complete onboarding
+    completeOnboarding();
+    
+    // Skip paywall and go directly to main app
     router.replace('/(tabs)');
   };
 
@@ -331,7 +431,7 @@ export default function OnboardingScreen() {
 
   const renderProgressBar = () => {
     const progressPercentage = currentStep / OnboardingStep.ENGAGEMENT_READY;
-    
+
     return (
       <View style={styles.progressContainer}>
         <Progress.Bar
@@ -358,13 +458,13 @@ export default function OnboardingScreen() {
             colors={[colors.primary + '15', colors.secondary + '10', 'transparent']}
             style={styles.welcomeCharacterGradient}
           />
-          <Image 
+          <Image
             source={require('@/assets/images/Character_PNG.png')}
             style={styles.welcomeCharacterImage}
             resizeMode="contain"
           />
         </View>
-        
+
         <View style={styles.welcomeTitleContainer}>
           <Text style={styles.welcomeTitle}>Meet Sobi 🌟</Text>
           <Text style={styles.welcomeSubtitle}>Your Recovery Companion</Text>
@@ -391,7 +491,7 @@ export default function OnboardingScreen() {
     <View style={styles.stepContainer}>
       <Text style={styles.onboardingTitle}>What should I call you?</Text>
       <Text style={styles.onboardingSubtitle}>Let's personalize your recovery experience</Text>
-      
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
@@ -410,7 +510,7 @@ export default function OnboardingScreen() {
   const renderSobrietyDateStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.onboardingTitle}>When did your sobriety begin?</Text>
-      
+
       <View style={styles.datePickerContainer}>
         <DateTimePicker
           value={sobrietyDate}
@@ -432,7 +532,7 @@ export default function OnboardingScreen() {
     <View style={styles.stepContainer}>
       <Text style={styles.onboardingTitle}>Why did you choose recovery?</Text>
       <Text style={styles.onboardingSubtitle}>Your reasons will help keep you motivated during challenges</Text>
-      
+
       <View style={styles.reasonsInputContainer}>
         <TextInput
           style={styles.reasonInput}
@@ -498,44 +598,20 @@ export default function OnboardingScreen() {
     ];
 
     return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.onboardingTitle}>How important is sobriety to you right now?</Text>
-        
-        <View style={styles.optionsContainer}>
+      <OnboardingStepComponent title="How important is sobriety to you right now?">
+        <OptionsContainer>
           {importanceLevels.map((item, index) => (
-            <TouchableOpacity
+            <OptionButton
               key={index}
-              style={[
-                styles.optionButtonWithIcon,
-                sobrietyImportance === `${item.emoji} ${item.level} - ${item.description}` && styles.optionButtonWithIconSelected
-              ]}
-              onPress={() => {
-                setSobrietyImportance(`${item.emoji} ${item.level} - ${item.description}`);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setTimeout(() => handleNext(), 500);
-              }}
-            >
-              <View style={styles.optionContentWithIcon}>
-                <Text style={styles.optionEmoji}>{item.emoji}</Text>
-                <View style={styles.optionTextContainer}>
-                  <Text style={[
-                    styles.optionTitle,
-                    sobrietyImportance === `${item.emoji} ${item.level} - ${item.description}` && styles.optionTitleSelected
-                  ]}>
-                    {item.level}
-                  </Text>
-                  <Text style={[
-                    styles.optionDescription,
-                    sobrietyImportance === `${item.emoji} ${item.level} - ${item.description}` && styles.optionDescriptionSelected
-                  ]}>
-                    {item.description}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+              label={item.level}
+              description={item.description}
+              icon={item.emoji}
+              isSelected={sobrietyImportance === `${item.emoji} ${item.level} - ${item.description}`}
+              onPress={() => setSobrietyImportance(`${item.emoji} ${item.level} - ${item.description}`)}
+            />
           ))}
-        </View>
-      </View>
+        </OptionsContainer>
+      </OnboardingStepComponent>
     );
   };
 
@@ -543,7 +619,7 @@ export default function OnboardingScreen() {
     const commonSubstances = [
       'Alcohol',
       'Nicotine/Tobacco',
-      'Cannabis/Marijuana', 
+      'Cannabis/Marijuana',
       'Cocaine',
       'Prescription drugs',
       'Gambling',
@@ -557,33 +633,13 @@ export default function OnboardingScreen() {
     ];
 
     return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.onboardingTitle}>What are you working on?</Text>
-        
-        <View style={styles.optionsContainer}>
-          {commonSubstances.map((substance, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.optionButton,
-                selectedSubstance === substance && styles.optionButtonSelected
-              ]}
-              onPress={() => {
-                setSelectedSubstance(substance);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setTimeout(() => handleNext(), 500);
-              }}
-            >
-              <Text style={[
-                styles.optionText,
-                selectedSubstance === substance && styles.optionTextSelected
-              ]}>
-                {substance}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <OnboardingStepComponent title="What are you working on?">
+        <SingleSelectOptions
+          options={commonSubstances}
+          selectedOption={selectedSubstance}
+          onSelectionChange={setSelectedSubstance}
+        />
+      </OnboardingStepComponent>
     );
   };
 
@@ -597,33 +653,13 @@ export default function OnboardingScreen() {
     ];
 
     return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.onboardingTitle}>How often do you use {selectedSubstance.toLowerCase()}?</Text>
-        
-        <View style={styles.optionsContainer}>
-          {frequencies.map((frequency, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.optionButton,
-                substanceFrequency === frequency && styles.optionButtonSelected
-              ]}
-              onPress={() => {
-                setSubstanceFrequency(frequency);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setTimeout(() => handleNext(), 500);
-              }}
-            >
-              <Text style={[
-                styles.optionText,
-                substanceFrequency === frequency && styles.optionTextSelected
-              ]}>
-                {frequency}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <OnboardingStepComponent title={`How often do you use ${selectedSubstance.toLowerCase()}?`}>
+        <SingleSelectOptions
+          options={frequencies}
+          selectedOption={substanceFrequency}
+          onSelectionChange={setSubstanceFrequency}
+        />
+      </OnboardingStepComponent>
     );
   };
 
@@ -642,40 +678,18 @@ export default function OnboardingScreen() {
       'I don\'t know yet'
     ];
 
-    const toggleTrigger = (trigger: string) => {
-      if (selectedTriggers.includes(trigger)) {
-        setSelectedTriggers(selectedTriggers.filter(t => t !== trigger));
-      } else {
-        setSelectedTriggers([...selectedTriggers, trigger]);
-      }
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    };
-
     return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.onboardingTitle}>What are your main triggers?</Text>
-        <Text style={styles.onboardingSubtitle}>Select all situations that commonly trigger you</Text>
-        
-        <View style={styles.optionsContainer}>
-          {triggers.map((trigger, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.optionButton,
-                selectedTriggers.includes(trigger) && styles.optionButtonSelected
-              ]}
-              onPress={() => toggleTrigger(trigger)}
-            >
-              <Text style={[
-                styles.optionText,
-                selectedTriggers.includes(trigger) && styles.optionTextSelected
-              ]}>
-                {trigger}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <OnboardingStepComponent 
+        title="What are your main triggers?"
+        subtitle="Select all situations that commonly trigger you"
+      >
+        <MultiSelectOptions
+          options={triggers}
+          selectedOptions={selectedTriggers}
+          onSelectionChange={setSelectedTriggers}
+          minSelections={1}
+        />
+      </OnboardingStepComponent>
     );
   };
 
@@ -688,40 +702,18 @@ export default function OnboardingScreen() {
       '🌃 Late night (12-6 AM)'
     ];
 
-    const toggleTime = (time: string) => {
-      if (struggleTimes.includes(time)) {
-        setStruggleTimes(struggleTimes.filter(t => t !== time));
-      } else {
-        setStruggleTimes([...struggleTimes, time]);
-      }
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    };
-
     return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.onboardingTitle}>When do you struggle the most?</Text>
-        <Text style={styles.onboardingSubtitle}>We'll check in with you during these times</Text>
-        
-        <View style={styles.optionsContainer}>
-          {times.map((time, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.optionButton,
-                struggleTimes.includes(time) && styles.optionButtonSelected
-              ]}
-              onPress={() => toggleTime(time)}
-            >
-              <Text style={[
-                styles.optionText,
-                struggleTimes.includes(time) && styles.optionTextSelected
-              ]}>
-                {time}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <OnboardingStepComponent 
+        title="When do you struggle the most?"
+        subtitle="We'll check in with you during these times"
+      >
+        <MultiSelectOptions
+          options={times}
+          selectedOptions={struggleTimes}
+          onSelectionChange={setStruggleTimes}
+          minSelections={1}
+        />
+      </OnboardingStepComponent>
     );
   };
 
@@ -735,33 +727,13 @@ export default function OnboardingScreen() {
     ];
 
     return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.onboardingTitle}>What's been the hardest part for you so far?</Text>
-        
-        <View style={styles.optionsContainer}>
-          {challenges.map((challenge, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.optionButton,
-                hardestPart === challenge && styles.optionButtonSelected
-              ]}
-              onPress={() => {
-                setHardestPart(challenge);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setTimeout(() => handleNext(), 500);
-              }}
-            >
-              <Text style={[
-                styles.optionText,
-                hardestPart === challenge && styles.optionTextSelected
-              ]}>
-                {challenge}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <OnboardingStepComponent title="What's been the hardest part for you so far?">
+        <SingleSelectOptions
+          options={challenges}
+          selectedOption={hardestPart}
+          onSelectionChange={setHardestPart}
+        />
+      </OnboardingStepComponent>
     );
   };
 
@@ -776,40 +748,18 @@ export default function OnboardingScreen() {
       '🌱 Personal growth'
     ];
 
-    const toggleGoal = (goal: string) => {
-      if (selectedGoals.includes(goal)) {
-        setSelectedGoals(selectedGoals.filter(g => g !== goal));
-      } else {
-        setSelectedGoals([...selectedGoals, goal]);
-      }
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    };
-
     return (
-      <View style={styles.stepContainer}>
-        <Text style={styles.onboardingTitle}>What are your recovery goals?</Text>
-        <Text style={styles.onboardingSubtitle}>Select all that apply to you</Text>
-        
-        <View style={styles.optionsContainer}>
-          {goals.map((goal, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.optionButton,
-                selectedGoals.includes(goal) && styles.optionButtonSelected
-              ]}
-              onPress={() => toggleGoal(goal)}
-            >
-              <Text style={[
-                styles.optionText,
-                selectedGoals.includes(goal) && styles.optionTextSelected
-              ]}>
-                {goal}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <OnboardingStepComponent 
+        title="What are your recovery goals?"
+        subtitle="Select all that apply to you"
+      >
+        <MultiSelectOptions
+          options={goals}
+          selectedOptions={selectedGoals}
+          onSelectionChange={setSelectedGoals}
+          minSelections={1}
+        />
+      </OnboardingStepComponent>
     );
   };
 
@@ -819,7 +769,7 @@ export default function OnboardingScreen() {
         <Text style={styles.engagementTitle}>You're Not Alone 💙</Text>
         <Text style={styles.engagementSubtitle}>Join thousands transforming their lives with Sobi</Text>
       </View>
-      
+
       <View style={styles.engagementContent}>
         <View style={styles.testimonialsSection}>
           <Animated.View style={[styles.testimonialCard, {
@@ -831,7 +781,7 @@ export default function OnboardingScreen() {
             </Text>
             <Text style={styles.testimonialAuthor}>— Sarah, 6 months sober</Text>
           </Animated.View>
-          
+
           <Animated.View style={[styles.testimonialCard, {
             transform: [{ translateX: testimonial2Anim }],
             opacity: testimonial2Opacity
@@ -858,16 +808,12 @@ export default function OnboardingScreen() {
 
   const renderEngagementReadyScreen = () => (
     <View style={[styles.stepContainer, { justifyContent: 'flex-start', paddingTop: 20 }]}>
-      <View style={[styles.engagementHeader, { marginBottom: 20 }]}>
-        <Text style={[styles.engagementTitle, { fontSize: 26, marginBottom: 8 }]}>You're Ready! 🚀</Text>
-        <Text style={[styles.engagementSubtitle, { fontSize: 15 }]}>Your personalized recovery plan is ready</Text>
+      <View style={[styles.engagementHeader, { marginBottom: 0 }]}>
+        <Text style={[styles.engagementTitle, { fontSize: 26, marginBottom: 22 }]}>Your personalized recovery plan is ready</Text>
+        <Text style={[styles.engagementSubtitle, { fontSize: 15 }]}>Here's what you can expect:</Text>
       </View>
-      
+
       <View style={styles.engagementContent}>
-        <Text style={[styles.engagementDescription, { fontSize: 15, marginBottom: 20, lineHeight: 22 }]}>
-          Here's what you can expect:
-        </Text>
-        
         <View style={[styles.featuresSection, { marginBottom: 20 }]}>
           <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
             <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
@@ -875,46 +821,89 @@ export default function OnboardingScreen() {
             </View>
             <View style={styles.featureTextContainer}>
               <Text style={[styles.featureTitle, { fontSize: 15 }]}>Smart Check-ins</Text>
-              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Daily support when you need it most</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Get daily support exactly when you need it most.</Text>
             </View>
           </View>
-          
+
+          <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
+            <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
+              <Text style={{ fontSize: 24 }}>🤖</Text>
+            </View>
+            <View style={styles.featureTextContainer}>
+              <Text style={[styles.featureTitle, { fontSize: 15 }]}>AI Recovery Companion</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Access personalized support and guidance 24/7.</Text>
+            </View>
+          </View>
+
+          <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
+            <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
+              <Text style={{ fontSize: 24 }}>📝</Text>
+            </View>
+            <View style={styles.featureTextContainer}>
+              <Text style={[styles.featureTitle, { fontSize: 15 }]}>Recovery Journaling</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Track your thoughts, feelings, and progress daily.</Text>
+            </View>
+          </View>
+          <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
+            <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
+              <Text style={{ fontSize: 24 }}>🧘</Text>
+            </View>
+            <View style={styles.featureTextContainer}>
+              <Text style={[styles.featureTitle, { fontSize: 15 }]}>Mindfulness Tools</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Find peace with guided meditation and breathing exercises.</Text>
+            </View>
+          </View>
           <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
             <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
               <Text style={{ fontSize: 24 }}>💝</Text>
             </View>
             <View style={styles.featureTextContainer}>
               <Text style={[styles.featureTitle, { fontSize: 15 }]}>Your Why</Text>
-              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Motivation based on your goals</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Stay motivated with reminders of your personal goals.</Text>
             </View>
           </View>
-          
+
           <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
             <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
               <Text style={{ fontSize: 24 }}>📈</Text>
             </View>
             <View style={styles.featureTextContainer}>
               <Text style={[styles.featureTitle, { fontSize: 15 }]}>Progress Tracking</Text>
-              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Celebrate every milestone</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Celebrate every milestone on your recovery journey.</Text>
             </View>
           </View>
-          
+
           <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
             <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
               <Text style={{ fontSize: 24 }}>🛡️</Text>
             </View>
             <View style={styles.featureTextContainer}>
               <Text style={[styles.featureTitle, { fontSize: 15 }]}>Trigger Support</Text>
-              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Help during challenging times</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Get immediate help during your most challenging moments.</Text>
             </View>
           </View>
+
+          <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
+            <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
+              <Text style={{ fontSize: 24 }}>💰</Text>
+            </View>
+            <View style={styles.featureTextContainer}>
+              <Text style={[styles.featureTitle, { fontSize: 15 }]}>Money Saved Tracker</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Watch your savings grow as you stay sober.</Text>
+            </View>
+          </View>
+
+
+
         </View>
-        
-        <View style={[styles.readyBox, { padding: 16 }]}>
-          <Text style={[styles.readyText, { fontSize: 15, lineHeight: 22 }]}>
-            Your journey starts now. Let's do this! 💪
+
+        <View style={styles.readyFooter}>
+          <Text style={styles.readyFooterText}>
+            and 30+ more features to support your recovery journey! 🌟
           </Text>
         </View>
+
+
       </View>
     </View>
   );
@@ -923,7 +912,7 @@ export default function OnboardingScreen() {
     <View style={styles.stepContainer}>
       <Text style={styles.onboardingTitle}>Track your financial recovery 💰</Text>
       <Text style={styles.onboardingSubtitle}>How much did you spend daily on substances?</Text>
-      
+
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.textInput}
@@ -949,17 +938,17 @@ export default function OnboardingScreen() {
 
   const renderMoneyProjectionStep = () => {
     const sixMonthSavings = parseFloat(dailySpending || '0') * 180; // 6 months = ~180 days
-    
+
     return (
       <View style={styles.stepContainer}>
         <Text style={styles.onboardingTitle}>Your Recovery Savings</Text>
-        
+
         <View style={styles.projectionContent}>
           <View style={styles.heroSavingsCard}>
             <Text style={styles.heroSavingsLabel}>You'll save in 6 months</Text>
             <Text style={styles.heroSavingsAmount}>${sixMonthSavings.toFixed(0)}</Text>
           </View>
-          
+
           <View>
             {dailySpending ? (
               <MoneyProjectionChart />
@@ -979,7 +968,7 @@ export default function OnboardingScreen() {
       <View style={styles.stepContainer}>
         <Text style={styles.onboardingTitle}>Creating Your Plan ✨</Text>
         <Text style={styles.onboardingSubtitle}>Just a moment while we personalize everything</Text>
-        
+
         <View style={styles.loadingContent}>
           <Progress.Circle
             size={120}
@@ -991,9 +980,9 @@ export default function OnboardingScreen() {
             thickness={10}
             style={styles.loadingSpinner}
           />
-          
+
           <Text style={styles.loadingText}>{loadingText}</Text>
-          
+
           <Text style={styles.loadingSubtext}>
             We're tailoring your recovery experience based on your unique needs and goals.
           </Text>
@@ -1002,70 +991,41 @@ export default function OnboardingScreen() {
     );
   };
 
-  const renderMoneyInterestStep = () => (
-    <View style={styles.stepContainer}>
-      <Text style={styles.onboardingTitle}>Track your financial progress? 💰</Text>
-      <Text style={styles.onboardingSubtitle}>See how much money you save by staying sober</Text>
-      
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity
-          style={[
-            styles.optionButton,
-            interestedInMoney === true && styles.optionButtonSelected
-          ]}
-          onPress={() => {
-            setInterestedInMoney(true);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setTimeout(() => {
-              setCurrentStep(OnboardingStep.MONEY);
-            }, 500);
-          }}
-        >
-          <Text style={[
-            styles.optionText,
-            interestedInMoney === true && styles.optionTextSelected
-          ]}>
-            Yes, I'd like to track my savings
-          </Text>
-        </TouchableOpacity>
+  const renderMoneyInterestStep = () => {
+    const options = [
+      "Yes, I'd like to track my savings",
+      "No, skip financial tracking"
+    ];
 
-        <TouchableOpacity
-          style={[
-            styles.optionButton,
-            interestedInMoney === false && styles.optionButtonSelected
-          ]}
-          onPress={() => {
-            setInterestedInMoney(false);
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setTimeout(() => {
-              setCurrentStep(OnboardingStep.STRUGGLE_TIMES);
-            }, 500);
-          }}
-        >
-          <Text style={[
-            styles.optionText,
-            interestedInMoney === false && styles.optionTextSelected
-          ]}>
-            No, skip financial tracking
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    const handleMoneySelection = (selection: string) => {
+      setInterestedInMoney(selection === options[0]);
+    };
+
+    const currentSelection = interestedInMoney === true ? options[0] : 
+                           interestedInMoney === false ? options[1] : '';
+
+    return (
+      <OnboardingStepComponent 
+        title="Track your financial progress? 💰"
+        subtitle="See how much money you save by staying sober"
+      >
+        <SingleSelectOptions
+          options={options}
+          selectedOption={currentSelection}
+          onSelectionChange={handleMoneySelection}
+        />
+      </OnboardingStepComponent>
+    );
+  };
 
   const renderReviewRequestScreen = () => (
     <View style={styles.stepContainer}>
-      <View style={styles.engagementHeader}>
-        <Text style={styles.engagementTitle}>Help Others Find Hope 💙</Text>
-        <Text style={styles.engagementSubtitle}>Your journey can inspire someone else to start theirs</Text>
-      </View>
-      
-      <View style={styles.engagementContent}>
-        <Text style={styles.reviewSimpleText}>
-          Thank you for choosing Sobi as your recovery companion. 
-          {'\n\n'}
-          Together, we're building a supportive community for everyone on their recovery journey.
-        </Text>
+      <View style={styles.reviewHeader}>
+        <Text style={styles.reviewTitle}>Give us a rating</Text>
+        <View style={styles.reviewStarsContainer}>
+          <Text style={styles.reviewStarsEmoji}>⭐⭐⭐⭐⭐</Text>
+        </View>
+        <Text style={styles.reviewSubtitle}>Help us grow and help others find recovery support</Text>
       </View>
     </View>
   );
@@ -1125,29 +1085,40 @@ export default function OnboardingScreen() {
         <Text style={styles.getStartedButtonText}>Get Started</Text>
         <ArrowRight size={20} color="#FFFFFF" />
       </TouchableOpacity>
+      
+      {/* Development/Testing Skip Button */}
+      {__DEV__ && (
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={handleSkipOnboarding}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.skipButtonText}>Skip Onboarding (Dev)</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      
-      <KeyboardAvoidingView 
+
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoid}
       >
         <View style={styles.header}>
           {currentStep > OnboardingStep.WELCOME && renderProgressBar()}
         </View>
-        
-        <ScrollView 
+
+        <ScrollView
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
         >
           {renderCurrentStep()}
         </ScrollView>
-        
+
         {currentStep === OnboardingStep.WELCOME ? renderWelcomeFooter() : (
           <View style={styles.footer}>
             {currentStep > OnboardingStep.WELCOME && (
@@ -1156,17 +1127,11 @@ export default function OnboardingScreen() {
                 <Text style={styles.backButtonText}>Back</Text>
               </TouchableOpacity>
             )}
-            
+
             <View style={styles.spacer} />
-            
-            {/* Hide Continue button for auto-advancing screens */}
-            {currentStep !== OnboardingStep.SUBSTANCES &&
-             currentStep !== OnboardingStep.SUBSTANCE_FREQUENCY &&
-             currentStep !== OnboardingStep.SOBRIETY_IMPORTANCE &&
-             currentStep !== OnboardingStep.HARDEST_PART &&
-             currentStep !== OnboardingStep.MONEY_INTEREST &&
-             currentStep !== OnboardingStep.LOADING_PLAN &&
-             currentStep < OnboardingStep.ENGAGEMENT_READY ? (
+
+            {/* Always show continue button */}
+            {currentStep < OnboardingStep.ENGAGEMENT_READY ? (
               <TouchableOpacity
                 style={[styles.nextButton, !canProceedFromStep() && styles.nextButtonDisabled]}
                 onPress={handleNext}
@@ -1187,13 +1152,6 @@ export default function OnboardingScreen() {
     </SafeAreaView>
   );
 }
-
-const FeatureItem = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <View style={styles.featureItem}>
-    {icon}
-    <Text style={styles.featureText}>{text}</Text>
-  </View>
-);
 
 const styles = StyleSheet.create({
   container: {
@@ -1242,14 +1200,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 10,
   },
-  onboardingSubtitleMuted: {
-    fontSize: 14,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginBottom: 40,
-    lineHeight: 20,
-    paddingHorizontal: 10,
-  },
   welcomeTitle: {
     fontSize: 32,
     fontWeight: '800',
@@ -1263,31 +1213,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 40,
     fontWeight: '600',
-  },
-  welcomeContent: {
-    alignItems: 'center',
-    maxWidth: 300,
-  },
-  welcomeDescription: {
-    fontSize: 16,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-  },
-  featureList: {
-    gap: 16,
-    alignSelf: 'stretch',
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureText: {
-    fontSize: 16,
-    color: colors.text,
-    fontWeight: '500',
   },
   inputContainer: {
     width: '100%',
@@ -1444,42 +1369,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
-  optionsContainer: {
-    width: '100%',
-    gap: 12,
-  },
-  projectionCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  projectionIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  projectionValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 2,
-  },
-  projectionLabel: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.textLight,
-  },
+
   chartPlaceholder: {
     flex: 1,
     justifyContent: 'center',
@@ -1489,40 +1379,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMuted,
   },
-  optionButton: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'flex-start',
-  },
-  optionButtonSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  optionText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: colors.text,
-    textAlign: 'left',
-  },
-  optionTextSelected: {
-    color: '#FFFFFF',
-  },
+
   engagementContent: {
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 0,
   },
-  engagementDescription: {
-    fontSize: 16,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 24,
-    paddingHorizontal: 12,
-  },
+
   engagementHeader: {
     alignItems: 'center',
     maxWidth: 380,
@@ -1542,54 +1405,6 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: 'center',
     fontWeight: '500',
-  },
-  successMetrics: {
-    width: '100%',
-    marginBottom: 8,
-  },
-  metricRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 8,
-    gap: 10,
-  },
-  metricCard: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 6,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    minHeight: 85,
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  metricEmoji: {
-    fontSize: 16,
-    marginBottom: 6,
-    opacity: 0.8,
-  },
-  metricNumber: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.primary,
-    marginBottom: 4,
-    letterSpacing: -0.5,
-  },
-  metricLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 14,
-    letterSpacing: 0.2,
   },
   testimonialsSection: {
     width: '100%',
@@ -1667,25 +1482,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textLight,
     lineHeight: 20,
-  },
-  readyBox: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: 20,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  readyText: {
-    fontSize: 16,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 24,
   },
   loadingContent: {
     alignItems: 'center',
@@ -1774,63 +1570,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 28,
   },
-  welcomeSecondaryMessage: {
-    fontSize: 15,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  welcomeFeatureGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 32,
-    gap: 12,
-  },
-  welcomeFeatureCard: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  welcomeFeatureIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  welcomeFeatureTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 6,
-    textAlign: 'center',
-  },
-  welcomeFeatureDescription: {
-    fontSize: 12,
-    color: colors.textLight,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  welcomeEncouragementContainer: {
-    alignItems: 'center',
-    borderRadius: 16,
-    paddingVertical: 20,
-    paddingHorizontal: 24,
-    marginHorizontal: 0,
-    width: '100%',
-    maxWidth: 320,
-  },
   welcomeEncouragementText: {
     fontSize: 16,
     color: colors.primary,
@@ -1863,53 +1602,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  // Option styles with icons (for importance step)
-  optionButtonWithIcon: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'flex-start',
-  },
-  optionButtonWithIconSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  optionContentWithIcon: {
-    flexDirection: 'row',
+  reviewHeader: {
     alignItems: 'center',
-    width: '100%',
+    maxWidth: 380,
+    paddingHorizontal: 20,
+    marginBottom: 80,
   },
-  optionEmoji: {
-    fontSize: 20,
-    marginRight: 12,
-  },
-  optionTextContainer: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 2,
-  },
-  optionTitleSelected: {
-    color: '#FFFFFF',
-  },
-  optionDescription: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: colors.textLight,
-  },
-  optionDescriptionSelected: {
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  reviewSimpleText: {
-    fontSize: 16,
+  reviewTitle: {
+    fontSize: 32,
+    fontWeight: '800',
     color: colors.text,
     textAlign: 'center',
+    marginBottom: 24,
+    letterSpacing: -0.5,
+  },
+  reviewStarsContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  reviewStarsEmoji: {
+    fontSize: 28,
+    letterSpacing: 4,
+  },
+  reviewSubtitle: {
+    fontSize: 17,
+    color: colors.textLight,
+    textAlign: 'center',
+    fontWeight: '500',
     lineHeight: 24,
+  },
+  readyFooter: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    marginTop: 10,
+  },
+  readyFooterText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  skipButton: {
+    backgroundColor: colors.textMuted,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  skipButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 }); 

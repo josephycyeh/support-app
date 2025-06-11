@@ -12,6 +12,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { Check, Heart, Star } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { calculateDaysSober } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
 import { Header } from '@/components/ui/Header';
@@ -92,7 +93,7 @@ export default function SOSScreen() {
   const randomQuote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
   
   // Calculate days sober for motivation
-  const daysSober = Math.floor((new Date().getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
+  const daysSober = calculateDaysSober(startDate);
   
   const handleExit = useCallback(() => {
     // Award XP if they completed at least one cycle

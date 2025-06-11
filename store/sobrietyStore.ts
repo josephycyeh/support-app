@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SobrietyState } from '@/types';
+import { getTodayDateStr, formatDateToISOString, calculateDaysSober } from '@/utils/dateUtils';
 
 interface SobrietyStore extends SobrietyState {
   addXP: (amount: number) => void;
@@ -13,21 +14,21 @@ interface SobrietyStore extends SobrietyState {
   setAge: (age: number) => void; // Set user's age
   setStartDate: (date: string) => void; // Set sobriety start date
   completeOnboarding: () => void; // Mark onboarding as complete
+  
+  // Onboarding data setters
+  setSubstance: (substance: string) => void;
+  setSubstanceFrequency: (frequency: string) => void;
+  setTriggers: (triggers: string[]) => void;
+  setRecoveryGoals: (goals: string[]) => void;
+  setHardestChallenge: (challenge: string) => void;
+  setSobrietyImportance: (importance: string) => void;
+  setStruggleTimes: (times: string[]) => void;
 }
 
 // Calculate XP needed for next level (increases with each level)
 const calculateXpForNextLevel = (level: number) => 100 + (level - 1) * 50;
 
-// Get today's date in YYYY-MM-DD format with proper UTC handling
-const getTodayDateStr = () => {
-  const now = new Date();
-  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())).toISOString().split('T')[0];
-};
-
-// Format a date object to ISO timestamp for consistent precision
-const formatDateToISOString = (date: Date) => {
-  return date.toISOString();
-};
+// Date utility functions are now imported from @/utils/dateUtils
 
 // Default state with current timestamp as start date
 const getDefaultState = (): SobrietyState => {
@@ -128,10 +129,7 @@ export const useSobrietyStore = create<SobrietyStore>()(
       
       checkAndAwardMilestones: () => 
         set((state) => {
-          const now = new Date();
-          // Parse startDate as ISO timestamp (always full timestamp now)
-          const sobrietyStart = new Date(state.startDate);
-          const daysSober = Math.floor((now.getTime() - sobrietyStart.getTime()) / (1000 * 60 * 60 * 24));
+          const daysSober = calculateDaysSober(state.startDate);
           
           // Define milestones and their XP rewards
           const milestones = [
@@ -232,6 +230,42 @@ export const useSobrietyStore = create<SobrietyStore>()(
       completeOnboarding: () => 
         set(() => ({
           onboardingCompleted: true,
+        })),
+      
+      // Onboarding data setters
+      setSubstance: (substance: string) => 
+        set(() => ({
+          substance,
+        })),
+      
+      setSubstanceFrequency: (frequency: string) => 
+        set(() => ({
+          substanceFrequency: frequency,
+        })),
+      
+      setTriggers: (triggers: string[]) => 
+        set(() => ({
+          triggers,
+        })),
+      
+      setRecoveryGoals: (goals: string[]) => 
+        set(() => ({
+          recoveryGoals: goals,
+        })),
+      
+      setHardestChallenge: (challenge: string) => 
+        set(() => ({
+          hardestChallenge: challenge,
+        })),
+      
+      setSobrietyImportance: (importance: string) => 
+        set(() => ({
+          sobrietyImportance: importance,
+        })),
+      
+      setStruggleTimes: (times: string[]) => 
+        set(() => ({
+          struggleTimes: times,
         })),
     }),
     {

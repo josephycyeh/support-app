@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Sparkles, RefreshCw } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
+import { TIME_CONSTANTS } from '@/utils/dateUtils';
 import { MOTIVATION_PACKS } from '@/store/motivationStore';
 import * as Haptics from 'expo-haptics';
 
@@ -17,7 +18,7 @@ export const DailyQuote = () => {
     
     // Use today's date as seed for consistent daily quote
     const today = new Date();
-    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / TIME_CONSTANTS.MILLISECONDS_PER_DAY);
     const quoteIndex = dayOfYear % allQuotes.length;
     
     return allQuotes[quoteIndex];

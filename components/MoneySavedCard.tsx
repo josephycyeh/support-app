@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { DollarSign, ArrowRight } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { calculateDaysSober } from '@/utils/dateUtils';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import * as Haptics from 'expo-haptics';
@@ -12,10 +13,8 @@ export const MoneySavedCard = () => {
   const { dailySpending, isConfigured, calculateTotalSaved, currency } = useMoneySavedStore();
   const { startDate } = useSobrietyStore();
 
-  // Calculate days sober
-  const now = new Date();
-  const start = new Date(startDate);
-  const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  // Calculate days sober using utility function
+  const daysSober = calculateDaysSober(startDate);
 
   const totalSaved = calculateTotalSaved(daysSober);
 

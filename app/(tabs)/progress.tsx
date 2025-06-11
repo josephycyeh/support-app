@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from
 import { Stack } from 'expo-router';
 import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check, Target, Zap, Shield, Flame, Sun, Moon } from 'lucide-react-native';
 import colors from '@/constants/colors';
+import { calculateDaysSober } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { HeatmapCalendar } from '@/components/HeatmapCalendar';
 import { useActivityStore } from '@/store/activityStore';
@@ -13,10 +14,8 @@ export default function ProgressScreen() {
   const { startDate, level, xp, dailyXP } = useSobrietyStore();
   const { breathingExercises, journalEntries, cravingsOvercome } = useActivityStore();
   
-  // Calculate days sober consistently with the rest of the app
-  const now = new Date();
-  const start = new Date(startDate);
-  const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+  // Calculate days sober using utility function
+  const daysSober = calculateDaysSober(startDate);
   
   // Calculate total XP earned (sum of all daily XP)
   const totalXPEarned = Object.values(dailyXP).reduce((sum, xp) => sum + xp, 0);

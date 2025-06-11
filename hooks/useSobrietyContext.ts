@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { calculateDaysSober } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
 import { useJournalStore } from '@/store/journalStore';
@@ -85,11 +86,7 @@ export function useSobrietyContext(): SobrietyContext {
   const { isConfigured, dailySpending, currency, calculateTotalSaved } = useMoneySavedStore();
   
   // Calculate days sober (memoized for performance)
-  const daysSober = useMemo(() => {
-    const today = new Date();
-    const start = new Date(startDate); // startDate is always ISO timestamp now
-    return Math.max(0, Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-  }, [startDate]);
+  const daysSober = useMemo(() => calculateDaysSober(startDate), [startDate]);
 
   // Build comprehensive sobriety context
   const context = useMemo((): SobrietyContext => {

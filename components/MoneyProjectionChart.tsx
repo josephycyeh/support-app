@@ -3,6 +3,7 @@ import { View, StyleSheet, Text } from 'react-native';
 import { DollarSign } from 'lucide-react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import colors from '@/constants/colors';
+import { calculateDaysSober } from '@/utils/dateUtils';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
@@ -12,9 +13,7 @@ export const MoneyProjectionChart = () => {
   
   // Calculate data for chart (current + future projections only)
   const chartData = useMemo(() => {
-    const now = new Date();
-    const start = new Date(startDate);
-    const daysSober = Math.max(0, Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+    const daysSober = calculateDaysSober(startDate);
     
     interface ChartDataPoint {
       value: number;

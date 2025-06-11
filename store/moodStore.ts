@@ -1,12 +1,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTodayDateStr, formatDateToYYYYMMDD, formatDateToISOString } from '@/utils/dateUtils';
 
-// Helper function to get today's date in consistent YYYY-MM-DD format
-const getTodayDateStr = () => {
-  const now = new Date();
-  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())).toISOString().split('T')[0];
-};
+// Date utility functions are now imported from @/utils/dateUtils
 
 export interface MoodEntry {
   id: string;
@@ -39,7 +36,7 @@ export const useMoodStore = create<MoodStore>()(
           id: Date.now().toString(),
           date: today,
           mood,
-          timestamp: now.toISOString(),
+          timestamp: formatDateToISOString(now),
         };
 
         set((state) => {
@@ -77,7 +74,7 @@ export const useMoodStore = create<MoodStore>()(
         for (let i = 0; i < 365; i++) { // Check up to a year
           const checkDate = new Date(today);
           checkDate.setDate(today.getDate() - i);
-          const dateString = new Date(Date.UTC(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate())).toISOString().split('T')[0];
+          const dateString = formatDateToYYYYMMDD(checkDate);
           
           if (entries.some(entry => entry.date === dateString)) {
             streak++;
