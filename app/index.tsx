@@ -9,16 +9,12 @@ export default function IndexScreen() {
   const { onboardingCompleted } = useSobrietyStore();
 
   useEffect(() => {
-    // Small delay to ensure stores are loaded
-    const timer = setTimeout(() => {
-      if (onboardingCompleted) {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/onboarding');
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
+    // Route immediately based on onboarding status
+    if (onboardingCompleted) {
+      router.replace('/(tabs)');
+    } else {
+      router.replace('/onboarding');
+    }
   }, [onboardingCompleted, router]);
 
   // Show loading spinner while determining route

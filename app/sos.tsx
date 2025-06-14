@@ -341,7 +341,12 @@ export default function SOSScreen() {
             <View style={styles.sobrietyCard}>
               <Text style={styles.sobrietyLabel}>Your Sobriety Streak</Text>
               <Text style={styles.sobrietyValue}>{daysSober} days</Text>
-              <Text style={styles.sobrietySubtext}>That's an incredible achievement!</Text>
+              <Text style={styles.sobrietySubtext}>
+                {daysSober === 0 
+                  ? "Every journey begins with a single step!" 
+                  : "That's an incredible achievement!"
+                }
+              </Text>
             </View>
             
             <Text style={styles.sectionTitle}>Remember Your Reasons for Change</Text>
@@ -356,14 +361,9 @@ export default function SOSScreen() {
                 </View>
               ))}
               
-              <View style={styles.reasonItem}>
-                <View style={styles.reasonIcon}>
-                  <Star size={20} color="#fff" />
-                </View>
-                <Text style={styles.reasonText}>
-                  You've already overcome {daysSober} days of challenges. This is just one more.
-                </Text>
-              </View>
+            <Text style={styles.motivationalMessage}>
+              ⭐ You've already overcome {daysSober} days of challenges. This is just one more.
+            </Text>
             </View>
             
             <View style={styles.buttonsContainer}>
@@ -473,19 +473,18 @@ const styles = StyleSheet.create({
   // Motivation styles
   motivationContainer: {
     flex: 1,
-    marginTop: 60,
+    marginTop: 150,
   },
   motivationContent: {
     flex: 1,
     padding: 20,
     paddingTop: 10,
-    justifyContent: 'space-between',
   },
   motivationTitle: {
     fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 16,
+    marginBottom: 24,
     textAlign: 'center',
   },
   sobrietyCard: {
@@ -493,7 +492,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -522,12 +521,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
     textAlign: 'center',
   },
   reasonsContainer: {
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 32,
   },
   reasonItem: {
     flexDirection: 'row',
@@ -563,8 +562,18 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 20,
   },
+  motivationalMessage: {
+    fontSize: 16,
+    color: colors.primary,
+    textAlign: 'center',
+    fontWeight: '600',
+    fontStyle: 'italic',
+    lineHeight: 22,
+    marginTop: 8,
+  },
   buttonsContainer: {
     gap: 12,
+    marginTop: 8,
   },
   overcomeButton: {
     backgroundColor: colors.success,

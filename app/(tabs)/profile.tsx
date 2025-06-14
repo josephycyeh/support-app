@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, Linking } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Calendar, Heart, LogOut, Edit, X, User, Settings } from 'lucide-react-native';
+import { Calendar, Heart, LogOut, Edit, X, User, Settings, Bell } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
 import { calculateDaysSober, getStartOfDay, formatDateToISOString } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
+import { 
+  scheduleTestNotification, 
+  getNotificationStatus, 
+  getScheduledNotifications,
+  cancelAllNotifications,
+  scheduleStruggleTimeNotifications,
+  cancelStruggleTimeNotifications,
+  scheduleAllUpcomingMilestones,
+  cancelMilestoneNotifications
+} from '@/services/NotificationService';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
@@ -19,7 +29,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge, setStartDate } = useSobrietyStore();
+  const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge, setStartDate, struggleTimes } = useSobrietyStore();
   const { reasons, addReason, updateReason, deleteReason } = useReasonsStore();
   
   const [showAddModal, setShowAddModal] = useState(false);
@@ -110,17 +120,17 @@ export default function ProfileScreen() {
   
   const handleResetSobriety = () => {
     Alert.alert(
-      "Reset Sobriety Counter",
-      "Are you sure you want to reset your sobriety counter? This will restart your streak from day 0.",
+      "Reset Your Journey",
+      "Recovery is a journey with ups and downs. If you need to restart your counter, that's okay - every step forward matters. Would you like to reset and begin again?",
       [
         {
-          text: "Cancel",
+          text: "Not Now",
           style: "cancel"
         },
         { 
-          text: "Reset Counter", 
+          text: "Reset & Continue", 
           onPress: () => resetSobriety(),
-          style: "destructive"
+          style: "default"
         }
       ]
     );
@@ -139,6 +149,156 @@ export default function ProfileScreen() {
   
   const closeSobrietyDateModal = () => {
     setShowSobrietyDateModal(false);
+  };
+
+  // Notification test functions for Phase 1
+  const handleTestNotification = async () => {
+    try {
+      const success = await scheduleTestNotification(5);
+      if (success) {
+        Alert.alert(
+          "Test Notification Scheduled",
+          "You should receive a test notification in 5 seconds!",
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "Notification Failed",
+          "Could not schedule test notification. Please check permissions.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error('Error scheduling test notification:', error);
+      Alert.alert(
+        "Error",
+        "Failed to schedule test notification.",
+        [{ text: "OK" }]
+      );
+    }
+  };
+
+  const handleCheckNotificationStatus = async () => {
+    try {
+      const status = await getNotificationStatus();
+      const scheduled = await getScheduledNotifications();
+      
+      Alert.alert(
+        "Notification Status",
+        `Platform: ${status.platform}\nPermissions: ${status.hasPermissions ? 'Granted' : 'Denied'}\nTotal Scheduled: ${scheduled.length}\nStruggle Time: ${status.struggleTimeCount}\nMilestones: ${status.milestoneCount}\nStruggle Times: ${struggleTimes?.join(', ') || 'None'}`,
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      console.error('Error checking notification status:', error);
+      Alert.alert("Error", "Failed to check notification status.", [{ text: "OK" }]);
+    }
+  };
+
+  const handleClearNotifications = async () => {
+    try {
+      const success = await cancelAllNotifications();
+      if (success) {
+        Alert.alert("Success", "All notifications cleared!", [{ text: "OK" }]);
+      } else {
+        Alert.alert("Error", "Failed to clear notifications.", [{ text: "OK" }]);
+      }
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+      Alert.alert("Error", "Failed to clear notifications.", [{ text: "OK" }]);
+    }
+  };
+
+  // Phase 2 test functions
+  const handleTestStruggleTimeNotifications = async () => {
+    try {
+      if (!struggleTimes || struggleTimes.length === 0) {
+        Alert.alert(
+          "No Struggle Times",
+          "You haven't set any struggle times in onboarding. Complete onboarding first or use the mock data.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+
+      const daysSober = calculateDaysSober(startDate);
+      const scheduledIds = await scheduleStruggleTimeNotifications(struggleTimes, {
+        name,
+        daysSober,
+      });
+
+      if (scheduledIds.length > 0) {
+        Alert.alert(
+          "Struggle Time Notifications Scheduled",
+          `Successfully scheduled ${scheduledIds.length} daily notifications for your struggle times: ${struggleTimes.join(', ')}`,
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "Scheduling Failed",
+          "Could not schedule struggle time notifications. Check permissions and struggle time format.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error('Error scheduling struggle time notifications:', error);
+      Alert.alert("Error", "Failed to schedule struggle time notifications.", [{ text: "OK" }]);
+    }
+  };
+
+  const handleCancelStruggleTimeNotifications = async () => {
+    try {
+      const success = await cancelStruggleTimeNotifications();
+      if (success) {
+        Alert.alert("Success", "All struggle time notifications cancelled!", [{ text: "OK" }]);
+      } else {
+        Alert.alert("Error", "Failed to cancel struggle time notifications.", [{ text: "OK" }]);
+      }
+    } catch (error) {
+      console.error('Error cancelling struggle time notifications:', error);
+      Alert.alert("Error", "Failed to cancel struggle time notifications.", [{ text: "OK" }]);
+    }
+  };
+
+  // Phase 3 test functions
+  const handleTestMilestoneNotifications = async () => {
+    try {
+      const daysSober = calculateDaysSober(startDate);
+      const scheduledIds = await scheduleAllUpcomingMilestones(startDate, {
+        name,
+        daysSober,
+      });
+
+      if (scheduledIds.length > 0) {
+        Alert.alert(
+          "Milestone Notifications Scheduled",
+          `Successfully scheduled ${scheduledIds.length} milestone notifications. Next milestones will be celebrated at 9 AM on their respective days.`,
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert(
+          "No Milestones to Schedule",
+          "All upcoming milestones are already scheduled, or you may have reached all available milestones.",
+          [{ text: "OK" }]
+        );
+      }
+    } catch (error) {
+      console.error('Error scheduling milestone notifications:', error);
+      Alert.alert("Error", "Failed to schedule milestone notifications.", [{ text: "OK" }]);
+    }
+  };
+
+  const handleCancelMilestoneNotifications = async () => {
+    try {
+      const success = await cancelMilestoneNotifications();
+      if (success) {
+        Alert.alert("Success", "All milestone notifications cancelled!", [{ text: "OK" }]);
+      } else {
+        Alert.alert("Error", "Failed to cancel milestone notifications.", [{ text: "OK" }]);
+      }
+    } catch (error) {
+      console.error('Error cancelling milestone notifications:', error);
+      Alert.alert("Error", "Failed to cancel milestone notifications.", [{ text: "OK" }]);
+    }
   };
   
   return (
@@ -233,16 +393,91 @@ export default function ProfileScreen() {
           </Card>
         </View>
         
+        {/* Notification Test Section - All Phases */}
+        {/* <View style={styles.sectionContainer}>
+          <SectionHeader title="Notifications (Phase 1, 2 & 3 Testing)" />
+          <Card style={styles.notificationTestContainer}>
+            <Text style={styles.notificationTestDescription}>
+              Test the complete notification system: basic notifications, struggle time check-ins, and milestone celebrations.
+            </Text>
+            
+            <View style={styles.notificationTestButtons}>
+              <TouchableOpacity 
+                style={styles.notificationTestButton} 
+                onPress={handleTestNotification}
+              >
+                <Bell size={16} color={colors.primary} />
+                <Text style={styles.notificationTestButtonText}>Test Notification</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.notificationTestButton} 
+                onPress={handleCheckNotificationStatus}
+              >
+                <Settings size={16} color={colors.primary} />
+                <Text style={styles.notificationTestButtonText}>Check Status</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.notificationTestButton} 
+                onPress={handleClearNotifications}
+              >
+                <X size={16} color={colors.primary} />
+                <Text style={styles.notificationTestButtonText}>Clear All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.notificationTestSectionTitle}>Phase 2: Struggle Time Check-ins</Text>
+            
+            <View style={styles.notificationTestButtons}>
+              <TouchableOpacity 
+                style={styles.notificationTestButton} 
+                onPress={handleTestStruggleTimeNotifications}
+              >
+                <Calendar size={16} color={colors.primary} />
+                <Text style={styles.notificationTestButtonText}>Schedule Struggle Times</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.notificationTestButton} 
+                onPress={handleCancelStruggleTimeNotifications}
+              >
+                <X size={16} color={colors.primary} />
+                <Text style={styles.notificationTestButtonText}>Cancel Struggle Times</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.notificationTestSectionTitle}>Phase 3: Milestone Celebrations</Text>
+            
+            <View style={styles.notificationTestButtons}>
+              <TouchableOpacity 
+                style={styles.notificationTestButton} 
+                onPress={handleTestMilestoneNotifications}
+              >
+                <Heart size={16} color={colors.primary} />
+                <Text style={styles.notificationTestButtonText}>Schedule Milestones</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.notificationTestButton} 
+                onPress={handleCancelMilestoneNotifications}
+              >
+                <X size={16} color={colors.primary} />
+                <Text style={styles.notificationTestButtonText}>Cancel Milestones</Text>
+              </TouchableOpacity>
+            </View>
+          </Card>
+        </View> */}
 
         
         <Button
           onPress={handleResetSobriety}
           variant="outline"
           style={styles.resetButton}
-          icon={<LogOut size={18} color="#8B0000" />}
+          icon={<Calendar size={18} color="#6B7280" />}
           textStyle={styles.resetButtonText}
         >
-I Relapsed        
+Reset My Journey        
 </Button>
         
       </ScrollView>
@@ -482,11 +717,11 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     marginTop: 20,
-    backgroundColor: '#f0a1a1',
-    borderColor: '#e08888',
+    backgroundColor: '#F3F4F6',
+    borderColor: '#D1D5DB',
   },
   resetButtonText: {
-    color: '#8B0000',
+    color: '#6B7280',
   },
 
   modal: {
@@ -614,5 +849,46 @@ const styles = StyleSheet.create({
   },
   headerTextContainer: {
     flex: 1,
+  },
+  
+  // Notification test styles for Phase 1
+  notificationTestContainer: {
+    padding: 16,
+  },
+  notificationTestDescription: {
+    ...typography.bodySmall,
+    color: colors.textLight,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  notificationTestButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 8,
+  },
+  notificationTestButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(107, 152, 194, 0.15)',
+    borderRadius: 12,
+    gap: 6,
+  },
+  notificationTestButtonText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  notificationTestSectionTitle: {
+    ...typography.bodySmall,
+    fontWeight: '600',
+    color: colors.text,
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
   },
 });

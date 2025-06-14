@@ -116,7 +116,7 @@ export default function SettingsScreen() {
           <View style={styles.settingsGroup}>
             <TouchableOpacity 
               style={styles.settingsItem}
-              onPress={() => Linking.openURL('https://example.com/privacy-policy')}
+              onPress={() => Linking.openURL('https://v0-sobi-landing-page.vercel.app/privacy-policy')}
             >
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconContainer}>
@@ -131,7 +131,7 @@ export default function SettingsScreen() {
             
             <TouchableOpacity 
               style={styles.settingsItem}
-              onPress={() => Linking.openURL('https://example.com/terms-of-use')}
+              onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
             >
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconContainer}>

@@ -3,12 +3,16 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSobrietyStore } from "@/store/sobrietyStore";
+import { 
+  scheduleStruggleTimeNotifications,
+  rescheduleMilestones
+} from "@/services/NotificationService";
+import { calculateDaysSober } from "@/utils/dateUtils";
 
 import { ErrorBoundary } from "./error-boundary";
 import { Platform } from "react-native"
-import Superwall from "expo-superwall/compat"
 // Register LiveKit globals
 
 export const unstable_settings = {
@@ -20,13 +24,34 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  
+  const { onboardingCompleted, struggleTimes, name, startDate } = useSobrietyStore();
+
+
+  // Schedule notifications when onboarding is completed or data changes
   useEffect(() => {
-    const apiKey = "pk_4466f136753fc81464d39d37803e9adefacc3123519e55fd"
-    Superwall.configure({
-      apiKey: apiKey,
-    })
-  }, [])
+    const scheduleNotifications = async () => {
+      if (onboardingCompleted) {
+        try {
+          const daysSober = calculateDaysSober(startDate);
+          const userPersonalization = { name, daysSober };
+
+          // Schedule struggle time notifications if user has struggle times
+          if (struggleTimes && struggleTimes.length > 0) {
+            await scheduleStruggleTimeNotifications(struggleTimes, userPersonalization);
+            console.log('✅ Struggle time notifications scheduled');
+          }
+
+          // Reschedule milestone notifications (cancels existing and creates new ones)
+          await rescheduleMilestones(startDate, userPersonalization);
+          console.log('✅ Milestone notifications rescheduled');
+        } catch (error) {
+          console.error('❌ Failed to schedule notifications:', error);
+        }
+      }
+    };
+
+    scheduleNotifications();
+  }, [onboardingCompleted, struggleTimes, name, startDate])
 
   const [loaded, error] = useFonts({
     ...FontAwesome.font,

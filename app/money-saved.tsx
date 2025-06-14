@@ -287,6 +287,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 16,
     elevation: 8,
+    marginTop: 24
   },
   breakdownHeader: {
     padding: 24,

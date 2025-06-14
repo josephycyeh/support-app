@@ -6,7 +6,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Progress from 'react-native-progress';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as StoreReview from 'expo-store-review';
-import Superwall from 'expo-superwall/compat';
+import LottieView from 'lottie-react-native';
 import colors from '@/constants/colors';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { useReasonsStore } from '@/store/reasonsStore';
@@ -16,7 +16,8 @@ import * as Haptics from 'expo-haptics';
 import { OnboardingStep as OnboardingStepComponent } from '@/components/onboarding/OnboardingStep';
 import { OptionButton, OptionsContainer } from '@/components/onboarding/OptionButton';
 import { SingleSelectOptions, MultiSelectOptions } from '@/components/onboarding/MultiSelectOptions';
-
+import { requestNotificationPermissions } from '@/services/NotificationService';
+import Superwall from 'expo-superwall/compat';
 enum OnboardingStep {
   WELCOME = 0,
   NAME = 1,
@@ -59,7 +60,7 @@ export default function OnboardingScreen() {
   const [userName, setUserName] = useState('');
   const [sobrietyDate, setSobrietyDate] = useState(new Date());
   const [currentReason, setCurrentReason] = useState('');
-  const [reasons, setReasons] = useState<string[]>([]);
+
   const [dailySpending, setDailySpendingInput] = useState('');
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [sobrietyImportance, setSobrietyImportance] = useState('');
@@ -83,6 +84,16 @@ export default function OnboardingScreen() {
   const [testimonial1Opacity] = useState(new Animated.Value(0));
   const [testimonial2Opacity] = useState(new Animated.Value(0));
   const [testimonial3Opacity] = useState(new Animated.Value(0));
+
+
+  useEffect(() => {
+    const apiKey = process.env.EXPO_PUBLIC_SUPERWALL_API_KEY;
+    if (apiKey) {
+      Superwall.configure({
+        apiKey: apiKey,
+      })
+    }
+  }, [])
 
   // Animate welcome screen on mount
   useEffect(() => {
@@ -164,15 +175,28 @@ export default function OnboardingScreen() {
       setLoadingProgress(0);
       setLoadingText('Analyzing your responses...');
 
+      // Request notification permissions when loading starts (independent of loading sequence)
+      const requestPermissions = async () => {
+        try {
+          await requestNotificationPermissions();
+          console.log('✅ Notification permissions requested during onboarding');
+        } catch (error) {
+          console.error('❌ Failed to request notification permissions during onboarding:', error);
+        }
+      };
+
+      // Trigger permission request after a short delay
+      setTimeout(requestPermissions, 1000);
+
       const loadingSteps = [
-        { text: 'Analyzing your responses...', progress: 12, duration: 2500 },
-        { text: 'Processing your goals...', progress: 25, duration: 2000 },
-        { text: 'Understanding your recovery journey...', progress: 45, duration: 3000 },
-        { text: 'Identifying your support needs...', progress: 65, duration: 2500 },
-        { text: 'Customizing your experience...', progress: 80, duration: 3500 },
-        { text: 'Building your recovery toolkit...', progress: 90, duration: 2000 },
+        { text: 'Analyzing your responses...', progress: 8, duration: 1000 },
+        { text: 'Processing your goals...', progress: 20, duration: 800 },
+        { text: 'Understanding your recovery journey...', progress: 30, duration: 2000 },
+        { text: 'Identifying your support needs...', progress: 45, duration: 1000 },
+        { text: 'Customizing your experience...', progress: 55, duration: 3000 },
+        { text: 'Building your recovery toolkit...', progress: 80, duration: 800 },
         { text: 'Finalizing personalization...', progress: 95, duration: 1800 },
-        { text: 'Ready to begin your journey!', progress: 100, duration: 1000 }
+        { text: 'Ready to begin your journey!', progress: 100, duration: 800 }
       ];
 
       let currentLoadingStep = -1;
@@ -274,6 +298,12 @@ export default function OnboardingScreen() {
           saveRecoveryGoals(selectedGoals);
         }
         break;
+      case OnboardingStep.REASONS:
+        if (currentReason.trim()) {
+          // Save the single reason to the store
+          addReason(currentReason.trim());
+        }
+        break;
       case OnboardingStep.SOBRIETY_IMPORTANCE:
         if (sobrietyImportance.trim()) {
           saveSobrietyImportance(sobrietyImportance);
@@ -321,70 +351,28 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleAddReason = () => {
-    if (currentReason.trim()) {
-      const newReason = currentReason.trim();
-      setReasons([...reasons, newReason]);
-      // Save reason immediately to store
-      addReason(newReason);
-      setCurrentReason('');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-  };
 
-  const handleRemoveReason = (index: number) => {
-    const reasonToRemove = reasons[index];
-    setReasons(reasons.filter((_, i) => i !== index));
-    // Note: We'd need a way to remove from store, but for now just update local state
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
 
   const handleComplete = () => {
     // All data should already be saved, just complete onboarding
     completeOnboarding();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     
-    // Register and launch Superwall paywall
-    Superwall.shared.register({
-      placement: 'onboarding_complete',
-      feature: () => {
-        // This runs when user has access (premium user or after payment)
-        router.replace('/(tabs)');
-      }
-    });
+    // router.replace('/(tabs)');
+
+
+  // Register and launch Superwall paywall
+  Superwall.shared.register({
+    placement: 'onboarding_complete',
+    feature: () => {
+      // This runs when user has access (premium user or after payment)
+      router.replace('/(tabs)');
+    }
+  });
+      
   };
 
-  const handleSkipOnboarding = () => {
-    // Only for development/testing - populate with mock data
-    const mockDate = new Date();
-    mockDate.setDate(mockDate.getDate() - 7); // 7 days sober
-    
-    // Set mock sobriety data
-    setName('Test User');
-    setStartDate(mockDate.toISOString());
-    
-    // Set mock onboarding data
-    saveSubstance('Alcohol');
-    saveSubstanceFrequency('Daily');
-    saveTriggers(['Stress or anxiety', 'Social situations']);
-    saveRecoveryGoals(['🎯 Stay completely sober', '💪 Build healthy habits']);
-    saveHardestChallenge('Cravings and urges');
-    saveSobrietyImportance('🔥 Extremely important - my top priority');
-    saveStruggleTimes(['🌆 Evening (4-8 PM)', '🌙 Night (8 PM-12 AM)']);
-    
-    // Add mock reasons
-    addReason('Testing the app');
-    addReason('For my family');
-    
-    // Set mock money spending
-    setDailySpending(25);
-    
-    // Complete onboarding
-    completeOnboarding();
-    
-    // Skip paywall and go directly to main app
-    router.replace('/(tabs)');
-  };
+
 
   const canProceedFromStep = () => {
     switch (currentStep) {
@@ -407,11 +395,11 @@ export default function OnboardingScreen() {
       case OnboardingStep.GOALS:
         return selectedGoals.length > 0;
       case OnboardingStep.REASONS:
-        return reasons.length > 0;
+        return currentReason.trim().length > 0;
       case OnboardingStep.MONEY_INTEREST:
         return interestedInMoney !== null;
       case OnboardingStep.MONEY:
-        return dailySpending.trim().length > 0 && parseFloat(dailySpending) >= 0;
+        return dailySpending.trim().length > 0 && parseFloat(dailySpending) > 0;
       case OnboardingStep.MONEY_PROJECTION:
         return true;
       case OnboardingStep.SOBRIETY_IMPORTANCE:
@@ -434,15 +422,22 @@ export default function OnboardingScreen() {
 
     return (
       <View style={styles.progressContainer}>
-        <Progress.Bar
-          progress={progressPercentage}
-          width={null}
-          height={6}
-          color={colors.primary}
-          unfilledColor={colors.border}
-          borderWidth={0}
-          borderRadius={2}
-        />
+        {currentStep > OnboardingStep.WELCOME && (
+          <TouchableOpacity style={styles.headerBackButton} onPress={handleBack}>
+            <ArrowLeft size={20} color={colors.textLight} />
+          </TouchableOpacity>
+        )}
+        <View style={styles.progressBarContainer}>
+          <Progress.Bar
+            progress={progressPercentage}
+            width={null}
+            height={6}
+            color={colors.primary}
+            unfilledColor={colors.border}
+            borderWidth={0}
+            borderRadius={2}
+          />
+        </View>
       </View>
     );
   };
@@ -473,7 +468,7 @@ export default function OnboardingScreen() {
         {/* Encouragement moved here */}
         <View style={styles.welcomeEncouragementInline}>
           <Text style={styles.welcomeEncouragementText}>
-            ✨ You're not alone in this.
+            You're not alone in this.
           </Text>
         </View>
       </View>
@@ -530,46 +525,22 @@ export default function OnboardingScreen() {
 
   const renderReasonsStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.onboardingTitle}>Why did you choose recovery?</Text>
-      <Text style={styles.onboardingSubtitle}>Your reasons will help keep you motivated during challenges</Text>
+      <Text style={styles.onboardingTitle}>What's your main reason for recovery?</Text>
+      <Text style={styles.onboardingSubtitle}>You can add more reasons later</Text>
 
-      <View style={styles.reasonsInputContainer}>
+      <View style={styles.inputContainer}>
         <TextInput
           style={styles.reasonInput}
           value={currentReason}
           onChangeText={setCurrentReason}
-          placeholder="For example: 'Being present for my family', 'My daughter'"
+          placeholder="For example: 'Being present for my family', 'My health', 'My daughter'"
           placeholderTextColor={colors.textMuted}
           multiline
+          autoFocus
           returnKeyType="done"
-          onSubmitEditing={handleAddReason}
+          onSubmitEditing={canProceedFromStep() ? handleNext : undefined}
         />
-        <TouchableOpacity
-          style={[styles.addReasonButton, !currentReason.trim() && styles.addReasonButtonDisabled]}
-          onPress={handleAddReason}
-          disabled={!currentReason.trim()}
-        >
-          <Text style={styles.addReasonButtonText}>Add Reason</Text>
-        </TouchableOpacity>
       </View>
-
-      <ScrollView style={styles.reasonsList}>
-        {reasons.map((reason, index) => (
-          <View key={index} style={styles.reasonItem}>
-            <Heart size={16} color={colors.primary} />
-            <Text style={styles.reasonText}>{reason}</Text>
-            <TouchableOpacity onPress={() => handleRemoveReason(index)}>
-              <Text style={styles.removeReasonText}>Remove</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </ScrollView>
-
-      {reasons.length === 0 && (
-        <View style={styles.emptyReasonsContainer}>
-          <Text style={styles.emptyReasonsText}>Add your first reason to continue</Text>
-        </View>
-      )}
     </View>
   );
 
@@ -645,11 +616,10 @@ export default function OnboardingScreen() {
 
   const renderSubstanceFrequencyStep = () => {
     const frequencies = [
-      'Daily',
-      'Several times a week',
-      'Weekly',
-      'A few times a month',
-      'Monthly or less'
+      'Daily or almost daily',
+      'Multiple times per week',
+      'Once a week or less',
+      'Zero. Currently in recovery'
     ];
 
     return (
@@ -681,7 +651,7 @@ export default function OnboardingScreen() {
     return (
       <OnboardingStepComponent 
         title="What are your main triggers?"
-        subtitle="Select all situations that commonly trigger you"
+        subtitle="Select all situations that apply"
       >
         <MultiSelectOptions
           options={triggers}
@@ -779,7 +749,7 @@ export default function OnboardingScreen() {
             <Text style={styles.testimonialText}>
               "Sobi helped me understand my triggers and gave me tools that actually work."
             </Text>
-            <Text style={styles.testimonialAuthor}>— Sarah, 6 months sober</Text>
+            <Text style={styles.testimonialAuthor}>— Malia, 6 months sober</Text>
           </Animated.View>
 
           <Animated.View style={[styles.testimonialCard, {
@@ -789,7 +759,7 @@ export default function OnboardingScreen() {
             <Text style={styles.testimonialText}>
               "The daily check-ins keep me accountable. I finally feel in control."
             </Text>
-            <Text style={styles.testimonialAuthor}>— Mike, 1 year sober</Text>
+            <Text style={styles.testimonialAuthor}>— Joseph, 1 year sober</Text>
           </Animated.View>
 
           <Animated.View style={[styles.testimonialCard, {
@@ -797,9 +767,9 @@ export default function OnboardingScreen() {
             opacity: testimonial3Opacity
           }]}>
             <Text style={styles.testimonialText}>
-              "I thought I had to do this alone. Having Sobi as my companion changed everything."
+              "I thought I had to do this alone. Having Sobi as my companion changed everything. So helpful!"
             </Text>
-            <Text style={styles.testimonialAuthor}>— Alex, 3 months sober</Text>
+            <Text style={styles.testimonialAuthor}>— Hugo, 3 months sober</Text>
           </Animated.View>
         </View>
       </View>
@@ -817,11 +787,11 @@ export default function OnboardingScreen() {
         <View style={[styles.featuresSection, { marginBottom: 20 }]}>
           <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
             <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
-              <Text style={{ fontSize: 24 }}>✅</Text>
+              <Text style={{ fontSize: 24 }}>⏰</Text>
             </View>
             <View style={styles.featureTextContainer}>
-              <Text style={[styles.featureTitle, { fontSize: 15 }]}>Smart Check-ins</Text>
-              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Get daily support exactly when you need it most.</Text>
+              <Text style={[styles.featureTitle, { fontSize: 15 }]}>Sober Tracker</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Real-time countdown of your sobriety journey with milestones.</Text>
             </View>
           </View>
 
@@ -844,6 +814,17 @@ export default function OnboardingScreen() {
               <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Track your thoughts, feelings, and progress daily.</Text>
             </View>
           </View>
+
+          <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
+            <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
+              <Text style={{ fontSize: 24 }}>✅</Text>
+            </View>
+            <View style={styles.featureTextContainer}>
+              <Text style={[styles.featureTitle, { fontSize: 15 }]}>Smart Check-ins</Text>
+              <Text style={[styles.featureDescription, { fontSize: 13, lineHeight: 18 }]}>Get daily support exactly when you need it most.</Text>
+            </View>
+          </View>
+          
           <View style={[styles.featureCard, { padding: 14, marginBottom: 10 }]}>
             <View style={[styles.featureIconContainer, { backgroundColor: 'transparent' }]}>
               <Text style={{ fontSize: 24 }}>🧘</Text>
@@ -911,7 +892,7 @@ export default function OnboardingScreen() {
   const renderMoneyStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.onboardingTitle}>Track your financial recovery 💰</Text>
-      <Text style={styles.onboardingSubtitle}>How much did you spend daily on substances?</Text>
+      <Text style={styles.onboardingSubtitle}>How much did you spend daily?</Text>
 
       <View style={styles.inputContainer}>
         <TextInput
@@ -929,8 +910,8 @@ export default function OnboardingScreen() {
           returnKeyType="next"
           onSubmitEditing={canProceedFromStep() ? handleNext : undefined}
         />
-        {dailySpending && parseFloat(dailySpending) < 0 && (
-          <Text style={styles.errorText}>Please enter a valid amount</Text>
+        {dailySpending && parseFloat(dailySpending) <= 0 && (
+          <Text style={styles.errorText}>Please enter an amount greater than $0</Text>
         )}
       </View>
     </View>
@@ -1027,6 +1008,24 @@ export default function OnboardingScreen() {
         </View>
         <Text style={styles.reviewSubtitle}>Help us grow and help others find recovery support</Text>
       </View>
+      
+      <View style={styles.reviewCharacterContainer}>
+        <LottieView
+          source={require('@/assets/images/getting petted_opt.json')}
+          autoPlay
+          loop={false}
+          style={styles.reviewCharacterLottie}
+        />
+        
+        <View style={styles.reviewBubbleContainer}>
+          <View style={styles.reviewBubble}>
+            <Text style={styles.reviewCharacterMessage}>
+              Your support means everything! A quick rating helps other people find Sobi! 💙
+            </Text>
+          </View>
+          <View style={styles.reviewBubbleTail} />
+        </View>
+      </View>
     </View>
   );
 
@@ -1086,16 +1085,7 @@ export default function OnboardingScreen() {
         <ArrowRight size={20} color="#FFFFFF" />
       </TouchableOpacity>
       
-      {/* Development/Testing Skip Button */}
-      {__DEV__ && (
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkipOnboarding}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.skipButtonText}>Skip Onboarding (Dev)</Text>
-        </TouchableOpacity>
-      )}
+
     </View>
   );
 
@@ -1121,28 +1111,19 @@ export default function OnboardingScreen() {
 
         {currentStep === OnboardingStep.WELCOME ? renderWelcomeFooter() : (
           <View style={styles.footer}>
-            {currentStep > OnboardingStep.WELCOME && (
-              <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-                <ArrowLeft size={20} color={colors.textLight} />
-                <Text style={styles.backButtonText}>Back</Text>
-              </TouchableOpacity>
-            )}
-
-            <View style={styles.spacer} />
-
-            {/* Always show continue button */}
+            {/* Centered continue button */}
             {currentStep < OnboardingStep.ENGAGEMENT_READY ? (
               <TouchableOpacity
-                style={[styles.nextButton, !canProceedFromStep() && styles.nextButtonDisabled]}
+                style={[styles.getStartedButton, !canProceedFromStep() && styles.nextButtonDisabled]}
                 onPress={handleNext}
                 disabled={!canProceedFromStep()}
               >
-                <Text style={styles.nextButtonText}>Continue</Text>
+                <Text style={styles.getStartedButtonText}>Continue</Text>
                 <ArrowRight size={20} color="#FFFFFF" />
               </TouchableOpacity>
             ) : currentStep === OnboardingStep.ENGAGEMENT_READY ? (
-              <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-                <Text style={styles.completeButtonText}>Get Started</Text>
+              <TouchableOpacity style={styles.getStartedButton} onPress={handleComplete}>
+                <Text style={styles.getStartedButtonText}>Get Started</Text>
                 <Check size={20} color="#FFFFFF" />
               </TouchableOpacity>
             ) : null}
@@ -1167,7 +1148,17 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 0,
+  },
+  headerBackButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    marginRight: 16,
+  },
+  progressBarContainer: {
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -1181,7 +1172,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 16,
     paddingBottom: 40,
     paddingHorizontal: 20,
     gap: 30,
@@ -1241,10 +1232,7 @@ const styles = StyleSheet.create({
     height: 200,
     width: '100%',
   },
-  reasonsInputContainer: {
-    width: '100%',
-    marginBottom: 20,
-  },
+
   reasonInput: {
     backgroundColor: colors.cardBackground,
     borderRadius: 16,
@@ -1257,108 +1245,21 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     marginBottom: 12,
   },
-  addReasonButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  addReasonButtonDisabled: {
-    backgroundColor: colors.textMuted,
-    opacity: 0.5,
-  },
-  addReasonButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  reasonsList: {
-    width: '100%',
-    maxHeight: 200,
-  },
-  reasonItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  reasonText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text,
-    marginLeft: 12,
-  },
-  removeReasonText: {
-    fontSize: 12,
-    color: colors.danger,
-    fontWeight: '600',
-  },
-  emptyReasonsContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  emptyReasonsText: {
-    fontSize: 14,
-    color: colors.textMuted,
-    textAlign: 'center',
-  },
+
   footer: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    paddingBottom: 40,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: colors.textLight,
-    fontWeight: '500',
-  },
-  spacer: {
-    flex: 1,
-  },
-  nextButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
   },
   nextButtonDisabled: {
     backgroundColor: colors.textMuted,
     opacity: 0.5,
   },
-  nextButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  completeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  completeButtonText: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
+
   errorText: {
     fontSize: 12,
     color: colors.danger,
@@ -1415,7 +1316,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     width: '100%',
-    marginBottom: 8,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -1528,14 +1429,14 @@ const styles = StyleSheet.create({
   heroSavingsAmount: {
     fontSize: 42,
     fontWeight: '800',
-    color: colors.primary,
+    color: colors.success,
     marginBottom: 0,
     letterSpacing: -1,
     textAlign: 'center',
   },
   welcomeHeroContainer: {
     alignItems: 'center',
-    marginBottom: 0,
+    marginBottom: 20,
   },
   welcomeCharacterContainer: {
     position: 'relative',
@@ -1587,11 +1488,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: colors.primary,
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 18,
     paddingHorizontal: 40,
-    width: '80%',
-    maxWidth: 280,
+    width: '95%',
   },
   getStartedButtonText: {
     fontSize: 16,
@@ -1600,13 +1500,15 @@ const styles = StyleSheet.create({
   },
   welcomeEncouragementInline: {
     alignItems: 'center',
-    padding: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
   },
   reviewHeader: {
     alignItems: 'center',
     maxWidth: 380,
     paddingHorizontal: 20,
-    marginBottom: 80,
+    marginBottom: 40,
   },
   reviewTitle: {
     fontSize: 32,
@@ -1652,18 +1554,59 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  skipButton: {
-    backgroundColor: colors.textMuted,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    marginTop: 16,
+  reviewCharacterContainer: {
     alignItems: 'center',
-    alignSelf: 'center',
+    marginTop: 40,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    position: 'relative',
+    minHeight: 120,
+   
   },
-  skipButtonText: {
-    color: '#FFFFFF',
+  reviewCharacterLottie: {
+    width: 100,
+    height: 100,
+    marginRight: 10,
+  },
+  reviewBubbleContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  reviewBubble: {
+    backgroundColor: colors.cardBackground,
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  reviewBubbleTail: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderTopWidth: 10,
+    borderRightWidth: 0,
+    borderBottomWidth: 10,
+    borderLeftWidth: 15,
+    borderTopColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderLeftColor: colors.cardBackground,
+    position: 'absolute',
+    left: -10,
+    top: 15,
+    transform: [{rotate: '180deg'}],
+  },
+  reviewCharacterMessage: {
     fontSize: 14,
-    fontWeight: '600',
+    lineHeight: 20,
+    color: colors.text,
   },
+
 }); 

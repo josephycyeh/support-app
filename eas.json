@@ -16,6 +16,7 @@
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://sushi-support-app.expo.app",
         "EXPO_PUBLIC_BACKEND_URL": "https://sushi-support-app-backend.onrender.com",
+        "EXPO_PUBLIC_SUPERWALL_API_KEY": "pk_4466f136753fc81464d39d37803e9adefacc3123519e55fd",
         "EXPO_UNSTABLE_DEPLOY_SERVER": "1"
       }
     }

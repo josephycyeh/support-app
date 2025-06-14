@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, Dimensions } from 'react-native';
 import { DollarSign } from 'lucide-react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import colors from '@/constants/colors';
@@ -7,9 +7,15 @@ import { calculateDaysSober } from '@/utils/dateUtils';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 
+const { width: screenWidth } = Dimensions.get('window');
+
 export const MoneyProjectionChart = () => {
   const { dailySpending, calculateTotalSaved, currency } = useMoneySavedStore();
   const { startDate } = useSobrietyStore();
+  
+  // Calculate responsive chart dimensions
+  const chartWidth = Math.min(screenWidth - 64, 300); // Account for padding and margins
+  const barWidth = Math.max(30, (chartWidth - 80) / 5); // Responsive bar width
   
   // Calculate data for chart (current + future projections only)
   const chartData = useMemo(() => {
@@ -48,7 +54,7 @@ export const MoneyProjectionChart = () => {
         label: timeframe.label,
         frontColor: timeframe.isFuture ? 'rgba(76, 175, 80, 0.3)' : colors.success,
         gradientColor: timeframe.isFuture ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.8)',
-        spacing: 12,
+        spacing: Math.max(8, (chartWidth - (barWidth * 5)) / 6), // Responsive spacing
         labelTextStyle: {
           fontSize: 10,
           fontWeight: timeframe.label === 'Now' ? '700' : '600',
@@ -65,7 +71,7 @@ export const MoneyProjectionChart = () => {
     });
     
     return data;
-  }, [dailySpending, calculateTotalSaved, startDate, colors]);
+  }, [dailySpending, calculateTotalSaved, startDate, colors, chartWidth, barWidth]);
 
   const formatCurrency = (amount: number) => {
     if (amount >= 1000) {
@@ -74,7 +80,7 @@ export const MoneyProjectionChart = () => {
     return `${currency}${Math.round(amount)}`;
   };
 
-  const maxValue = Math.max(...chartData.map(item => item.value), 100);
+  const maxValue = Math.max(...chartData.map(item => item.value), 1);
 
   return (
     <View style={styles.container}>
@@ -91,19 +97,19 @@ export const MoneyProjectionChart = () => {
         <View style={styles.chartContainer}>
           <BarChart
             data={chartData}
-            width={320}
+            width={chartWidth}
             height={140}
-            barWidth={45}
-            spacing={12}
-            initialSpacing={15}
-            endSpacing={15}
+            barWidth={barWidth}
+            spacing={Math.max(8, (chartWidth - (barWidth * 5)) / 6)}
+            initialSpacing={10}
+            endSpacing={10}
             noOfSections={4}
             yAxisThickness={0}
             xAxisThickness={0}
             isAnimated
             animationDuration={800}
             frontColor={colors.success}
-            backgroundColor="rgba(248, 250, 252, 0.5)"
+            backgroundColor="transparent"
             barBorderRadius={6}
             yAxisTextStyle={{
               fontSize: 11,
@@ -117,7 +123,7 @@ export const MoneyProjectionChart = () => {
               formatCurrency(maxValue * 0.75),
               formatCurrency(maxValue),
             ]}
-            maxValue={maxValue * 1.1}
+            maxValue={maxValue}
             rulesType="solid"
             rulesColor="rgba(0,0,0,0.04)"
             showReferenceLine1
@@ -207,6 +213,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(248, 250, 252, 0.5)',
     borderRadius: 12,
     paddingVertical: 16,
+    paddingHorizontal: 8,
+    overflow: 'hidden',
+    width: '100%',
   },
   tooltip: {
     backgroundColor: colors.text,
