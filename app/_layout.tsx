@@ -12,7 +12,9 @@ import {
 import { calculateDaysSober } from "@/utils/dateUtils";
 
 import { ErrorBoundary } from "./error-boundary";
-import { Platform } from "react-native"
+import { Platform } from "react-native";
+import { PostHogProvider } from 'posthog-react-native';
+// import Superwall from "expo-superwall/compat"
 // Register LiveKit globals
 
 export const unstable_settings = {
@@ -26,10 +28,19 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { onboardingCompleted, struggleTimes, name, startDate } = useSobrietyStore();
 
+  // useEffect(() => {
+  //   const apiKey = process.env.EXPO_PUBLIC_SUPERWALL_API_KEY;
+  //   if (apiKey) {
+  //     Superwall.configure({
+  //       apiKey: apiKey,
+  //     })
+  //   }
+  // }, [])
 
   // Schedule notifications when onboarding is completed or data changes
   useEffect(() => {
     const scheduleNotifications = async () => {
+      console.log("onboardingCompleted: ",onboardingCompleted)
       if (onboardingCompleted) {
         try {
           const daysSober = calculateDaysSober(startDate);
@@ -75,9 +86,18 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary>
-      <RootLayoutNav />
-    </ErrorBoundary>
+    <PostHogProvider
+      apiKey="phc_n1UkJyY4B1jsucmCC5FG2DywiKnixcWdyl2xZscAYmv"
+      options={{
+        host: 'https://us.i.posthog.com',
+        enableSessionReplay: true,
+      }}
+      autocapture
+    >
+      <ErrorBoundary>
+        <RootLayoutNav />
+      </ErrorBoundary>
+    </PostHogProvider>
   );
 }
 

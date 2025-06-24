@@ -53,12 +53,15 @@ const MILESTONES: Milestone[] = [
  */
 function parseStruggleTime(timeString: string): StruggleTimeSlot | null {
   try {
-    // Extract emoji (first character)
-    const emoji = timeString.charAt(0);
-    
-    // Extract label (between emoji and parentheses)
-    const labelMatch = timeString.match(/.\s*([^(]+)/);
+    // Extract emoji (first character) - use Array.from to handle Unicode properly
+    const emoji = Array.from(timeString)[0] || '';
+
+    // Extract label (between emoji and parentheses) - improved extraction
+    // Remove the emoji first, then extract everything before the opening parenthesis
+    const withoutEmoji = timeString.slice(emoji.length).trim();
+    const labelMatch = withoutEmoji.match(/^([^(]+)/);
     const label = labelMatch ? labelMatch[1].trim() : '';
+
     
     // Extract time range from parentheses
     const timeMatch = timeString.match(/\(([^)]+)\)/);
@@ -114,7 +117,31 @@ function generateStruggleTimeMessage(
   const { name, daysSober } = userPersonalization;
   const { label, emoji } = timeSlot;
   
-  // Message templates for different time periods
+  // Special messages for users with less than 1 day sober
+  const earlyJourneyTemplates = {
+    morning: [
+      `Good morning${name ? ` ${name}` : ''}! Starting your recovery journey strong ☀️`,
+      `${emoji} Morning check-in${name ? `, ${name}` : ''}! Every hour counts - you're building something amazing 💪`,
+    ],
+    afternoon: [
+      `${emoji} Afternoon check-in${name ? `, ${name}` : ''}! You're taking it one step at a time 🌞`,
+      `Hey${name ? ` ${name}` : ''}! You're doing great - every moment of sobriety is progress 💪`,
+    ],
+    evening: [
+      `${emoji} Evening check-in${name ? `, ${name}` : ''}! You're making it through - hour by hour 🌅`,
+      `Hey${name ? ` ${name}` : ''}! Evening can be tough, but every moment of progress matters 💪`,
+    ],
+    night: [
+      `${emoji} Night check-in${name ? `, ${name}` : ''}! You're choosing recovery in this moment 🌙`,
+      `Good evening${name ? ` ${name}` : ''}! Late nights can be challenging, but you're taking it one hour at a time 🛡️`,
+    ],
+    latenight: [
+      `${emoji} Late night check-in${name ? `, ${name}` : ''}! Every hour is a victory - you've got this 🌃`,
+      `Hey${name ? ` ${name}` : ''}! Even in the late hours, remember you're building something lasting ✨`,
+    ],
+  };
+  
+  // Message templates for different time periods (1+ days sober)
   const messageTemplates = {
     morning: [
       `Good morning${name ? ` ${name}` : ''}! Starting the day strong with ${daysSober} days behind you ☀️`,
@@ -147,8 +174,10 @@ function generateStruggleTimeMessage(
   else if (lowerLabel.includes('night')) category = 'night';
   else if (lowerLabel.includes('late')) category = 'latenight';
   
+  // Choose template set based on days sober
+  const templates = daysSober < 1 ? earlyJourneyTemplates[category] : messageTemplates[category];
+  
   // Select random message from category
-  const templates = messageTemplates[category];
   const selectedMessage = templates[Math.floor(Math.random() * templates.length)];
   
   return {

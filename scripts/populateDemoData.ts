@@ -183,7 +183,7 @@ Texted Sarah back finally. She's been worried about me but I wasn't ready to tal
 
 Intensity: 8/10
 
-Coping Strategy: Left after 20 minutes and told them I had dinner plans. Came straight home and opened this app. Talked to Sushi for like 30 minutes just processing it all. Did some breathing exercises to calm down.
+Coping Strategy: Left after 20 minutes and told them I had dinner plans. Came straight home and opened this app. Talked to Sobi for like 30 minutes just processing it all. Did some breathing exercises to calm down.
 
 Outcome: Stayed Strong`,
       date: getTimestampDaysAgo(8),
@@ -229,7 +229,7 @@ Maybe I need to just be honest with him. Or find new friends who don't revolve e
     {
       id: 'demo-msg-1',
       role: 'user' as const,
-      content: 'hey sushi, having a rough day today',
+      content: 'hey sobi, having a rough day today',
     },
     {
       id: 'demo-msg-2',
@@ -259,7 +259,7 @@ Maybe I need to just be honest with him. Or find new friends who don't revolve e
     {
       id: 'demo-msg-7',
       role: 'user' as const,
-      content: 'thanks sushi. youre right. maybe ill suggest going to that new coffee place instead',
+      content: 'thanks sobi. youre right. maybe ill suggest going to that new coffee place instead',
     },
     {
       id: 'demo-msg-8',

@@ -13,6 +13,7 @@ interface ReasonsStore {
   deleteReason: (id: string) => void;
   updateReason: (id: string, text: string) => void;
   getReasons: () => Reason[];
+  clearAll: () => void;
 }
 
 // Initial default reasons
@@ -41,6 +42,11 @@ export const useReasonsStore = create<ReasonsStore>()(
         })),
       
       getReasons: () => get().reasons,
+      
+      clearAll: () => 
+        set(() => ({
+          reasons: []
+        })),
     }),
     {
       name: 'reasons-storage',

@@ -14,6 +14,7 @@ interface SobrietyStore extends SobrietyState {
   setAge: (age: number) => void; // Set user's age
   setStartDate: (date: string) => void; // Set sobriety start date
   completeOnboarding: () => void; // Mark onboarding as complete
+  clearAll: () => void; // Complete reset for account deletion
   
   // Onboarding data setters
   setSubstance: (substance: string) => void;
@@ -23,6 +24,7 @@ interface SobrietyStore extends SobrietyState {
   setHardestChallenge: (challenge: string) => void;
   setSobrietyImportance: (importance: string) => void;
   setStruggleTimes: (times: string[]) => void;
+  setAcquisitionSource: (source: string) => void;
 }
 
 // Calculate XP needed for next level (increases with each level)
@@ -266,6 +268,16 @@ export const useSobrietyStore = create<SobrietyStore>()(
       setStruggleTimes: (times: string[]) => 
         set(() => ({
           struggleTimes: times,
+        })),
+      
+      setAcquisitionSource: (source: string) => 
+        set(() => ({
+          acquisitionSource: source,
+        })),
+      
+      clearAll: () => 
+        set(() => ({
+          ...getDefaultState()
         })),
     }),
     {

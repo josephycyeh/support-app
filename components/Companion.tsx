@@ -217,7 +217,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
         textStyle={styles.talkButtonText}
         icon={<MessageSquare size={18} color={colors.text} />}
       >
-        Talk with Sushi
+        Talk with Sobi
       </Button>
 
       {/* Level Up Modal */}
@@ -245,7 +245,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
                 />
               </View>
               <Text style={styles.adventureText}>
-                Sushi is going on an adventure!
+                You're getting stronger every day!
               </Text>
             </View>
           </View>

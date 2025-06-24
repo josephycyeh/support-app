@@ -17,6 +17,7 @@ export interface SobrietyState {
   name?: string; // User's name
   age?: number; // User's age
   onboardingCompleted?: boolean; // Track if user has completed onboarding
+  acquisitionSource?: string; // Where user came from: 'Reddit', 'Instagram', etc.
   
   // Onboarding personalization data
   substance?: string; // What they're working on: 'Alcohol', 'Nicotine', etc.

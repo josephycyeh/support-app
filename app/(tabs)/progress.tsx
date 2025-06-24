@@ -257,11 +257,93 @@ export default function ProgressScreen() {
               progress={consistencyProgress}
               earned={consistencyProgress >= 100}
             />
+            
+            {/* Recovery Milestone Badges */}
+            <BadgeItem 
+              title="First Day" 
+              description="1 day sober"
+              icon={<Clock size={24} color="#FFFFFF" />}
+              color={colors.primary}
+              progress={daysSober >= 1 ? 100 : (daysSober * 100)}
+              earned={daysSober >= 1}
+            />
+            <BadgeItem 
+              title="Three Days" 
+              description="3 days sober"
+              icon={<Star size={24} color="#FFFFFF" />}
+              color="#FFA726" // Orange
+              progress={daysSober >= 3 ? 100 : Math.min((daysSober / 3) * 100, 100)}
+              earned={daysSober >= 3}
+            />
+            <BadgeItem 
+              title="One Week" 
+              description="7 days sober"
+              icon={<Calendar size={24} color="#FFFFFF" />}
+              color={colors.accent}
+              progress={daysSober >= 7 ? 100 : Math.min((daysSober / 7) * 100, 100)}
+              earned={daysSober >= 7}
+            />
+            <BadgeItem 
+              title="Two Weeks" 
+              description="14 days sober"
+              icon={<Wind size={24} color="#FFFFFF" />}
+              color="#66BB6A" // Green
+              progress={daysSober >= 14 ? 100 : Math.min((daysSober / 14) * 100, 100)}
+              earned={daysSober >= 14}
+            />
+            <BadgeItem 
+              title="One Month" 
+              description="30 days sober"
+              icon={<Trophy size={24} color="#FFFFFF" />}
+              color="#5E72E4" // Indigo
+              progress={daysSober >= 30 ? 100 : Math.min((daysSober / 30) * 100, 100)}
+              earned={daysSober >= 30}
+            />
+            <BadgeItem 
+              title="Three Months" 
+              description="90 days sober"
+              icon={<Award size={24} color="#FFFFFF" />}
+              color="#11CDEF" // Cyan
+              progress={daysSober >= 90 ? 100 : Math.min((daysSober / 90) * 100, 100)}
+              earned={daysSober >= 90}
+            />
+            <BadgeItem 
+              title="Six Months" 
+              description="180 days sober"
+              icon={<Heart size={24} color="#FFFFFF" />}
+              color="#E91E63" // Pink
+              progress={daysSober >= 180 ? 100 : Math.min((daysSober / 180) * 100, 100)}
+              earned={daysSober >= 180}
+            />
+            <BadgeItem 
+              title="One Year" 
+              description="365 days sober"
+              icon={<Star size={24} color="#FFFFFF" />}
+              color="#FFD700" // Gold
+              progress={daysSober >= 365 ? 100 : Math.min((daysSober / 365) * 100, 100)}
+              earned={daysSober >= 365}
+            />
+            <BadgeItem 
+              title="Two Years" 
+              description="730 days sober"
+              icon={<Award size={24} color="#FFFFFF" />}
+              color="#8E24AA" // Purple
+              progress={daysSober >= 730 ? 100 : Math.min((daysSober / 730) * 100, 100)}
+              earned={daysSober >= 730}
+            />
+            <BadgeItem 
+              title="Five Years" 
+              description="1825 days sober"
+              icon={<Trophy size={24} color="#FFFFFF" />}
+              color="#FF6F00" // Deep Orange
+              progress={daysSober >= 1825 ? 100 : Math.min((daysSober / 1825) * 100, 100)}
+              earned={daysSober >= 1825}
+            />
           </ScrollView>
         </View>
         
         {/* Stats Section */}
-        <View style={styles.sectionContainer}>
+        {/* <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Your Stats</Text>
           <Text style={styles.sectionSubtitle}>Track your recovery activities</Text>
           <View style={styles.statsGrid}>
@@ -286,7 +368,7 @@ export default function ProgressScreen() {
               icon={<Award size={20} color={colors.primary} />}
             />
           </View>
-        </View>
+        </View> */}
       </ScrollView>
     </View>
   );
@@ -309,7 +391,7 @@ const MilestoneNode = ({ title, description, icon, color, completed, current, xp
       styles.milestoneNode, 
       { 
         backgroundColor: completed ? color : colors.border,
-        opacity: completed || current ? 1 : 0.6
+        opacity: 1
       },
       current && styles.currentNode
     ]}>
@@ -463,12 +545,12 @@ const styles = StyleSheet.create({
   },
   journeyLine: {
     position: 'absolute',
-    left: 24,
+    left: 48,
     top: 30,
     bottom: 30,
     width: 2,
     backgroundColor: colors.border,
-    zIndex: 1,
+    zIndex: 0,
   },
   milestoneContainer: {
     flexDirection: 'row',

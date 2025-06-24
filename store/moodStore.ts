@@ -20,6 +20,7 @@ interface MoodStore {
   checkHasLoggedToday: () => boolean;
   getMoodStreak: () => number;
   getAverageMood: (days?: number) => number;
+  clearAll: () => void;
 }
 
 export const useMoodStore = create<MoodStore>()(
@@ -95,6 +96,12 @@ export const useMoodStore = create<MoodStore>()(
         const sum = recentEntries.reduce((acc, entry) => acc + entry.mood, 0);
         return Math.round((sum / recentEntries.length) * 10) / 10;
       },
+      
+      clearAll: () => 
+        set(() => ({
+          entries: [],
+          hasLoggedToday: false,
+        })),
     }),
     {
       name: 'mood-storage',

@@ -16,6 +16,7 @@ interface JournalStore {
   deleteEntry: (id: string) => void;
   updateEntry: (updatedEntry: JournalEntry) => void;
   getEntries: () => JournalEntry[];
+  clearAll: () => void;
 }
 
 export const useJournalStore = create<JournalStore>()(
@@ -41,6 +42,11 @@ export const useJournalStore = create<JournalStore>()(
         })),
       
       getEntries: () => get().entries,
+      
+      clearAll: () => 
+        set(() => ({
+          entries: []
+        })),
     }),
     {
       name: 'journal-storage',

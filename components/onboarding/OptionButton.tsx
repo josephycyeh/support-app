@@ -12,7 +12,7 @@ interface OptionButtonProps {
   isSelected?: boolean;
   
   // Enhanced option with icon and description
-  icon?: string;
+  icon?: string | React.ReactElement;
   description?: string;
   
   // Auto-advance after selection (opinionated default: false)
@@ -70,7 +70,15 @@ export const OptionButton: React.FC<OptionButtonProps> = ({
         accessibilityState={{ selected: isSelected }}
       >
         <View style={styles.optionContentWithIcon}>
-          {icon && <Text style={styles.optionEmoji}>{icon}</Text>}
+          {icon && (
+            <View style={styles.optionIconContainer}>
+              {typeof icon === 'string' ? (
+                <Text style={styles.optionEmoji}>{icon}</Text>
+              ) : (
+                icon
+              )}
+            </View>
+          )}
           <View style={styles.optionTextContainer}>
             <Text style={[
               styles.optionTitle,
@@ -159,9 +167,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
+  optionIconContainer: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: 12,
+  },
   optionEmoji: {
     fontSize: 20,
-    marginRight: 12,
   },
   optionTextContainer: {
     flex: 1,

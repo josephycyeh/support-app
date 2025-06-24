@@ -35,7 +35,7 @@ export default function CommunityScreen() {
             name="Michael T."
             avatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80"
             time="Yesterday"
-            content="Had a really strong craving today but talked to Sushi and went for a walk instead. Proud of myself for making it through."
+            content="Had a really strong craving today but talked to Sobi and went for a walk instead. Proud of myself for making it through."
             likes={42}
             comments={15}
           />

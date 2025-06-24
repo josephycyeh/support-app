@@ -26,7 +26,7 @@ export const JournalModeModal = ({ visible, onClose, onSelectJournal, onSelectTr
     >
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>What would you like to add?</Text>
+          <Text style={styles.modalTitle}>Add Entry</Text>
           <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
             <X size={20} color={colors.text} />
           </TouchableOpacity>

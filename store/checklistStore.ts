@@ -10,6 +10,7 @@ interface ChecklistStore {
   toggleItem: (id: string) => void;
   resetDailyItems: () => void;
   checkAndResetIfNewDay: () => void;
+  clearAll: () => void;
 }
 
 // Updated checklist items with more action-oriented titles
@@ -51,6 +52,12 @@ export const useChecklistStore = create<ChecklistStore>()(
           resetDailyItems();
         }
       },
+      
+      clearAll: () => 
+        set(() => ({
+          items: defaultItems.map(item => ({ ...item, completed: false })),
+          lastResetDate: getTodayDateStr(),
+        })),
     }),
     {
       name: 'checklist-storage',

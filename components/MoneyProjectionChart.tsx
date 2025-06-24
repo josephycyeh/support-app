@@ -75,7 +75,7 @@ export const MoneyProjectionChart = () => {
 
   const formatCurrency = (amount: number) => {
     if (amount >= 1000) {
-      return `${currency}${(amount / 1000).toFixed(1)}k`;
+      return `${currency}${Math.round(amount / 1000)}k`;
     }
     return `${currency}${Math.round(amount)}`;
   };

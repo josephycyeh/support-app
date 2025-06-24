@@ -88,7 +88,7 @@ export default function JournalEntryScreen() {
         });
         
         // Award XP for journaling (only for new entries)
-        addXP(20);
+        addXP(30);
         
         // Increment journal entries count (only for new entries)
         incrementJournalEntries();
@@ -216,7 +216,7 @@ export default function JournalEntryScreen() {
           activeOpacity={0.8}
         >
           <Text style={styles.saveButtonText}>
-            {mode === 'edit' ? 'Save Changes' : 'Save (+20 XP)'}
+            {mode === 'edit' ? 'Save Changes' : 'Save (+30 XP)'}
           </Text>
         </TouchableOpacity>
       )}

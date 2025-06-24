@@ -131,7 +131,7 @@ const CallSetupView = ({ onStartCall, isConnecting }: { onStartCall: () => void,
             contentFit="cover"
           />
         </View>
-        <Text style={styles.companionName}>Sushi</Text>
+        <Text style={styles.companionName}>Sobi</Text>
         <Text style={styles.callStatus}>
           {isConnecting ? 'Setting up call...' : 'Ready to talk'}
         </Text>
@@ -155,8 +155,8 @@ const CallSetupView = ({ onStartCall, isConnecting }: { onStartCall: () => void,
       <View style={styles.instructionsContainer}>
         <Text style={styles.instructionsText}>
           {isConnecting 
-            ? "Creating a secure voice connection with Sushi..."
-            : "Start a voice conversation with Sushi about your recovery journey. Sushi will listen and respond with supportive guidance."
+            ? "Creating a secure voice connection with Sobi..."
+            : "Start a voice conversation with Sobi about your recovery journey. Sobi will listen and respond with supportive guidance."
           }
         </Text>
       </View>
@@ -291,7 +291,7 @@ const RoomView = ({ onCallEnded, roomName }: { onCallEnded: () => void, roomName
             autoPlay={false}
           />
         </View>
-        <Text style={styles.companionName}>Sushi</Text>
+        <Text style={styles.companionName}>Sobi</Text>
         <Text style={styles.callStatus}>
           {isConnected ? `Connected • ${formatDuration(callDuration)}` : 'Connecting...'}
         </Text>
@@ -302,7 +302,7 @@ const RoomView = ({ onCallEnded, roomName }: { onCallEnded: () => void, roomName
         <SimpleVoiceAssistant />
         {isConnected && (
           <Text style={styles.visualizerHint}>
-            Speak naturally - Sushi is listening and will respond
+            Speak naturally - Sobi is listening and will respond
           </Text>
         )}
       </View>
@@ -338,8 +338,8 @@ const RoomView = ({ onCallEnded, roomName }: { onCallEnded: () => void, roomName
       <View style={styles.instructionsContainer}>
         <Text style={styles.instructionsText}>
           {isConnected 
-            ? "Speak naturally with Sushi about your recovery journey. Tap the microphone to mute yourself."
-            : "Setting up your voice connection with Sushi..."
+            ? "Speak naturally with Sobi about your recovery journey. Tap the microphone to mute yourself."
+            : "Setting up your voice connection with Sobi..."
           }
         </Text>
       </View>

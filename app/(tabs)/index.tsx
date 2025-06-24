@@ -41,14 +41,17 @@ export default function HomeScreen() {
       // Check for milestone achievements immediately
       checkAndAwardMilestones();
       
-      // Add a delay only for the auto-popup modal, not for checking mood status
+      // Add a longer delay for users coming from onboarding to avoid modal conflicts
+      // Check if user just completed onboarding by looking at app state
+      const delayTime = 5000; // 5 seconds delay to allow other modals to dismiss
+      
       const timer = setTimeout(() => {
         const hasLogged = checkHasLoggedToday();
         
         if (!hasLogged) {
           setShowMoodTracker(true);
         }
-      }, 1000);
+      }, delayTime);
 
       return () => {
         // Set screen as not focused when leaving
@@ -99,15 +102,15 @@ export default function HomeScreen() {
         
         <DailyQuote />
         
-        <View style={styles.checklistContainer}>
+        {/* <View style={styles.checklistContainer}>
           <DailyChecklist onTaskCompleted={handleTaskCompleted} />
-        </View>
+        </View> */}
         
         {/* Temporary Demo Data Button - Remove after demo */}
         {/* <DemoDataButton /> */}
         
         {/* Add some space at the bottom for the floating button */}
-        <View style={{ height: 50 }} />
+        <View style={{ height: 10 }} />
       </ScrollView>
       
       <SOSButton />

@@ -1,11 +1,19 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { MessageSquare, Shield, FileText, Trash2, ChevronRight } from 'lucide-react-native';
+import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
 import { useChatStore } from '@/store/chatStore';
+import { useSobrietyStore } from '@/store/sobrietyStore';
+import { useReasonsStore } from '@/store/reasonsStore';
+import { useMoodStore } from '@/store/moodStore';
+import { useJournalStore } from '@/store/journalStore';
+import { useActivityStore } from '@/store/activityStore';
+import { useChecklistStore } from '@/store/checklistStore';
+import { useMotivationStore } from '@/store/motivationStore';
+import { useMoneySavedStore } from '@/store/moneySavedStore';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +22,14 @@ import { Header } from '@/components/ui/Header';
 export default function SettingsScreen() {
   const router = useRouter();
   const { clearHistory } = useChatStore();
+  const { clearAll: clearSobriety } = useSobrietyStore();
+  const { clearAll: clearReasons } = useReasonsStore();
+  const { clearAll: clearMood } = useMoodStore();
+  const { clearAll: clearJournal } = useJournalStore();
+  const { clearAll: clearActivity } = useActivityStore();
+  const { clearAll: clearChecklist } = useChecklistStore();
+  const { clearAll: clearMotivation } = useMotivationStore();
+  const { resetConfiguration: resetMoney } = useMoneySavedStore();
 
   const handleBackPress = () => {
     router.back();
@@ -22,7 +38,7 @@ export default function SettingsScreen() {
   const handleClearChatHistory = () => {
     Alert.alert(
       "Clear Chat History",
-      "Are you sure you want to delete all your conversations with Sushi? This action cannot be undone.",
+      "Are you sure you want to delete all your conversations with Sobi? This action cannot be undone.",
       [
         {
           text: "Cancel",
@@ -50,9 +66,23 @@ export default function SettingsScreen() {
           text: "Delete Account", 
           onPress: async () => {
             try {
-              // Clear all AsyncStorage data
+              // Clear all Zustand stores first (in-memory data)
+              clearSobriety();
+              clearReasons();
+              clearMood();
+              clearJournal();
+              clearActivity();
+              clearChecklist();
+              clearMotivation();
+              clearHistory();
+              resetMoney();
+              
+              // Clear all AsyncStorage data (persisted data)
               await AsyncStorage.clear();
-              // Navigate back to onboarding
+              
+              // Navigate to root index which will redirect to onboarding
+              // Using dismissAll to clear the entire navigation stack
+              router.dismissAll();
               router.replace('/onboarding');
             } catch (error) {
               console.error('Error clearing storage:', error);
@@ -110,13 +140,33 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Support Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Support</Text>
+          <View style={styles.settingsGroup}>
+            <TouchableOpacity 
+              style={styles.settingsItem}
+              onPress={() => Linking.openURL('mailto:support@trysobi.com?subject=Sobi App Support')}
+            >
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconContainer}>
+                  <Mail size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.settingsItemText}>Contact Us</Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Legal & Privacy Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Legal & Privacy</Text>
           <View style={styles.settingsGroup}>
             <TouchableOpacity 
               style={styles.settingsItem}
-              onPress={() => Linking.openURL('https://v0-sobi-landing-page.vercel.app/privacy-policy')}
+              onPress={() => Linking.openURL('https://www.trysobi.com/privacy-policy')}
             >
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconContainer}>
@@ -131,13 +181,13 @@ export default function SettingsScreen() {
             
             <TouchableOpacity 
               style={styles.settingsItem}
-              onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}
+              onPress={() => Linking.openURL('https://www.trysobi.com/terms-of-service')}
             >
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconContainer}>
                   <FileText size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.settingsItemText}>Terms of Use</Text>
+                <Text style={styles.settingsItemText}>Terms of Service</Text>
               </View>
               <ChevronRight size={18} color={colors.textMuted} />
             </TouchableOpacity>

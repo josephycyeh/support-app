@@ -5,22 +5,11 @@ export async function POST(req: Request) {
   const { messages, sobrietyContext } = await req.json();
 
   // Build context-aware system prompt
-  let systemPrompt = `You are Sushi, a friendly and supportive companion in a sobriety app. 
+  let systemPrompt = `You are Sobi, a friendly and supportive companion in a sobriety app. 
   Your primary role is to provide emotional support, practical advice, and motivation to users 
-  maintaining their sobriety journey. You are empathetic, non-judgmental, and encouraging.
+  maintaining their sobriety journey. You are empathetic, non-judgmental, and encouraging. You also help the user stay accountable and motivated. You serve as an AI Sobriety Sponsor.
   
-  Don't need to be overly empathetic to the point of being annoying and unnatural. Be natural and conversational.
-
-
-  Remember these important guidelines:
-  - Be conversational and friendly, like a supportive friend.
-  - Provide practical tips for maintaining sobriety when appropriate.
-  - Celebrate the user's milestones and achievements, no matter how small.
-  - If the user is struggling, offer encouragement and remind them of their strength.
-  - Avoid clinical or overly formal language - keep conversations warm and relatable.
-  - If the user is experiencing a crisis, suggest using the SOS button in the app.
-  - Never encourage or normalize alcohol or substance use.
-  - Reference their specific progress and context when relevant.
+  Be natural and conversational. Keep your responses short and casual unless instructed otherwise.
 
 On Insights:
 
@@ -38,6 +27,7 @@ No need to mention everything or prove you read the whole context.
 
 
 On Advice and Tips:
+
 When giving advice or tips, format the response as bullet points using dashes ( - ).
 
 Keep the tips short, clear, and actionable.
@@ -52,8 +42,22 @@ Avoid sounding clinical or preachy. No long explanations — let the tips speak 
 
 Never suggest anything that risks relapse or harm.  
 
-Ensure all response are in plain text. For example, if you want to give a tip, use this:
+If you want to give a tip, use this format with a dash:
 - Go for a short walk after stressful moments
+
+Ensure all response are in plain text.
+
+
+General Important Guidelines:
+  - Be conversational and friendly, like a supportive friend.
+  - Provide practical tips for maintaining sobriety when appropriate.
+  - Celebrate the user's milestones and achievements, no matter how small.
+  - If the user is struggling, offer encouragement and remind them of their strength.
+  - Avoid clinical or overly formal language - keep conversations warm and relatable.
+  - If the user is experiencing a crisis, suggest using the Help button in the app. 
+  - For any extreme escalations, suggest them call the SAMHSA National Helpline at 1-800-662-HELP (4357).
+  - Never encourage or normalize alcohol or substance use.
+  - Reference their specific progress and context when relevant.
   `;
 
   // Add personalized context if available
@@ -91,17 +95,22 @@ Ensure all response are in plain text. For example, if you want to give a tip, u
       systemPrompt += `- Their reasons for sobriety: ${sobrietyContext.reasons.map((r: any) => r.text).join('; ')}\n`;
     }
     
-    // Recent activities
-    if (sobrietyContext.recentActivity) {
-      const activities = sobrietyContext.recentActivity;
-      if (activities.breathingExercises > 0) {
-        systemPrompt += `- Breathing exercises completed: ${activities.breathingExercises}\n`;
+    // Onboarding personalization
+    if (sobrietyContext.onboarding) {
+      if (sobrietyContext.onboarding.substance) {
+        systemPrompt += `- What they're working on: ${sobrietyContext.onboarding.substance}\n`;
       }
-      if (activities.journalCount > 0) {
-        systemPrompt += `- Journal entries written: ${activities.journalCount}\n`;
+      if (sobrietyContext.onboarding.substanceFrequency) {
+        systemPrompt += `- Previous usage frequency: ${sobrietyContext.onboarding.substanceFrequency}\n`;
       }
-      if (activities.cravingsOvercome > 0) {
-        systemPrompt += `- Cravings overcome: ${activities.cravingsOvercome}\n`;
+      if (sobrietyContext.onboarding.triggers && sobrietyContext.onboarding.triggers.length > 0) {
+        systemPrompt += `- Main triggers: ${sobrietyContext.onboarding.triggers.join(', ')}\n`;
+      }
+      if (sobrietyContext.onboarding.recoveryGoals && sobrietyContext.onboarding.recoveryGoals.length > 0) {
+        systemPrompt += `- Recovery goals: ${sobrietyContext.onboarding.recoveryGoals.join(', ')}\n`;
+      }
+      if (sobrietyContext.onboarding.hardestChallenge) {
+        systemPrompt += `- Hardest challenge: ${sobrietyContext.onboarding.hardestChallenge}\n`;
       }
     }
     
@@ -129,10 +138,10 @@ Ensure all response are in plain text. For example, if you want to give a tip, u
       }
     }
     
-    // Daily checklist progress
-    if (sobrietyContext.checklist) {
-      systemPrompt += `- Today's checklist progress: ${sobrietyContext.checklist.completedToday}/${sobrietyContext.checklist.totalItems} completed\n`;
-    }
+    // // Daily checklist progress
+    // if (sobrietyContext.checklist) {
+    //   systemPrompt += `- Today's checklist progress: ${sobrietyContext.checklist.completedToday}/${sobrietyContext.checklist.totalItems} completed\n`;
+    // }
     
     // Money saved information
     if (sobrietyContext.money) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, Image, Animated, Easing } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Calendar, Heart, ArrowRight, ArrowLeft, Check, Sparkles, Star } from 'lucide-react-native';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Progress from 'react-native-progress';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,22 +22,24 @@ import Superwall from 'expo-superwall/compat';
 enum OnboardingStep {
   WELCOME = 0,
   NAME = 1,
-  SUBSTANCES = 2,
-  SUBSTANCE_FREQUENCY = 3,
-  SOBRIETY_DATE = 4,
-  TRIGGERS = 5,
-  HARDEST_PART = 6,
-  ENGAGEMENT_SUPPORT = 7,    // "You're not alone" engagement screen
-  GOALS = 8,
-  SOBRIETY_IMPORTANCE = 9,
-  REASONS = 10,
-  MONEY_INTEREST = 11,       // Ask if they want to track money             
-  MONEY = 12,
-  MONEY_PROJECTION = 13,
-  STRUGGLE_TIMES = 14,
-  REVIEW_REQUEST = 15,       // Ask for app store review
-  LOADING_PLAN = 16,         // Loading screen - tailoring their plan
-  ENGAGEMENT_READY = 17      // "Ready to begin" engagement screen - final step               
+  SOURCE = 2,
+  SUBSTANCES = 3,
+  SUBSTANCE_FREQUENCY = 4,
+  SOBRIETY_DATE = 5,
+  TRIGGERS = 6,
+  HARDEST_PART = 7,
+  ENGAGEMENT_SUPPORT = 8,    // "You're not alone" engagement screen
+  GOALS = 9,
+  SOBRIETY_IMPORTANCE = 10,
+  REASONS = 11,
+  MONEY_INTEREST = 12,       // Ask if they want to track money             
+  MONEY = 13,
+  MONEY_PROJECTION = 14,
+  STRUGGLE_TIMES = 15,
+  REVIEW_REQUEST = 16,       // Ask for app store review
+  XP_EXPLANATION = 17,       // Explain how XP and leveling works
+  LOADING_PLAN = 18,         // Loading screen - tailoring their plan
+  ENGAGEMENT_READY = 19      // "Ready to begin" engagement screen - final step               
 }
 
 export default function OnboardingScreen() {
@@ -51,7 +54,8 @@ export default function OnboardingScreen() {
     setRecoveryGoals: saveRecoveryGoals,
     setHardestChallenge: saveHardestChallenge,
     setSobrietyImportance: saveSobrietyImportance,
-    setStruggleTimes: saveStruggleTimes
+    setStruggleTimes: saveStruggleTimes,
+    setAcquisitionSource: saveAcquisitionSource
   } = useSobrietyStore();
   const { addReason } = useReasonsStore();
   const { setDailySpending } = useMoneySavedStore();
@@ -69,6 +73,7 @@ export default function OnboardingScreen() {
   const [selectedTriggers, setSelectedTriggers] = useState<string[]>([]);
   const [struggleTimes, setStruggleTimes] = useState<string[]>([]);
   const [hardestPart, setHardestPart] = useState('');
+  const [selectedSource, setSelectedSource] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Analyzing your responses...');
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -195,8 +200,8 @@ export default function OnboardingScreen() {
         { text: 'Identifying your support needs...', progress: 45, duration: 1000 },
         { text: 'Customizing your experience...', progress: 55, duration: 3000 },
         { text: 'Building your recovery toolkit...', progress: 80, duration: 800 },
-        { text: 'Finalizing personalization...', progress: 95, duration: 1800 },
-        { text: 'Ready to begin your journey!', progress: 100, duration: 800 }
+        { text: 'Finalizing personalization...', progress: 95, duration: 1500 },
+        { text: 'Ready to begin your journey!', progress: 100, duration: 600 }
       ];
 
       let currentLoadingStep = -1;
@@ -268,6 +273,16 @@ export default function OnboardingScreen() {
       case OnboardingStep.NAME:
         if (userName.trim()) {
           setName(userName.trim());
+        }
+        break;
+      case OnboardingStep.SOURCE:
+        if (selectedSource.trim()) {
+          saveAcquisitionSource(selectedSource);
+          // Set Superwall user attribute for acquisition source
+          Superwall.shared.setUserAttributes({
+            source: selectedSource,
+            name: userName
+          });
         }
         break;
       case OnboardingStep.SUBSTANCES:
@@ -355,17 +370,15 @@ export default function OnboardingScreen() {
 
   const handleComplete = () => {
     // All data should already be saved, just complete onboarding
-    completeOnboarding();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    
     // router.replace('/(tabs)');
-
-
+    completeOnboarding();
   // Register and launch Superwall paywall
   Superwall.shared.register({
     placement: 'onboarding_complete',
     feature: () => {
       // This runs when user has access (premium user or after payment)
+      // completeOnboarding();
       router.replace('/(tabs)');
     }
   });
@@ -380,6 +393,8 @@ export default function OnboardingScreen() {
         return true;
       case OnboardingStep.NAME:
         return userName.trim().length > 0;
+      case OnboardingStep.SOURCE:
+        return selectedSource.trim().length > 0;
       case OnboardingStep.SUBSTANCES:
         return selectedSubstance.trim().length > 0;
       case OnboardingStep.SUBSTANCE_FREQUENCY:
@@ -406,10 +421,12 @@ export default function OnboardingScreen() {
         return sobrietyImportance.trim().length > 0;
       case OnboardingStep.STRUGGLE_TIMES:
         return struggleTimes.length > 0;
-      case OnboardingStep.LOADING_PLAN:
-        return !isLoading;
       case OnboardingStep.REVIEW_REQUEST:
         return true;
+      case OnboardingStep.XP_EXPLANATION:
+        return true;
+      case OnboardingStep.LOADING_PLAN:
+        return !isLoading;
       case OnboardingStep.ENGAGEMENT_READY:
         return true;
       default:
@@ -441,6 +458,64 @@ export default function OnboardingScreen() {
       </View>
     );
   };
+
+  const renderXPExplanationStep = () => (
+    <View style={styles.stepContainer}>
+      <View style={styles.xpExplanationHeader}>
+        <Text style={styles.onboardingTitle}>Earn XP & Level Up! ✨</Text>
+        <Text style={styles.onboardingSubtitle}>Stay motivated with our reward system</Text>
+      </View>
+
+      <View style={styles.xpExplanationContent}>
+        {/* Level System */}
+        <View style={styles.xpCard}>
+          <View style={styles.xpCardHeader}>
+            <View style={styles.xpIconContainer}>
+              <Text style={styles.xpEmoji}>⭐</Text>
+            </View>
+            <Text style={styles.xpCardTitle}>Level Up</Text>
+          </View>
+          <Text style={styles.xpCardDescription}>
+            Complete activities to gain XP and level up! Each level celebrates your growing commitment to recovery.
+          </Text>
+        </View>
+
+        {/* Daily Activities */}
+        <View style={styles.xpCard}>
+          <View style={styles.xpCardHeader}>
+            <View style={styles.xpIconContainer}>
+              <Text style={styles.xpEmoji}>📅</Text>
+            </View>
+            <Text style={styles.xpCardTitle}>Daily Activities</Text>
+          </View>
+          <Text style={styles.xpCardDescription}>
+            Earn XP by engaging with recovery tools like breathing exercises, mood check-ins, journaling, and completing daily goals.
+          </Text>
+        </View>
+
+        {/* Milestones */}
+        <View style={styles.xpCard}>
+          <View style={styles.xpCardHeader}>
+            <View style={styles.xpIconContainer}>
+              <Text style={styles.xpEmoji}>🏆</Text>
+            </View>
+            <Text style={styles.xpCardTitle}>Sobriety Milestones</Text>
+          </View>
+          <Text style={styles.xpCardDescription}>
+            Reach major sobriety milestones to unlock big XP rewards that recognize your incredible progress.
+          </Text>
+        </View>
+
+ 
+        {/* Pre-level Note */}
+        <View style={styles.xpNoteSection}>
+          <Text style={styles.xpNoteText}>
+            Note: Depending on your sobriety date, you might start at a higher level to recognize your existing progress!
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
 
   const renderWelcome = () => (
     <Animated.View style={[styles.stepContainer, {
@@ -482,6 +557,46 @@ export default function OnboardingScreen() {
     </Animated.View>
   );
 
+  const renderSourceStep = () => {
+    const sources = [
+      { name: 'App Store', icon: 'apple', color: '#000000' },
+      { name: 'Facebook', icon: 'facebook', color: '#1877F2' },
+      { name: 'Reddit', icon: 'reddit', color: '#FF4500' },
+      { name: 'TikTok', icon: 'tiktok', color: '#000000' },
+      { name: 'Discord', icon: 'discord', color: '#5865F2' },
+      { name: 'Instagram', icon: 'instagram', color: '#E4405F' },
+      { name: 'Twitter/X', icon: 'x-twitter', color: '#000000' },
+      { name: 'Google', icon: 'google', color: '#4285F4' },
+      { name: 'Friend or family', icon: 'users', color: '#F59E0B' },
+      { name: 'Other', icon: 'ellipsis', color: '#6B7280' }
+    ];
+
+    return (
+      <OnboardingStepComponent 
+        title="How did you hear about Sobi?"
+        
+      >
+        <OptionsContainer>
+          {sources.map((source, index) => (
+            <OptionButton
+              key={index}
+              label={source.name}
+              icon={
+                <FontAwesome6 
+                  name={source.icon as any} 
+                  size={20} 
+                  color={selectedSource === source.name ? '#FFFFFF' : source.color} 
+                />
+              }
+              isSelected={selectedSource === source.name}
+              onPress={() => setSelectedSource(source.name)}
+            />
+          ))}
+        </OptionsContainer>
+      </OnboardingStepComponent>
+    );
+  };
+
   const renderNameStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.onboardingTitle}>What should I call you?</Text>
@@ -508,17 +623,18 @@ export default function OnboardingScreen() {
 
       <View style={styles.datePickerContainer}>
         <DateTimePicker
-          value={sobrietyDate}
-          mode="date"
-          display="spinner"
-          onChange={(event, selectedDate) => {
-            if (selectedDate) {
-              setSobrietyDate(selectedDate);
-            }
-          }}
-          maximumDate={new Date()}
-          style={styles.datePicker}
-        />
+        value={sobrietyDate}
+        mode="date"
+        display="spinner"
+        onChange={(event, selectedDate) => {
+          if (selectedDate) {
+            setSobrietyDate(selectedDate);
+          }
+        }}
+        maximumDate={new Date()}
+        style={styles.datePicker}
+        textColor="black"
+      />
       </View>
     </View>
   );
@@ -595,11 +711,8 @@ export default function OnboardingScreen() {
       'Prescription drugs',
       'Gambling',
       'Porn',
-      'Social media/Internet',
-      'Shopping',
-      'Food/Eating',
-      'Caffeine',
       'Gaming',
+      'Self-harm',
       'Other'
     ];
 
@@ -1035,6 +1148,8 @@ export default function OnboardingScreen() {
         return renderWelcome();
       case OnboardingStep.NAME:
         return renderNameStep();
+      case OnboardingStep.SOURCE:
+        return renderSourceStep();
       case OnboardingStep.SUBSTANCES:
         return renderSubstancesStep();
       case OnboardingStep.SUBSTANCE_FREQUENCY:
@@ -1061,10 +1176,12 @@ export default function OnboardingScreen() {
         return renderSobrietyImportanceStep();
       case OnboardingStep.STRUGGLE_TIMES:
         return renderStruggleTimesStep();
-      case OnboardingStep.LOADING_PLAN:
-        return renderLoadingPlanScreen();
       case OnboardingStep.REVIEW_REQUEST:
         return renderReviewRequestScreen();
+      case OnboardingStep.XP_EXPLANATION:
+        return renderXPExplanationStep();
+      case OnboardingStep.LOADING_PLAN:
+        return renderLoadingPlanScreen();
       case OnboardingStep.ENGAGEMENT_READY:
         return renderEngagementReadyScreen();
       default:
@@ -1608,5 +1725,79 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: colors.text,
   },
-
+  xpExplanationHeader: {
+    alignItems: 'center',
+    maxWidth: 380,
+    paddingHorizontal: 16,
+    marginBottom: 0,
+  },
+  xpExplanationContent: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: 0,
+  },
+  xpCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  xpCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  xpIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    flexShrink: 0,
+  },
+  xpEmoji: {
+    fontSize: 24,
+    color: colors.text,
+  },
+  xpCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  xpCardDescription: {
+    fontSize: 14,
+    color: colors.textLight,
+    lineHeight: 20,
+  },
+  xpMotivationSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  xpMotivationText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.primary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  xpNoteSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  xpNoteText: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
 }); 

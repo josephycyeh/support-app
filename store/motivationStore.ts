@@ -23,6 +23,7 @@ interface MotivationState {
 
 interface MotivationStore extends MotivationState {
   setCurrentPack: (packId: string) => void;
+  clearAll: () => void;
 }
 
 // Motivation packs with themed content
@@ -251,6 +252,11 @@ export const useMotivationStore = create<MotivationStore>()(
       
       setCurrentPack: (packId: string) =>
         set(() => ({ currentPackId: packId })),
+      
+      clearAll: () => 
+        set(() => ({
+          ...defaultState
+        })),
     }),
     {
       name: 'motivation-storage',

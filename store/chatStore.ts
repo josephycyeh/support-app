@@ -76,7 +76,7 @@ export const useChatStore = create<ChatStore>()(
           messages: [{
             id: 'welcome',
             role: 'assistant',
-            content: `Hi there! I'm Sushi, your companion on this journey. I'm here to talk, listen, or just keep you company whenever you need it.\n\nYou can also ask me about your sobriety journey, celebrate your milestones, get tips, and more, just ask!`,
+            content: `Hi there! I'm Sobi, your companion on this journey. I'm here to talk, listen, or just keep you company whenever you need it.\n\nYou can also ask me about your sobriety journey, celebrate your milestones, get tips, and more, just ask!`,
             timestamp: new Date().toISOString(),
           }],
         })),

@@ -16,7 +16,7 @@ export const ChatInput = ({ value, onChange, onSubmit, isLoading }: ChatInputPro
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Message Sushi..."
+          placeholder="Message Sobi..."
           placeholderTextColor={colors.textMuted}
           value={value}
           onChangeText={(text) => 

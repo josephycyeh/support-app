@@ -15,6 +15,7 @@ interface ActivityStore extends ActivityState {
   setBreathingExercises: (count: number) => void;
   setJournalEntries: (count: number) => void;
   setCravingsOvercome: (count: number) => void;
+  clearAll: () => void;
 }
 
 const initialState: ActivityState = {
@@ -56,6 +57,11 @@ export const useActivityStore = create<ActivityStore>()(
       setCravingsOvercome: (count: number) => 
         set(() => ({
           cravingsOvercome: count,
+        })),
+      
+      clearAll: () => 
+        set(() => ({
+          ...initialState
         })),
     }),
     {
