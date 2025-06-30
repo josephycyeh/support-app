@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
-import Rive from 'rive-react-native';
+import { usePostHog } from 'posthog-react-native';
 
 interface CompanionProps {
   animationTrigger?: number;
@@ -24,6 +24,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
   const levelUpTimeoutRef = useRef<number | null>(null);
   const router = useRouter();
   const { levelUp, level, setLevelUpComplete } = useSobrietyStore();
+  const posthog = usePostHog();
 
   // Check for level up and show level up modal
   useEffect(() => {
@@ -113,11 +114,21 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
   }, []);
 
   const handleChatPress = () => {
+    // Track chat button click
+    posthog.capture('chat_button_clicked', {
+      source: 'companion_component',
+    });
+    
     router.push('/chat');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   const handleBreathingPress = () => {
+    // Track breathing button click
+    posthog.capture('breathing_button_clicked', {
+      source: 'companion_component',
+    });
+    
     router.push('/breathing');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
@@ -144,6 +155,11 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
   };
 
   const handleJournalPress = () => {
+    // Track journaling button click
+    posthog.capture('journaling_button_clicked', {
+      source: 'companion_component',
+    });
+    
     // Navigate to the main journal page to view all entries
     router.push('/journal');
     
@@ -172,9 +188,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
             style={styles.companionTouchable}
           >
             <View style={styles.companionImageContainer}>
-            {/* <Rive
-           url="https://image-gen-styles.s3.us-east-2.amazonaws.com/bird_joseph+(1).riv"  
-           /> */}
+           
               <Image 
                 source={require('@/assets/images/Character_PNG.png')}
                 style={[

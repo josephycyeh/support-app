@@ -5,11 +5,18 @@ import { Heart } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
 import * as Haptics from 'expo-haptics';
+import { usePostHog } from 'posthog-react-native';
 
 export const SOSButton = () => {
   const router = useRouter();
+  const posthog = usePostHog();
 
   const handleCrisisSupportPress = () => {
+    // Track help button click
+    posthog.capture('help_button_clicked', {
+      source: 'sos_button',
+    });
+    
     // Provide haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     

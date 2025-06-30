@@ -18,12 +18,14 @@ import { useJournalStore } from '@/store/journalStore';
 import { useActivityStore } from '@/store/activityStore';
 import { Header } from '@/components/ui/Header';
 import * as Haptics from 'expo-haptics';
+import { usePostHog } from 'posthog-react-native';
 
 export default function TriggerEntryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const mode = typeof params.mode === 'string' ? params.mode : 'new';
   const entryId = typeof params.id === 'string' ? params.id : null;
+  const posthog = usePostHog();
   
   const [title, setTitle] = useState(typeof params.title === 'string' ? params.title : '');
   const [trigger, setTrigger] = useState(typeof params.trigger === 'string' ? params.trigger : '');
@@ -98,6 +100,9 @@ export default function TriggerEntryScreen() {
     if (trigger.trim()) {
       const outcomeText = outcome === 'stayed-strong' ? 'Stayed Strong' : 'Relapsed';
       const content = `Trigger: ${trigger.trim()}\n\nIntensity: ${intensity}/10\n\nCoping Strategy: ${copingStrategy.trim()}\n\nOutcome: ${outcomeText}`;
+      const triggerWordCount = trigger.trim().split(/\s+/).length;
+      const copingWordCount = copingStrategy.trim() ? copingStrategy.trim().split(/\s+/).length : 0;
+      const totalWordCount = triggerWordCount + copingWordCount;
       
       if (mode === 'edit' && entryId) {
         // Update existing entry
@@ -116,6 +121,17 @@ export default function TriggerEntryScreen() {
           content,
           date: new Date().toISOString(),
           type: 'trigger',
+        });
+        
+        // Track trigger journal written for new entries only
+        posthog.capture('journal_written', {
+          type: 'trigger',
+          word_count: totalWordCount,
+          character_count: content.length,
+          has_title: !!(title.trim()),
+          intensity_level: parseInt(intensity),
+          outcome: outcome,
+          has_coping_strategy: !!copingStrategy.trim(),
         });
         
         // Award XP for logging trigger (only for new entries)

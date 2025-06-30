@@ -163,7 +163,7 @@ General Important Guidelines:
 
   try {
     const result = await generateText({
-      model: openai('gpt-4o'),
+      model: openai('gpt-4.1'),
       messages,
       temperature: 0.7,
       system: systemPrompt

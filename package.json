@@ -68,7 +68,6 @@
     "react-native-screens": "~4.10.0",
     "react-native-svg": "15.11.2",
     "react-native-web": "^0.20.0",
-    "rive-react-native": "^9.3.4",
     "victory-native": "^41.17.3",
     "zod": "^3.25.31",
     "zustand": "^5.0.5"

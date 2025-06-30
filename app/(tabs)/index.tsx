@@ -107,7 +107,7 @@ export default function HomeScreen() {
         </View> */}
         
         {/* Temporary Demo Data Button - Remove after demo */}
-        {/* <DemoDataButton /> */}
+        <DemoDataButton />
         
         {/* Add some space at the bottom for the floating button */}
         <View style={{ height: 10 }} />

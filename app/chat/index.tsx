@@ -13,6 +13,7 @@ import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
 import { useChatStore } from '@/store/chatStore';
 import { useSobrietyContext } from '@/hooks/useSobrietyContext';
+import { usePostHog } from 'posthog-react-native';
 
 // Simple ID generator
 const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -20,6 +21,7 @@ const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(
 export default function ChatScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const posthog = usePostHog();
   
   // Simple state management
   const [input, setInput] = useState('');
@@ -59,6 +61,12 @@ export default function ChatScreen() {
 
     // Add user message to store immediately
     addMessage(userMessage);
+    
+    // Track message sent
+    posthog.capture('message_sent', {
+      content_length: content.trim().length,
+      word_count: content.trim().split(/\s+/).length,
+    });
     
     // Clear input
     setInput('');

@@ -18,12 +18,14 @@ import { useJournalStore } from '@/store/journalStore';
 import { useActivityStore } from '@/store/activityStore';
 import { Header } from '@/components/ui/Header';
 import * as Haptics from 'expo-haptics';
+import { usePostHog } from 'posthog-react-native';
 
 export default function JournalEntryScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const mode = typeof params.mode === 'string' ? params.mode : 'new';
   const entryId = typeof params.id === 'string' ? params.id : null;
+  const posthog = usePostHog();
   
   const [title, setTitle] = useState(typeof params.title === 'string' ? params.title : '');
   const [content, setContent] = useState(typeof params.content === 'string' ? params.content : '');
@@ -70,12 +72,16 @@ export default function JournalEntryScreen() {
   
   const handleSave = () => {
     if (content.trim()) {
+      const trimmedContent = content.trim();
+      const wordCount = trimmedContent.split(/\s+/).length;
+      const characterCount = trimmedContent.length;
+      
       if (mode === 'edit' && entryId) {
         // Update existing entry
         updateEntry({
           id: entryId,
           title: title.trim() || 'Untitled',
-          content: content.trim(),
+          content: trimmedContent,
           date: typeof params.date === 'string' ? params.date : new Date().toISOString(), // Keep original date
         });
       } else {
@@ -83,8 +89,16 @@ export default function JournalEntryScreen() {
         addEntry({
           id: Date.now().toString(),
           title: title.trim() || 'Untitled',
-          content: content.trim(),
+          content: trimmedContent,
           date: new Date().toISOString(),
+        });
+        
+        // Track journal written for new entries only
+        posthog.capture('journal_written', {
+          type: 'journal',
+          word_count: wordCount,
+          character_count: characterCount,
+          has_title: !!(title.trim()),
         });
         
         // Award XP for journaling (only for new entries)

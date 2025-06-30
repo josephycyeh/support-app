@@ -26,11 +26,13 @@ import { EditNameModal } from '@/components/EditNameModal';
 import { EditAgeModal } from '@/components/EditAgeModal';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { usePostHog } from 'posthog-react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { level, xp, startDate, xpToNextLevel, resetSobriety, name, age, setName, setAge, setStartDate, struggleTimes } = useSobrietyStore();
   const { reasons, addReason, updateReason, deleteReason } = useReasonsStore();
+  const posthog = usePostHog();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -108,7 +110,17 @@ export default function ProfileScreen() {
   };
   
   const handleSaveAge = (newAge: number) => {
+    const wasFirstTimeSet = !age;
     setAge(newAge);
+    
+    // Track age setting
+    if (wasFirstTimeSet) {
+      posthog.capture('user_age_set', {
+        age: newAge,
+        source: 'profile_screen',
+      });
+    }
+    
     setShowAgeModal(false);
   };
   

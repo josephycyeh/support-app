@@ -5,11 +5,13 @@ import { ArrowLeft } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 import * as Haptics from 'expo-haptics';
+import { usePostHog } from 'posthog-react-native';
 
 export default function EditMoneySpendingScreen() {
   const router = useRouter();
   const { dailySpending, setDailySpending, currency, isConfigured } = useMoneySavedStore();
   const [customAmount, setCustomAmount] = useState(isConfigured ? dailySpending.toString() : '');
+  const posthog = usePostHog();
 
   const handleBack = () => {
     router.back();
@@ -21,6 +23,16 @@ export default function EditMoneySpendingScreen() {
     if (amount > 0) {
       const wasInitialSetup = !isConfigured;
       setDailySpending(amount);
+      
+      // Track money tracker setup
+      if (wasInitialSetup) {
+        posthog.capture('money_tracker_setup_completed', {
+          daily_amount: amount,
+          currency: currency,
+          source: 'home_screen',
+        });
+      }
+      
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       
       if (wasInitialSetup) {
@@ -188,12 +200,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     marginBottom: 4,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: 8,
   },
   customInputContainer: {
     gap: 8,

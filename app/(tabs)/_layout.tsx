@@ -2,6 +2,7 @@ import React from "react";
 import { Tabs } from "expo-router";
 import { Home, BarChart, Users, User } from "lucide-react-native";
 import colors from "@/constants/colors";
+import { HapticTab } from "@/components/HapticTab";
 
 export default function TabLayout() {
   return (
@@ -9,6 +10,7 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        tabBarButton: HapticTab,
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: colors.border,

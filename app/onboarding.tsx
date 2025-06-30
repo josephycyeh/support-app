@@ -19,6 +19,8 @@ import { OptionButton, OptionsContainer } from '@/components/onboarding/OptionBu
 import { SingleSelectOptions, MultiSelectOptions } from '@/components/onboarding/MultiSelectOptions';
 import { requestNotificationPermissions } from '@/services/NotificationService';
 import Superwall from 'expo-superwall/compat';
+import { usePostHog } from 'posthog-react-native';
+
 enum OnboardingStep {
   WELCOME = 0,
   NAME = 1,
@@ -90,6 +92,7 @@ export default function OnboardingScreen() {
   const [testimonial2Opacity] = useState(new Animated.Value(0));
   const [testimonial3Opacity] = useState(new Animated.Value(0));
 
+  const posthog = usePostHog();
 
   useEffect(() => {
     const apiKey = process.env.EXPO_PUBLIC_SUPERWALL_API_KEY;
@@ -198,7 +201,7 @@ export default function OnboardingScreen() {
         { text: 'Processing your goals...', progress: 20, duration: 800 },
         { text: 'Understanding your recovery journey...', progress: 30, duration: 2000 },
         { text: 'Identifying your support needs...', progress: 45, duration: 1000 },
-        { text: 'Customizing your experience...', progress: 55, duration: 3000 },
+        { text: 'Customizing your experience...', progress: 55, duration: 2500 },
         { text: 'Building your recovery toolkit...', progress: 80, duration: 800 },
         { text: 'Finalizing personalization...', progress: 95, duration: 1500 },
         { text: 'Ready to begin your journey!', progress: 100, duration: 600 }
@@ -283,12 +286,21 @@ export default function OnboardingScreen() {
             source: selectedSource,
             name: userName
           });
+
+          posthog.capture('onboarding_source_selected', {
+            source: selectedSource,
+          });
         }
         break;
       case OnboardingStep.SUBSTANCES:
         if (selectedSubstance.trim()) {
           saveSubstance(selectedSubstance);
+          
+          posthog.capture('onboarding_addiction_selected', {
+            addiction: selectedSubstance,
+          });
         }
+
         break;
       case OnboardingStep.SUBSTANCE_FREQUENCY:
         if (substanceFrequency.trim()) {
@@ -297,6 +309,11 @@ export default function OnboardingScreen() {
         break;
       case OnboardingStep.SOBRIETY_DATE:
         setStartDate(sobrietyDate.toISOString());
+
+        posthog.capture('onboarding_sobriety_date_selected', {
+          date: sobrietyDate.toISOString(),
+        });
+
         break;
       case OnboardingStep.TRIGGERS:
         if (selectedTriggers.length > 0) {
@@ -332,6 +349,13 @@ export default function OnboardingScreen() {
       case OnboardingStep.MONEY:
         if (dailySpending.trim()) {
           setDailySpending(parseFloat(dailySpending));
+          
+          // Track money tracker setup completion during onboarding
+          posthog.capture('money_tracker_setup_completed', {
+            daily_amount: parseFloat(dailySpending),
+            currency: '$',
+            source: 'onboarding',
+          });
         }
         break;
     }

@@ -245,13 +245,13 @@ interface JournalEntryCardProps {
 const JournalEntryCard = ({ entry, onEdit, onView, onDelete, index }: JournalEntryCardProps) => {
   const [showMenu, setShowMenu] = React.useState(false);
   const [menuPosition, setMenuPosition] = React.useState({ x: 0, y: 0 });
-  const menuButtonRef = React.useRef<TouchableOpacity>(null);
+  const menuButtonRef = React.useRef<View>(null);
   
   const handleMenuPress = (e: any) => {
     e.stopPropagation();
     
     if (menuButtonRef.current) {
-      menuButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+      menuButtonRef.current.measure((x: number, y: number, width: number, height: number, pageX: number, pageY: number) => {
         setMenuPosition({
           x: pageX - 120, // Position menu to the left of the button
           y: pageY + height + 5, // Position below the button with small gap

@@ -6,6 +6,7 @@ import colors from '@/constants/colors';
 import { calculateDaysSober } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { HeatmapCalendar } from '@/components/HeatmapCalendar';
+import { MoodTrackerChart } from '@/components/MoodTrackerChart';
 import { useActivityStore } from '@/store/activityStore';
 
 const screenWidth = Dimensions.get('window').width;
@@ -182,6 +183,11 @@ export default function ProgressScreen() {
           <Text style={styles.sectionTitle}>Sobriety Calendar</Text>
           <Text style={styles.sectionSubtitle}>Track your daily progress</Text>
           <HeatmapCalendar startDate={startDate} />
+        </View>
+        
+        {/* Mood Tracker Chart Section */}
+        <View style={styles.moodTrackerContainer}>
+          <MoodTrackerChart />
         </View>
         
         {/* Badges Section */}
@@ -617,6 +623,9 @@ const styles = StyleSheet.create({
     elevation: 4,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  moodTrackerContainer: {
+    marginBottom: 30,
   },
   sectionTitle: {
     fontSize: 18,

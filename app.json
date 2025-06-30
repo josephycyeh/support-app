@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sobi",
     "slug": "sushi-support-app",
-    "version": "1.1.2",
+    "version": "1.1.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
@@ -17,7 +17,8 @@
       "supportsTablet": false,
       "bitcode": false,
       "bundleIdentifier": "com.caladanapps.myro",
-      "appleTeamId": "FJ8TN5K3MB"
+      "appleTeamId": "FJ8TN5K3MB",
+      "associatedDomains": ["applinks:sushi-support-app.expo.app"]
     },
     "android": {
       "adaptiveIcon": {
