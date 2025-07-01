@@ -42,66 +42,66 @@ export const MoodTrackerChart = ({ className }: MoodTrackerChartProps) => {
     return moodData;
   };
 
-  var moodData = getMoodDataForDays();
-  //simulate lowest mood
-  moodData[2].mood = 1;
-
-  const maxBarHeight = 150;
+  const moodData = getMoodDataForDays();
+  
+  // Check if there's any mood data at all
+  const hasAnyMoodData = entries.length > 0;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Mood Tracker</Text>
       <Text style={styles.subtitle}>Last 5 days</Text>
       
-      <View style={styles.chartContainer}>
-        {moodData.map((data, index) => {
-          const moodLevel = data.mood ? MOOD_LEVELS.find(level => level.value === data.mood) : null;
-          const fillPercentage = data.mood ? (data.mood / 5) : 0;
-          const barColor = moodLevel ? moodLevel.color : colors.border;
-          
-          return (
-            <View key={index} style={styles.barContainer}>
-              {/* Bar Container - Fixed height */}
-              <View style={styles.barWrapper}>
-                {/* Background bar */}
-                <View style={styles.barBackground}>
-                  {/* Filled portion */}
-                  <View 
-                    style={[
-                      styles.barFill, 
-                      { 
-                        height: `${fillPercentage * 100}%`,
-                        backgroundColor: barColor,
-                      }
-                    ]}
-                  >
-                    {/* Emoji positioned at top of fill */}
-                    {moodLevel && fillPercentage > 0.15 && (
-                      <View style={styles.emojiInFill}>
-                        <Text style={styles.emoji}>{moodLevel.emoji}</Text>
-                      </View>
-                    )}
+      {hasAnyMoodData ? (
+        <View style={styles.chartContainer}>
+          {moodData.map((data, index) => {
+            const moodLevel = data.mood ? MOOD_LEVELS.find(level => level.value === data.mood) : null;
+            const fillPercentage = data.mood ? (data.mood / 5) : 0;
+            const barColor = moodLevel ? moodLevel.color : colors.border;
+            
+            return (
+              <View key={index} style={styles.barContainer}>
+                {/* Emoji on top */}
+                <View style={styles.emojiContainer}>
+                  {moodLevel ? (
+                    <Text style={styles.emoji}>{moodLevel.emoji}</Text>
+                  ) : (
+                    <View style={styles.noMoodIndicator} />
+                  )}
+                </View>
+                
+                {/* Bar Container - Fixed height */}
+                <View style={styles.barWrapper}>
+                  {/* Background bar */}
+                  <View style={styles.barBackground}>
+                    {/* Filled portion */}
+                    <View 
+                      style={[
+                        styles.barFill, 
+                        { 
+                          height: `${fillPercentage * 100}%`,
+                          backgroundColor: barColor,
+                        }
+                      ]} 
+                    />
                   </View>
                 </View>
                 
-                {/* Emoji above bar for very low moods or no mood */}
-                {(!moodLevel || fillPercentage <= 0.15) && (
-                  <View style={styles.emojiAboveBar}>
-                    {moodLevel ? (
-                      <Text style={styles.emoji}>{moodLevel.emoji}</Text>
-                    ) : (
-                      <View style={styles.noMoodIndicator} />
-                    )}
-                  </View>
-                )}
+                {/* Day label */}
+                <Text style={styles.dayLabel}>{data.day}</Text>
               </View>
-              
-              {/* Day label */}
-              <Text style={styles.dayLabel}>{data.day}</Text>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      ) : (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateEmoji}>😊</Text>
+          <Text style={styles.emptyStateTitle}>Start tracking your mood</Text>
+          <Text style={styles.emptyStateSubtitle}>
+            Log your daily mood to see patterns and track your emotional journey
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -128,12 +128,13 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: colors.textLight,
+    marginBottom: 20,
   },
   chartContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 210,
+    height: 180,
     paddingHorizontal: 10,
   },
   barContainer: {
@@ -141,25 +142,14 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
   },
-  emojiInFill: {
-    position: 'absolute',
-    top: 4,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
+  emojiContainer: {
+    height: 40,
     justifyContent: 'center',
-  },
-  emojiAboveBar: {
-    position: 'absolute',
-    top: -40,
-    left: 0,
-    right: 0,
-    height: 32,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 8,
   },
   emoji: {
-    fontSize: 20,
+    fontSize: 24,
   },
   noMoodIndicator: {
     width: 6,
@@ -168,14 +158,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   barWrapper: {
-    height: 150,
+    height: 120,
     width: 28,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
   barBackground: {
     width: 28,
-    height: 150,
+    height: 120,
     backgroundColor: colors.progressBackground,
     borderRadius: 14,
     overflow: 'hidden',
@@ -197,5 +187,28 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 12,
     textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyStateEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 }); 

@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Linking, Share as ShareAPI } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail } from 'lucide-react-native';
+import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail, Share } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { usePostHog } from 'posthog-react-native';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
 import { useChatStore } from '@/store/chatStore';
@@ -21,6 +22,7 @@ import { Header } from '@/components/ui/Header';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const posthog = usePostHog();
   const { clearHistory } = useChatStore();
   const { clearAll: clearSobriety } = useSobrietyStore();
   const { clearAll: clearReasons } = useReasonsStore();
@@ -33,6 +35,23 @@ export default function SettingsScreen() {
 
   const handleBackPress = () => {
     router.back();
+  };
+
+  const handleShareApp = async () => {
+    try {
+      await ShareAPI.share({
+        message: 'I found this amazing app called Sobi that\'s been helping me on my recovery journey. It has an AI companion, mood tracking, journaling, and so much more. It might help you too! 💙',
+        url: 'https://www.trysobi.com', // Replace with actual app store URL when available
+        title: 'Sobi - Your Recovery Companion',
+      });
+
+      // Track the app share event
+      posthog.capture('app_shared', {
+        share_method: 'native_share'
+      });
+    } catch (error) {
+      console.error('Error sharing app:', error);
+    }
   };
   
   const handleClearChatHistory = () => {
@@ -145,6 +164,21 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support</Text>
           <View style={styles.settingsGroup}>
+            <TouchableOpacity 
+              style={styles.settingsItem}
+              onPress={handleShareApp}
+            >
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconContainer}>
+                  <Share size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.settingsItemText}>Share Sobi</Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+            
+            <View style={styles.settingsItemSeparator} />
+            
             <TouchableOpacity 
               style={styles.settingsItem}
               onPress={() => Linking.openURL('mailto:support@trysobi.com?subject=Sobi App Support')}

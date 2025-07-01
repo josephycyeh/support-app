@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
+import { Share } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import colors from '@/constants/colors';
 import { XPProgressBar } from '@/components/XPProgressBar';
@@ -25,6 +26,7 @@ export default function HomeScreen() {
   const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
   const [triggerCompanionAnimation, setTriggerCompanionAnimation] = useState(0);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
+
 
   // Check mood status immediately on mount to prevent flickering
   useEffect(() => {
@@ -78,6 +80,11 @@ export default function HomeScreen() {
     setTriggerCompanionAnimation(prev => prev + 1);
   };
 
+  const handleSharePress = () => {
+    router.push('/share-progress');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -107,7 +114,17 @@ export default function HomeScreen() {
         </View> */}
         
         {/* Temporary Demo Data Button - Remove after demo */}
-        <DemoDataButton />
+        {/* <DemoDataButton /> */}
+        
+        {/* Share Button */}
+        <TouchableOpacity
+          style={styles.shareButton}
+          onPress={handleSharePress}
+          activeOpacity={0.8}
+        >
+          <Share size={20} color="#FFFFFF" />
+          <Text style={styles.shareButtonText}>Share My Progress</Text>
+        </TouchableOpacity>
         
         {/* Add some space at the bottom for the floating button */}
         <View style={{ height: 10 }} />
@@ -144,5 +161,25 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   checklistContainer: {
+  },
+  shareButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  shareButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
