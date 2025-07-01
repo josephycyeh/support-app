@@ -4,13 +4,22 @@ import { useRouter } from 'expo-router';
 import { Sparkles } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
+import Superwall from 'expo-superwall/compat';
 
 export const MotivationButton = () => {
   const router = useRouter();
 
   const handlePress = () => {
-    router.push('/motivation');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Register paywall for daily motivation feature
+    Superwall.shared.register({
+      placement: 'daily_motivation',
+      feature: () => {
+        // This runs when user has access (premium user or after payment)
+        router.push('/motivation');
+      }
+    });
   };
 
   return (

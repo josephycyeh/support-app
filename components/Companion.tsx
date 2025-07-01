@@ -9,6 +9,7 @@ import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { usePostHog } from 'posthog-react-native';
+import Superwall from 'expo-superwall/compat';
 
 interface CompanionProps {
   animationTrigger?: number;
@@ -119,8 +120,16 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
       source: 'companion_component',
     });
     
-    router.push('/chat');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    // Register paywall for chat feature
+    Superwall.shared.register({
+      placement: 'chat',
+      feature: () => {
+        // This runs when user has access (premium user or after payment)
+        router.push('/chat');
+      }
+    });
   };
 
   const handleBreathingPress = () => {
@@ -129,8 +138,16 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
       source: 'companion_component',
     });
     
-    router.push('/breathing');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    
+    // Register paywall for breathing feature
+    Superwall.shared.register({
+      placement: 'breathing_exercises',
+      feature: () => {
+        // This runs when user has access (premium user or after payment)
+        router.push('/breathing');
+      }
+    });
   };
 
   const handleCompanionPress = () => {

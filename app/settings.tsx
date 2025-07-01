@@ -41,7 +41,7 @@ export default function SettingsScreen() {
     try {
       await ShareAPI.share({
         message: 'I found this amazing app called Sobi that\'s been helping me on my recovery journey. It has an AI companion, mood tracking, journaling, and so much more. It might help you too! 💙',
-        url: 'https://www.trysobi.com', // Replace with actual app store URL when available
+        url: 'https://apps.apple.com/us/app/sobi-quit-tracker-recovery/id6745745695', // Replace with actual app store URL when available
         title: 'Sobi - Your Recovery Companion',
       });
 

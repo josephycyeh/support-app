@@ -54,7 +54,7 @@ export default function ShareProgressScreen() {
       });
 
       // Track the share event
-      posthog?.capture('progress_shared', {
+      posthog.capture('progress_shared', {
         days_sober: daysSober,
         share_method: 'native_share'
       });
@@ -92,7 +92,7 @@ export default function ShareProgressScreen() {
       await MediaLibrary.saveToLibraryAsync(uri);
       
       // Track the download event
-      posthog?.capture('progress_downloaded', {
+      posthog.capture('progress_downloaded', {
         days_sober: daysSober,
         save_method: 'media_library'
       });

@@ -7,6 +7,7 @@ import { calculateDaysSober } from '@/utils/dateUtils';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import * as Haptics from 'expo-haptics';
+import Superwall from 'expo-superwall/compat';
 
 export const MoneySavedCard = () => {
   const router = useRouter();
@@ -19,8 +20,16 @@ export const MoneySavedCard = () => {
   const totalSaved = calculateTotalSaved(daysSober);
 
   const handlePress = () => {
-    router.push('/money-saved');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Register paywall for money tracker feature
+    Superwall.shared.register({
+      placement: 'money_tracker',
+      feature: () => {
+        // This runs when user has access (premium user or after payment)
+        router.push('/money-saved');
+      }
+    });
   };
 
   const formatCurrency = (amount: number) => {

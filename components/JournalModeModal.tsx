@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { X, BookOpen, AlertTriangle } from 'lucide-react-native';
 import Modal from 'react-native-modal';
 import colors from '@/constants/colors';
+import Superwall from 'expo-superwall/compat';
 
 interface JournalModeModalProps {
   visible: boolean;
@@ -12,6 +13,28 @@ interface JournalModeModalProps {
 }
 
 export const JournalModeModal = ({ visible, onClose, onSelectJournal, onSelectTrigger }: JournalModeModalProps) => {
+  const handleJournalPress = () => {
+    // Register paywall for journal entry feature
+    Superwall.shared.register({
+      placement: 'journal_log',
+      feature: () => {
+        // This runs when user has access (premium user or after payment)
+        onSelectJournal();
+      }
+    });
+  };
+
+  const handleTriggerPress = () => {
+    // Register paywall for trigger log feature
+    Superwall.shared.register({
+      placement: 'trigger_log',
+      feature: () => {
+        // This runs when user has access (premium user or after payment)
+        onSelectTrigger();
+      }
+    });
+  };
+
   return (
     <Modal
       isVisible={visible}
@@ -35,7 +58,7 @@ export const JournalModeModal = ({ visible, onClose, onSelectJournal, onSelectTr
         <View style={styles.optionsContainer}>
           <TouchableOpacity 
             style={styles.optionCard}
-            onPress={onSelectJournal}
+            onPress={handleJournalPress}
             activeOpacity={0.7}
           >
             <View style={[styles.optionIcon, { backgroundColor: colors.primary }]}>
@@ -49,7 +72,7 @@ export const JournalModeModal = ({ visible, onClose, onSelectJournal, onSelectTr
           
           <TouchableOpacity 
             style={styles.optionCard}
-            onPress={onSelectTrigger}
+            onPress={handleTriggerPress}
             activeOpacity={0.7}
           >
             <View style={[styles.optionIcon, { backgroundColor: colors.danger }]}>

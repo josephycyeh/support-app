@@ -40,8 +40,9 @@ enum OnboardingStep {
   STRUGGLE_TIMES = 15,
   REVIEW_REQUEST = 16,       // Ask for app store review
   XP_EXPLANATION = 17,       // Explain how XP and leveling works
-  LOADING_PLAN = 18,         // Loading screen - tailoring their plan
-  ENGAGEMENT_READY = 19      // "Ready to begin" engagement screen - final step               
+  AGE = 18,                  // Collect user's age
+  LOADING_PLAN = 19,         // Loading screen - tailoring their plan
+  ENGAGEMENT_READY = 20      // "Ready to begin" engagement screen - final step               
 }
 
 export default function OnboardingScreen() {
@@ -57,7 +58,8 @@ export default function OnboardingScreen() {
     setHardestChallenge: saveHardestChallenge,
     setSobrietyImportance: saveSobrietyImportance,
     setStruggleTimes: saveStruggleTimes,
-    setAcquisitionSource: saveAcquisitionSource
+    setAcquisitionSource: saveAcquisitionSource,
+    setAge: saveAge
   } = useSobrietyStore();
   const { addReason } = useReasonsStore();
   const { setDailySpending } = useMoneySavedStore();
@@ -80,6 +82,7 @@ export default function OnboardingScreen() {
   const [loadingText, setLoadingText] = useState('Analyzing your responses...');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [interestedInMoney, setInterestedInMoney] = useState<boolean | null>(null);
+  const [userAge, setUserAge] = useState('');
 
   // Animation values for welcome screen
   const [fadeAnim] = useState(new Animated.Value(0));
@@ -93,6 +96,7 @@ export default function OnboardingScreen() {
   const [testimonial3Opacity] = useState(new Animated.Value(0));
 
   const posthog = usePostHog();
+
 
   useEffect(() => {
     const apiKey = process.env.EXPO_PUBLIC_SUPERWALL_API_KEY;
@@ -199,12 +203,12 @@ export default function OnboardingScreen() {
       const loadingSteps = [
         { text: 'Analyzing your responses...', progress: 8, duration: 1000 },
         { text: 'Processing your goals...', progress: 20, duration: 800 },
-        { text: 'Understanding your recovery journey...', progress: 30, duration: 2000 },
-        { text: 'Identifying your support needs...', progress: 45, duration: 1000 },
-        { text: 'Customizing your experience...', progress: 55, duration: 2500 },
+        { text: 'Understanding your recovery journey...', progress: 30, duration: 1800 },
+        { text: 'Identifying your support needs...', progress: 45, duration: 800 },
+        { text: 'Customizing your experience...', progress: 55, duration: 2200 },
         { text: 'Building your recovery toolkit...', progress: 80, duration: 800 },
-        { text: 'Finalizing personalization...', progress: 95, duration: 1500 },
-        { text: 'Ready to begin your journey!', progress: 100, duration: 600 }
+        { text: 'Finalizing personalization...', progress: 95, duration: 1400 },
+        { text: 'Ready to begin your journey!', progress: 100, duration: 500 }
       ];
 
       let currentLoadingStep = -1;
@@ -270,6 +274,22 @@ export default function OnboardingScreen() {
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Track step completion for funnel analysis
+    const stepNames = [
+      'welcome', 'name', 'source', 'substances', 'substance_frequency', 
+      'sobriety_date', 'triggers', 'hardest_part', 'engagement_support', 
+      'goals', 'sobriety_importance', 'reasons', 'money_interest', 'money', 
+      'money_projection', 'struggle_times', 'review_request', 'xp_explanation', 
+      'age', 'loading_plan', 'engagement_ready'
+    ];
+
+    if (currentStep < stepNames.length) {
+      posthog.capture('onboarding_step_completed', {
+        step_name: stepNames[currentStep],
+        step_number: currentStep,
+      });
+    }
 
     // Save data immediately when moving to next step
     switch (currentStep) {
@@ -358,6 +378,15 @@ export default function OnboardingScreen() {
           });
         }
         break;
+      case OnboardingStep.AGE:
+        if (userAge.trim()) {
+          saveAge(parseInt(userAge));
+          posthog.capture('user_age_set', {
+            age: userAge.trim(),
+            source: 'onboarding',
+          });
+        }
+        break;
     }
 
     // Handle conditional navigation
@@ -395,6 +424,10 @@ export default function OnboardingScreen() {
   const handleComplete = () => {
     // All data should already be saved, just complete onboarding
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    
+    // Track onboarding completion
+    posthog.capture('onboarding_completed');
+    
     // router.replace('/(tabs)');
     completeOnboarding();
   // Register and launch Superwall paywall
@@ -449,6 +482,8 @@ export default function OnboardingScreen() {
         return true;
       case OnboardingStep.XP_EXPLANATION:
         return true;
+      case OnboardingStep.AGE:
+        return userAge.trim().length > 0 && parseInt(userAge) >= 13 && parseInt(userAge) <= 120;
       case OnboardingStep.LOADING_PLAN:
         return !isLoading;
       case OnboardingStep.ENGAGEMENT_READY:
@@ -482,6 +517,35 @@ export default function OnboardingScreen() {
       </View>
     );
   };
+
+  const renderAgeStep = () => (
+    <View style={styles.stepContainer}>
+      <Text style={styles.onboardingTitle}>Lastly, what's your age?</Text>
+      <Text style={styles.onboardingSubtitle}>This helps us personalize your recovery experience</Text>
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.textInput}
+          value={userAge}
+          onChangeText={(text) => {
+            // Only allow numbers
+            const numericText = text.replace(/[^0-9]/g, '');
+            setUserAge(numericText);
+          }}
+          placeholder="Enter your age"
+          placeholderTextColor={colors.textMuted}
+          keyboardType="numeric"
+          autoFocus
+          returnKeyType="next"
+          onSubmitEditing={canProceedFromStep() ? handleNext : undefined}
+          maxLength={3}
+        />
+        {userAge && (parseInt(userAge) < 13 || parseInt(userAge) > 120) && (
+          <Text style={styles.errorText}>Please enter a valid age (13-120)</Text>
+        )}
+      </View>
+    </View>
+  );
 
   const renderXPExplanationStep = () => (
     <View style={styles.stepContainer}>
@@ -1204,6 +1268,8 @@ export default function OnboardingScreen() {
         return renderReviewRequestScreen();
       case OnboardingStep.XP_EXPLANATION:
         return renderXPExplanationStep();
+      case OnboardingStep.AGE:
+        return renderAgeStep();
       case OnboardingStep.LOADING_PLAN:
         return renderLoadingPlanScreen();
       case OnboardingStep.ENGAGEMENT_READY:
