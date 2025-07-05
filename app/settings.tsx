@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Linking, Share as ShareAPI } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail, Share } from 'lucide-react-native';
+import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail, Share, Lightbulb } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePostHog } from 'posthog-react-native';
 import colors from '@/constants/colors';
@@ -52,6 +52,11 @@ export default function SettingsScreen() {
     } catch (error) {
       console.error('Error sharing app:', error);
     }
+  };
+
+  const handleFeatureRequest = () => {
+    // Feature request functionality can be implemented here
+    console.log('Feature request tapped');
   };
   
   const handleClearChatHistory = () => {
@@ -173,6 +178,21 @@ export default function SettingsScreen() {
                   <Share size={20} color={colors.primary} />
                 </View>
                 <Text style={styles.settingsItemText}>Share Sobi</Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+            
+            <View style={styles.settingsItemSeparator} />
+            
+            <TouchableOpacity 
+              style={styles.settingsItem}
+              onPress={handleFeatureRequest}
+            >
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconContainer}>
+                  <Lightbulb size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.settingsItemText}>Feature Request</Text>
               </View>
               <ChevronRight size={18} color={colors.textMuted} />
             </TouchableOpacity>

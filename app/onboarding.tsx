@@ -98,15 +98,6 @@ export default function OnboardingScreen() {
   const posthog = usePostHog();
 
 
-  useEffect(() => {
-    const apiKey = process.env.EXPO_PUBLIC_SUPERWALL_API_KEY;
-    if (apiKey) {
-      Superwall.configure({
-        apiKey: apiKey,
-      })
-    }
-  }, [])
-
   // Animate welcome screen on mount
   useEffect(() => {
     if (currentStep === OnboardingStep.WELCOME) {

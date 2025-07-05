@@ -43,7 +43,7 @@
         "expo-superwall": "^0.0.1",
         "expo-symbols": "~0.4.4",
         "expo-system-ui": "~5.0.7",
-        "expo-updates": "~0.28.13",
+        "expo-updates": "^0.28.15",
         "expo-web-browser": "~14.1.6",
         "livekit-client": "^2.13.3",
         "lottie-react-native": "^7.2.2",
@@ -1083,7 +1083,7 @@
 
     "expo-system-ui": ["expo-system-ui@5.0.7", "", { "dependencies": { "@react-native/normalize-colors": "0.79.2", "debug": "^4.3.2" }, "peerDependencies": { "expo": "*", "react-native": "*", "react-native-web": "*" }, "optionalPeers": ["react-native-web"] }, "sha512-ijSnSFA4VfuQc84N6WyCUNsKKTIyQb6QuC8q2zGvYC/sBXTMrOtZg0zrisQGzCRW+WhritQTiVqHlp3Ix9xDmQ=="],
 
-    "expo-updates": ["expo-updates@0.28.13", "", { "dependencies": { "@expo/code-signing-certificates": "0.0.5", "@expo/config": "~11.0.10", "@expo/config-plugins": "~10.0.2", "@expo/spawn-async": "^1.7.2", "arg": "4.1.0", "chalk": "^4.1.2", "expo-eas-client": "~0.14.3", "expo-manifests": "~0.16.5", "expo-structured-headers": "~4.1.0", "expo-updates-interface": "~1.1.0", "glob": "^10.4.2", "ignore": "^5.3.1", "resolve-from": "^5.0.0" }, "peerDependencies": { "expo": "*", "react": "*" }, "bin": { "expo-updates": "bin/cli.js" } }, "sha512-wyUxZfPmEeyzRBm+XTtYA+eYGj46nscL+xj3OIm8YSBFr4g37MNPEZ4x0ZH2dq2mU/yXn/yIwZmDRIJg9KQ1vQ=="],
+    "expo-updates": ["expo-updates@0.28.15", "", { "dependencies": { "@expo/code-signing-certificates": "0.0.5", "@expo/config": "~11.0.10", "@expo/config-plugins": "~10.0.3", "@expo/spawn-async": "^1.7.2", "arg": "4.1.0", "chalk": "^4.1.2", "expo-eas-client": "~0.14.3", "expo-manifests": "~0.16.5", "expo-structured-headers": "~4.1.0", "expo-updates-interface": "~1.1.0", "glob": "^10.4.2", "ignore": "^5.3.1", "resolve-from": "^5.0.0" }, "peerDependencies": { "expo": "*", "react": "*" }, "bin": { "expo-updates": "bin/cli.js" } }, "sha512-JwmZ5RP7sPUgl+7FoP62Qs1gfkpYzJGhc6LfAiVSK9pxV0PWNP1jxzE9Jp4GSm/Ya9Tbz0mjDYaZPwoUGcUd+g=="],
 
     "expo-updates-interface": ["expo-updates-interface@1.1.0", "", { "peerDependencies": { "expo": "*" } }, "sha512-DeB+fRe0hUDPZhpJ4X4bFMAItatFBUPjw/TVSbJsaf3Exeami+2qbbJhWkcTMoYHOB73nOIcaYcWXYJnCJXO0w=="],
 
@@ -2189,6 +2189,8 @@
 
     "expo-router/semver": ["semver@7.6.3", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A=="],
 
+    "expo-updates/@expo/config-plugins": ["@expo/config-plugins@10.0.3", "", { "dependencies": { "@expo/config-types": "^53.0.4", "@expo/json-file": "~9.1.4", "@expo/plist": "^0.3.4", "@expo/sdk-runtime-versions": "^1.0.0", "chalk": "^4.1.2", "debug": "^4.3.5", "getenv": "^2.0.0", "glob": "^10.4.2", "resolve-from": "^5.0.0", "semver": "^7.5.4", "slash": "^3.0.0", "slugify": "^1.6.6", "xcode": "^3.0.1", "xml2js": "0.6.0" } }, "sha512-fjCckkde67pSDf48x7wRuPsgQVIqlDwN7NlOk9/DFgQ1hCH0L5pGqoSmikA1vtAyiA83MOTpkGl3F3wyATyUog=="],
+
     "fast-glob/glob-parent": ["glob-parent@5.1.2", "", { "dependencies": { "is-glob": "^4.0.1" } }, "sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow=="],
 
     "fbjs/promise": ["promise@7.3.1", "", { "dependencies": { "asap": "~2.0.3" } }, "sha512-nolQXZ/4L+bP/UGlkfaIujX9BKxGwmQ9OT4mOt5yvy8iK1h3wqTEJCijzGANTCCl9nWjY41juyAn2K3Q1hLLTg=="],
@@ -2354,6 +2356,10 @@
     "cosmiconfig/import-fresh/resolve-from": ["resolve-from@3.0.0", "", {}, "sha512-GnlH6vxLymXJNMBo7XP1fJIzBFbdYt49CuTwmB/6N53t+kMPRMFKz783LlQ4tv28XoQfMWinAJX6WCGf2IlaIw=="],
 
     "cosmiconfig/js-yaml/argparse": ["argparse@1.0.10", "", { "dependencies": { "sprintf-js": "~1.0.2" } }, "sha512-o5Roy6tNG4SL/FOkCAN6RzjiakZS25RLYFrcMttJqbdd8BWrnA+fGz57iN5Pb06pvBGvl5gQ0B48dJlslXvoTg=="],
+
+    "expo-updates/@expo/config-plugins/getenv": ["getenv@2.0.0", "", {}, "sha512-VilgtJj/ALgGY77fiLam5iD336eSWi96Q15JSAG1zi8NRBysm3LXKdGnHb4m5cuyxvOLQQKWpBZAT6ni4FI2iQ=="],
+
+    "expo-updates/@expo/config-plugins/semver": ["semver@7.7.2", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA=="],
 
     "finalhandler/debug/ms": ["ms@2.0.0", "", {}, "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A=="],
 

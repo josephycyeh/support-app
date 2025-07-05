@@ -121,15 +121,15 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
     });
     
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
+    router.push('/chat');
     // Register paywall for chat feature
-    Superwall.shared.register({
-      placement: 'chat',
-      feature: () => {
-        // This runs when user has access (premium user or after payment)
-        router.push('/chat');
-      }
-    });
+    // Superwall.shared.register({
+    //   placement: 'chat',
+    //   feature: () => {
+    //     // This runs when user has access (premium user or after payment)
+    //     router.push('/chat');
+    //   }
+    // });
   };
 
   const handleBreathingPress = () => {

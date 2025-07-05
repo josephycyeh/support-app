@@ -49,7 +49,7 @@
     "expo-superwall": "^0.0.1",
     "expo-symbols": "~0.4.4",
     "expo-system-ui": "~5.0.7",
-    "expo-updates": "~0.28.13",
+    "expo-updates": "^0.28.15",
     "expo-web-browser": "~14.1.6",
     "livekit-client": "^2.13.3",
     "lottie-react-native": "^7.2.2",
