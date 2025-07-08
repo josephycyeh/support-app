@@ -123,7 +123,7 @@ export const HeatmapCalendar = ({ startDate }: HeatmapCalendarProps) => {
       
       <View style={styles.legend}>
         <Text style={styles.legendTitle}>Daily Engagement:</Text>
-        <Text style={styles.legendSubtitle}>Sobriety + activities make days bluer</Text>
+        <Text style={styles.legendSubtitle}>Being sober + activities make days bluer</Text>
         <View style={styles.legendItems}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: 'rgba(126, 174, 217, 0.2)' }]} />

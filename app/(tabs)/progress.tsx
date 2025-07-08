@@ -1,10 +1,14 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Stack } from 'expo-router';
-import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check, Target, Zap, Shield, Flame, Sun, Moon } from 'lucide-react-native';
+import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check, Target, Zap, Shield, Flame, Sun, Moon, MessageSquare, Smile, Share } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { calculateDaysSober } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
+import { useReasonsStore } from '@/store/reasonsStore';
+import { useChatStore } from '@/store/chatStore';
+import { useMoodStore } from '@/store/moodStore';
+import { useJournalStore } from '@/store/journalStore';
 import { HeatmapCalendar } from '@/components/HeatmapCalendar';
 import { MoodTrackerChart } from '@/components/MoodTrackerChart';
 import { useActivityStore } from '@/store/activityStore';
@@ -13,7 +17,11 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function ProgressScreen() {
   const { startDate, level, xp, dailyXP } = useSobrietyStore();
-  const { breathingExercises, journalEntries, cravingsOvercome } = useActivityStore();
+  const { breathingExercises, journalEntries, cravingsOvercome, sharesCount } = useActivityStore();
+  const { reasons } = useReasonsStore();
+  const { messages } = useChatStore();
+  const { entries: moodEntries } = useMoodStore();
+  const { entries: journalEntryStore } = useJournalStore();
   
   // Calculate days sober using utility function
   const daysSober = calculateDaysSober(startDate);
@@ -138,6 +146,14 @@ export default function ProgressScreen() {
   const xpCollectorProgress = Math.min((totalXPEarned / 500) * 100, 100); // Collect 500 XP
   const consistencyProgress = Math.min(daysSober >= 30 ? 100 : 0, 100); // 30 days consistent
   
+  // Calculate Getting Started badge progress
+  const motivatorProgress = Math.min(((reasons?.length || 0) / 3) * 100, 100); // Add 3 reasons for recovery (incremental)
+  const helloSobiProgress = messages?.some(msg => msg.role === 'user') ? 100 : 0; // First chat with AI companion (binary)
+  const moodTrackerProgress = (moodEntries?.length || 0) > 0 ? 100 : 0; // Log first mood (binary)
+  const firstStoryProgress = (journalEntryStore?.length || 0) > 0 ? 100 : 0; // Write first journal entry (binary)
+  const deepBreathProgress = (breathingExercises || 0) > 0 ? 100 : 0; // Complete first breathing exercise (binary)
+  const firstShareProgress = (sharesCount || 0) > 0 ? 100 : 0; // Share progress for first time (binary)
+  
   return (
     <View style={styles.container}>
       <Stack.Screen 
@@ -199,6 +215,57 @@ export default function ProgressScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.badgesContainer}
           >
+            {/* Getting Started Badges */}
+            <BadgeItem 
+              title="Motivator" 
+              description="Add 3 reasons for recovery"
+              icon={<Heart size={24} color="#FFFFFF" />}
+              color="#E91E63" // Pink
+              progress={motivatorProgress}
+              earned={motivatorProgress >= 100}
+            />
+            <BadgeItem 
+              title="Hello Sobi" 
+              description="First chat with AI companion"
+              icon={<MessageSquare size={24} color="#FFFFFF" />}
+              color="#11CDEF" // Cyan
+              progress={helloSobiProgress}
+              earned={helloSobiProgress >= 100}
+            />
+            <BadgeItem 
+              title="Mood Tracker" 
+              description="Log first mood"
+              icon={<Smile size={24} color="#FFFFFF" />}
+              color="#66BB6A" // Green
+              progress={moodTrackerProgress}
+              earned={moodTrackerProgress >= 100}
+            />
+            <BadgeItem 
+              title="First Story" 
+              description="Write first journal entry"
+              icon={<BookOpen size={24} color="#FFFFFF" />}
+              color="#FB6340" // Orange
+              progress={firstStoryProgress}
+              earned={firstStoryProgress >= 100}
+            />
+            <BadgeItem 
+              title="Deep Breath" 
+              description="Complete first breathing exercise"
+              icon={<Wind size={24} color="#FFFFFF" />}
+              color="#5E72E4" // Indigo
+              progress={deepBreathProgress}
+              earned={deepBreathProgress >= 100}
+            />
+            <BadgeItem 
+              title="First Share" 
+              description="Share progress for first time"
+              icon={<Share size={24} color="#FFFFFF" />}
+              color="#8E24AA" // Purple
+              progress={firstShareProgress}
+              earned={firstShareProgress >= 100}
+            />
+            
+            {/* Activity Badges */}
             <BadgeItem 
               title="Early Riser" 
               description="Complete morning check-in 5 days in a row"

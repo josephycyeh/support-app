@@ -18,6 +18,7 @@ import { usePostHog } from 'posthog-react-native';
 import colors from '@/constants/colors';
 import { ShareProgressCard } from '@/components/ShareProgressCard';
 import { useSobrietyStore } from '@/store/sobrietyStore';
+import { useActivityStore } from '@/store/activityStore';
 import { calculateDaysSober } from '@/utils/dateUtils';
 
 export default function ShareProgressScreen() {
@@ -26,6 +27,7 @@ export default function ShareProgressScreen() {
   const [isSharing, setIsSharing] = useState(false);
   const cardRef = useRef<View>(null);
   const { startDate, name } = useSobrietyStore();
+  const { incrementSharesCount } = useActivityStore();
   const daysSober = calculateDaysSober(startDate);
 
   const handleBack = () => {
@@ -58,6 +60,9 @@ export default function ShareProgressScreen() {
         days_sober: daysSober,
         share_method: 'native_share'
       });
+
+      // Increment shares count for badge tracking
+      incrementSharesCount();
 
     } catch (error) {
       console.error('Error sharing progress:', error);

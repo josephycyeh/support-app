@@ -6,15 +6,18 @@ interface ActivityState {
   breathingExercises: number;
   journalEntries: number;
   cravingsOvercome: number;
+  sharesCount: number;
 }
 
 interface ActivityStore extends ActivityState {
   incrementBreathingExercises: () => void;
   incrementJournalEntries: () => void;
   incrementCravingsOvercome: () => void;
+  incrementSharesCount: () => void;
   setBreathingExercises: (count: number) => void;
   setJournalEntries: (count: number) => void;
   setCravingsOvercome: (count: number) => void;
+  setSharesCount: (count: number) => void;
   clearAll: () => void;
 }
 
@@ -22,6 +25,7 @@ const initialState: ActivityState = {
   breathingExercises: 0,
   journalEntries: 0,
   cravingsOvercome: 0,
+  sharesCount: 0,
 };
 
 export const useActivityStore = create<ActivityStore>()(
@@ -44,6 +48,11 @@ export const useActivityStore = create<ActivityStore>()(
           cravingsOvercome: state.cravingsOvercome + 1,
         })),
       
+      incrementSharesCount: () => 
+        set((state) => ({
+          sharesCount: state.sharesCount + 1,
+        })),
+      
       setBreathingExercises: (count: number) => 
         set(() => ({
           breathingExercises: count,
@@ -57,6 +66,11 @@ export const useActivityStore = create<ActivityStore>()(
       setCravingsOvercome: (count: number) => 
         set(() => ({
           cravingsOvercome: count,
+        })),
+      
+      setSharesCount: (count: number) => 
+        set(() => ({
+          sharesCount: count,
         })),
       
       clearAll: () => 

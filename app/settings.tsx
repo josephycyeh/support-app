@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Linking, Share as ShareAPI } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail, Share, Lightbulb } from 'lucide-react-native';
+import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail, Share, Lightbulb, Clock, Crown } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Superwall from 'expo-superwall/compat';
 import { usePostHog } from 'posthog-react-native';
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
@@ -32,6 +33,47 @@ export default function SettingsScreen() {
   const { clearAll: clearChecklist } = useChecklistStore();
   const { clearAll: clearMotivation } = useMotivationStore();
   const { resetConfiguration: resetMoney } = useMoneySavedStore();
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'unknown' | 'active' | 'inactive'>('unknown');
+
+  // Check subscription status
+  useEffect(() => {
+    const checkSubscriptionStatus = () => {
+      try {
+        // Listen to subscription status changes
+        const subscription = Superwall.shared.subscriptionStatusEmitter.addListener('change', (status) => {
+          if (status.status === 'ACTIVE') {
+            setSubscriptionStatus('active');
+          } else if (status.status === 'INACTIVE') {
+            setSubscriptionStatus('inactive');
+          } else {
+            setSubscriptionStatus('unknown');
+          }
+        });
+
+        // Get initial subscription status
+        Superwall.shared.getSubscriptionStatus().then((status) => {
+          if (status.status === 'ACTIVE') {
+            setSubscriptionStatus('active');
+          } else if (status.status === 'INACTIVE') {
+            setSubscriptionStatus('inactive');
+          } else {
+            setSubscriptionStatus('unknown');
+          }
+        }).catch(() => {
+          setSubscriptionStatus('inactive'); // Default to inactive if unable to get status
+        });
+
+        return () => {
+          subscription.remove();
+        };
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+        setSubscriptionStatus('inactive'); // Default to inactive on error
+      }
+    };
+
+    checkSubscriptionStatus();
+  }, []);
 
   const handleBackPress = () => {
     router.back();
@@ -54,9 +96,14 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleFeatureRequest = () => {
-    // Feature request functionality can be implemented here
-    console.log('Feature request tapped');
+
+  const handleCheckInTimes = () => {
+    router.push('/check-in-settings' as any);
+  };
+
+  const handleUpgradePress = () => {
+    // Navigate to promo code screen
+    router.push('/promo-code' as any);
   };
   
   const handleClearChatHistory = () => {
@@ -131,6 +178,49 @@ export default function SettingsScreen() {
       <Header title="Settings" onBack={handleBackPress} />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Upgrade to Pro Section - Only show if user is not subscribed */}
+        {subscriptionStatus === 'inactive' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Upgrade</Text>
+            <View style={styles.settingsGroup}>
+              <TouchableOpacity 
+                style={styles.settingsItem}
+                onPress={handleUpgradePress}
+              >
+                <View style={styles.settingsItemLeft}>
+                  <View style={[styles.settingsIconContainer, styles.premiumIconContainer]}>
+                    <Crown size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.upgradeTextContainer}>
+                    <Text style={styles.settingsItemText}>Upgrade to Pro</Text>
+                    <Text style={styles.upgradeSubtext}>Unlock premium features</Text>
+                  </View>
+                </View>
+                <ChevronRight size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Notifications Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Notifications</Text>
+          <View style={styles.settingsGroup}>
+            <TouchableOpacity 
+              style={styles.settingsItem}
+              onPress={handleCheckInTimes}
+            >
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconContainer}>
+                  <Clock size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.settingsItemText}>Check-in Times</Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
          {/* Account Management Section */}
          <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Management</Text>
@@ -186,7 +276,7 @@ export default function SettingsScreen() {
             
             <TouchableOpacity 
               style={styles.settingsItem}
-              onPress={handleFeatureRequest}
+              onPress={() => Linking.openURL('mailto:josephyeh.dev@gmail.com?subject=Feature Request')}
             >
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconContainer}>
@@ -201,7 +291,7 @@ export default function SettingsScreen() {
             
             <TouchableOpacity 
               style={styles.settingsItem}
-              onPress={() => Linking.openURL('mailto:support@trysobi.com?subject=Sobi App Support')}
+              onPress={() => Linking.openURL('mailto:josephyeh.dev@gmail.com?subject=Sobi App Support')}
             >
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconContainer}>
@@ -326,5 +416,16 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: colors.danger,
+  },
+  premiumIconContainer: {
+    backgroundColor: 'rgba(255, 215, 0, 0.15)', // Gold background for premium
+  },
+  upgradeTextContainer: {
+    flex: 1,
+  },
+  upgradeSubtext: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 2,
   },
 }); 

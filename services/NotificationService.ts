@@ -49,62 +49,63 @@ const MILESTONES: Milestone[] = [
 
 /**
  * Parse struggle time string into structured data
- * Example: "🌆 Evening (4-8 PM)" → { start: 16, end: 20, label: "Evening", emoji: "🌆" }
+ * Uses hardcoded mapping for the known struggle time options from onboarding
  */
 function parseStruggleTime(timeString: string): StruggleTimeSlot | null {
-  try {
-    // Extract emoji (first character) - use Array.from to handle Unicode properly
-    const emoji = Array.from(timeString)[0] || '';
+  console.log('🕐 Parsing struggle time:', timeString);
+  
+  // Hardcoded mapping for the exact struggle time options from onboarding
+  // This ensures 100% accuracy and avoids parsing issues
+  const struggleTimeMap: Record<string, StruggleTimeSlot> = {
+    '🌅 Morning (6 AM-12 PM)': {
+      start: 6,
+      end: 12,
+      label: 'Morning',
+      emoji: '🌅',
+    },
+    '🌞 Afternoon (12-4 PM)': {
+      start: 12,
+      end: 16,
+      label: 'Afternoon',
+      emoji: '🌞',
+    },
+    '🌆 Evening (4-8 PM)': {
+      start: 16,
+      end: 20,
+      label: 'Evening',
+      emoji: '🌆',
+    },
+    '🌙 Night (8 PM-12 AM)': {
+      start: 20,
+      end: 24,
+      label: 'Night',
+      emoji: '🌙',
+    },
+    '🌃 Late night (12-6 AM)': {
+      start: 0,
+      end: 6,
+      label: 'Late night',
+      emoji: '🌃',
+    },
+  };
 
-    // Extract label (between emoji and parentheses) - improved extraction
-    // Remove the emoji first, then extract everything before the opening parenthesis
-    const withoutEmoji = timeString.slice(emoji.length).trim();
-    const labelMatch = withoutEmoji.match(/^([^(]+)/);
-    const label = labelMatch ? labelMatch[1].trim() : '';
-
-    
-    // Extract time range from parentheses
-    const timeMatch = timeString.match(/\(([^)]+)\)/);
-    if (!timeMatch) return null;
-    
-    const timeRange = timeMatch[1];
-    
-    // Parse time range like "4-8 PM" or "12-4 PM" or "8 PM-12 AM"
-    const rangeParts = timeRange.split('-');
-    if (rangeParts.length !== 2) return null;
-    
-    const startPart = rangeParts[0].trim();
-    const endPart = rangeParts[1].trim();
-    
-    // Convert to 24-hour format
-    const parseTime = (timeStr: string): number => {
-      const isPM = timeStr.includes('PM');
-      const isAM = timeStr.includes('AM');
-      const numStr = timeStr.replace(/[^\d]/g, '');
-      let hour = parseInt(numStr);
-      
-      if (isPM && hour !== 12) {
-        hour += 12;
-      } else if (isAM && hour === 12) {
-        hour = 0;
-      }
-      
-      return hour;
-    };
-    
-    const start = parseTime(startPart);
-    const end = parseTime(endPart);
-    
-    return {
-      start,
-      end: end === 0 ? 24 : end, // Handle midnight as 24 for easier comparison
-      label,
-      emoji,
-    };
-  } catch (error) {
-    console.error('Error parsing struggle time:', timeString, error);
-    return null;
+  // Direct lookup for exact matches
+  const exactMatch = struggleTimeMap[timeString];
+  if (exactMatch) {
+    console.log('🕐 Found exact match:', exactMatch);
+    return exactMatch;
   }
+
+  // Fallback: Try to find partial matches (in case of slight variations)
+  for (const [key, value] of Object.entries(struggleTimeMap)) {
+    if (timeString.includes(value.label) || timeString.includes(value.emoji)) {
+      console.log('🕐 Found partial match:', value);
+      return value;
+    }
+  }
+
+  console.error('❌ No matching struggle time found for:', timeString);
+  return null;
 }
 
 /**
@@ -117,43 +118,55 @@ function generateStruggleTimeMessage(
   const { name, daysSober } = userPersonalization;
   const { label, emoji } = timeSlot;
   
-  // Special messages for users with less than 1 day sober
-  const earlyJourneyTemplates = {
+  // Base messages that work for all users (regardless of days sober)
+  const baseMessages = {
     morning: [
-      `Good morning${name ? ` ${name}` : ''}! Starting your recovery journey strong ☀️`,
-      `${emoji} Morning check-in${name ? `, ${name}` : ''}! Every hour counts - you're building something amazing 💪`,
+      `Morning! ☀️ Take 3 deep breaths and set one small intention for today. What's one thing that will make you proud by evening?`,
+      `Peaceful morning${name ? `, ${name}` : ''} 🧘‍♀️ Notice something beautiful around you right now. Recovery is about finding joy in small moments.`,
+      `Hey there! Sobi checking in 💙 I'm proud of how far you've come. Let's start this day with kindness toward yourself.`,
+      `Hey${name ? ` ${name}` : ''}, Sobi here! 💙 I know mornings can be tough, but you're not alone. You're stronger than you realize.`,
     ],
     afternoon: [
-      `${emoji} Afternoon check-in${name ? `, ${name}` : ''}! You're taking it one step at a time 🌞`,
-      `Hey${name ? ` ${name}` : ''}! You're doing great - every moment of sobriety is progress 💪`,
+      `Hey there! How's your afternoon going? I know this time of day can feel long, but you're doing amazing. Let's finish strong together!`,
+      `Afternoon check-in${name ? `, ${name}` : ''} 💪 You're building momentum with every hour. The day isn't over yet - you've got this!`,
+      `${name ? `${name}, ` : ''}it's Sobi! Afternoons can feel endless sometimes, but remember - you're not just getting through today, you're building tomorrow.`,
+      `Hi${name ? ` ${name}` : ''}, Sobi checking in 💙 Just wanted to remind you that you're not alone in this moment. I'm here, and I'm proud of you.`,
+      `Afternoon self-care reminder 🌻 Have you eaten? Had water? Taken a breath? Small acts of self-care add up to big changes.`,
+      `Hi${name ? ` ${name}` : ''}, Sobi checking in 💙 We're almost at the finish line for today. You've been so strong - let's keep that beautiful momentum going!`,
     ],
     evening: [
-      `${emoji} Evening check-in${name ? `, ${name}` : ''}! You're making it through - hour by hour 🌅`,
-      `Hey${name ? ` ${name}` : ''}! Evening can be tough, but every moment of progress matters 💪`,
+      `Hey, Sobi here! 🌅 You made it through another day - that's incredible. Ready to wind down together?`,
+      `Hi${name ? ` ${name}` : ''}, it's Sobi 💙 I know evenings can feel heavy sometimes, but you're not alone. You've been so strong today - let's get through this together.`,
+      `Evening self-care 🌙 You've given so much to your recovery today. Now it's time to give to yourself - rest, nourish, breathe.`,
+      `Hey${name ? ` ${name}` : ''} 🌙 Evening check-in! You made it to another evening - that's something to acknowledge. How are you feeling right now?`,
+      `Good evening${name ? `, ${name}` : ''} ✨ Just a gentle reminder that you're not alone tonight. I'm here, and tomorrow is a fresh start.`,
     ],
     night: [
-      `${emoji} Night check-in${name ? `, ${name}` : ''}! You're choosing recovery in this moment 🌙`,
-      `Good evening${name ? ` ${name}` : ''}! Late nights can be challenging, but you're taking it one hour at a time 🛡️`,
+      `Hey${name ? ` ${name}` : ''}, it's Sobi 🌙 Night time can feel quiet and long, but you're not alone. I'm here with you through these evening hours. You're safe.`,
+      `Night time self-care 🌙 Your body and mind need rest after a day of recovery. What helps you feel calm and peaceful right now?`,
+      `Good evening${name ? `, ${name}` : ''} 🌟 Before the day ends completely, take a moment to appreciate one small thing about today. You deserve that kindness.`,
+      `It's Sobi 🌙 I'm sending you protective, calming energy for the night. You're surrounded by support, even when it's quiet.`,
+      `Take a moment to unwind. What will you do for yourself tonight? You deserve kindness 🌙`,
     ],
     latenight: [
       `${emoji} Late night check-in${name ? `, ${name}` : ''}! Every hour is a victory - you've got this 🌃`,
-      `Hey${name ? ` ${name}` : ''}! Even in the late hours, remember you're building something lasting ✨`,
+      `Even in the late hours, remember you're building something lasting ✨`,
+      `Hey${name ? ` ${name}` : ''}, it's Sobi 💙 I know it's late, but I'm here. Late nights can feel endless, but you're not walking through this alone. I'm right here with you.`,
+      `Goodnight${name ? `, ${name}` : ''}! Rest well and recharge for a brighter tomorrow! 🌙`,
     ],
   };
   
-  // Message templates for different time periods (1+ days sober)
-  const messageTemplates = {
+  // Additional messages for users with 1+ days sober (include day count)
+  const dayCountMessages = {
     morning: [
-      `Good morning${name ? ` ${name}` : ''}! Starting the day strong with ${daysSober} days behind you ☀️`,
-      `${emoji} Morning check-in${name ? `, ${name}` : ''}! You've got ${daysSober} days of strength to carry you forward 💪`,
+      `Good morning! Sobi here 🌅 Ready to tackle another day together? You've got ${daysSober} days of strength behind you - let's make today count!`,
+      `Morning check-in${name ? `, ${name}` : ''} 💪 Every sober morning is a victory. You're ${daysSober} days strong and building the life you deserve.`,
     ],
     afternoon: [
-      `${emoji} Afternoon check-in${name ? `, ${name}` : ''}! You're ${daysSober} days strong and going! 🌞`,
-      `Hey${name ? ` ${name}` : ''}! Midday can be challenging, but you've conquered ${daysSober} days already 💪`,
+      `We're almost through another day together - you've got ${daysSober} days of strength behind you. The afternoon is nearly over, let's finish strong!`,
     ],
     evening: [
-      `${emoji} Evening check-in${name ? `, ${name}` : ''}! You've made it through another day - ${daysSober} days strong 🌅`,
-      `Hey${name ? ` ${name}` : ''}! Evening can be tough, but you've got ${daysSober} days of strength behind you 💪`,
+      `You've made it through another day - that's ${daysSober} days of strength now. I'm so proud of your consistency.`,
     ],
     night: [
       `${emoji} Late night check-in${name ? `, ${name}` : ''}! You've conquered ${daysSober} days - stay strong 🌙`,
@@ -166,7 +179,7 @@ function generateStruggleTimeMessage(
   };
   
   // Determine message category based on label
-  let category: keyof typeof messageTemplates = 'evening'; // default
+  let category: keyof typeof baseMessages = 'evening'; // default
   const lowerLabel = label.toLowerCase();
   if (lowerLabel.includes('morning')) category = 'morning';
   else if (lowerLabel.includes('afternoon')) category = 'afternoon';
@@ -175,10 +188,12 @@ function generateStruggleTimeMessage(
   else if (lowerLabel.includes('late')) category = 'latenight';
   
   // Choose template set based on days sober
-  const templates = daysSober < 1 ? earlyJourneyTemplates[category] : messageTemplates[category];
+  const baseTemplates = baseMessages[category] || [];
+  const dayCountTemplates = daysSober >= 1 ? (dayCountMessages[category] || []) : [];
+  const allTemplates = [...baseTemplates, ...dayCountTemplates];
   
-  // Select random message from category
-  const selectedMessage = templates[Math.floor(Math.random() * templates.length)];
+  // Select random message from combined templates
+  const selectedMessage = allTemplates[Math.floor(Math.random() * allTemplates.length)];
   
   return {
     title: `${emoji} ${label} Check-in`,
@@ -500,12 +515,6 @@ export async function scheduleAllUpcomingMilestones(
       // Calculate the exact date/time for this milestone
       const milestoneDate = new Date(start);
       milestoneDate.setTime(milestoneDate.getTime() + (milestone.days * TIME_CONSTANTS.MILLISECONDS_PER_DAY));
-      
-      // For milestones >= 1 day, set to 9 AM. For hour milestone, keep exact time
-      const MILESTONE_NOTIFICATION_HOUR = 9; // 9 AM local time
-      if (milestone.days >= 1) {
-        milestoneDate.setHours(MILESTONE_NOTIFICATION_HOUR, 0, 0, 0);
-      }
 
       // Generate personalized message
       const message = generateMilestoneMessage(milestone, userPersonalization);
@@ -534,7 +543,7 @@ export async function scheduleAllUpcomingMilestones(
         });
 
         scheduledIds.push(notificationId);
-        console.log(`✅ Scheduled milestone notification: ${milestone.days} days on ${milestoneDate.toLocaleDateString()}`);
+        console.log(`✅ Scheduled milestone notification: ${milestone.days} days on ${milestoneDate.toLocaleDateString()} at ${milestoneDate.toLocaleTimeString()}`);
       } catch (error) {
         console.error(`❌ Error scheduling milestone notification for ${milestone.days} days:`, error);
       }

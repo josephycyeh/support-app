@@ -153,6 +153,8 @@ export default function ProfileScreen() {
     setShowSobrietyDateModal(false);
   };
 
+
+
   // Notification test functions for Phase 1
   const handleTestNotification = async () => {
     try {
@@ -393,8 +395,10 @@ export default function ProfileScreen() {
               <Text style={styles.addReasonText}>+ Add another reason</Text>
             </TouchableOpacity>
           </Card>
-        </View>
-        
+                </View>
+
+
+
         {/* Notification Test Section - All Phases */}
         {/* <View style={styles.sectionContainer}>
           <SectionHeader title="Notifications (Phase 1, 2 & 3 Testing)" />
