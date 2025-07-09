@@ -12,7 +12,7 @@ const MOOD_EMOJIS = ['😢', '😔', '😐', '😊', '😄'];
 const MOOD_LABELS = ['Very Sad', 'Sad', 'Neutral', 'Good', 'Great'];
 
 export const MoodButton = ({ onPress }: MoodButtonProps) => {
-  const { getTodaysMood, hasLoggedToday } = useMoodStore();
+  const { getTodaysMood } = useMoodStore();
   const todaysMood = getTodaysMood();
 
   return (

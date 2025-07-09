@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { Stack } from 'expo-router';
-import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check, Target, Zap, Shield, Flame, Sun, Moon, MessageSquare, Smile, Share } from 'lucide-react-native';
+import { Award, Star, Trophy, Clock, Calendar, Heart, BookOpen, Wind, TrendingUp, Check, Target, Shield, Moon, MessageSquare, Smile, Share } from 'lucide-react-native';
 import colors from '@/constants/colors';
 import { calculateDaysSober } from '@/utils/dateUtils';
 import { useSobrietyStore } from '@/store/sobrietyStore';
@@ -137,14 +137,9 @@ export default function ProgressScreen() {
   };
   
   // Calculate badge progress
-  const earlyRiserProgress = Math.min(daysSober, 5) * 20; // 20% per day up to 5 days
   const mindfulMasterProgress = Math.min(breathingExercises * 10, 100); // 10% per exercise up to 10
   const journalKeeperProgress = Math.min(journalEntries * 20, 100); // 20% per entry up to 5
-  const streakWarriorProgress = Math.min(daysSober, 7) * (100/7); // 7 days streak
   const craveConquerorProgress = Math.min(cravingsOvercome * 25, 100); // 4 cravings overcome
-  const levelUpProgress = Math.min(level * 25, 100); // Reach level 4
-  const xpCollectorProgress = Math.min((totalXPEarned / 500) * 100, 100); // Collect 500 XP
-  const consistencyProgress = Math.min(daysSober >= 30 ? 100 : 0, 100); // 30 days consistent
   
   // Calculate Getting Started badge progress
   const motivatorProgress = Math.min(((reasons?.length || 0) / 3) * 100, 100); // Add 3 reasons for recovery (incremental)
@@ -226,7 +221,7 @@ export default function ProgressScreen() {
             />
             <BadgeItem 
               title="Hello Sobi" 
-              description="First chat with AI companion"
+              description="First chat with Sobi"
               icon={<MessageSquare size={24} color="#FFFFFF" />}
               color="#11CDEF" // Cyan
               progress={helloSobiProgress}
@@ -267,14 +262,6 @@ export default function ProgressScreen() {
             
             {/* Activity Badges */}
             <BadgeItem 
-              title="Early Riser" 
-              description="Complete morning check-in 5 days in a row"
-              icon={<Sun size={24} color="#FFFFFF" />}
-              color={colors.primary}
-              progress={earlyRiserProgress}
-              earned={earlyRiserProgress >= 100}
-            />
-            <BadgeItem 
               title="Mindful Master" 
               description="Complete 10 breathing exercises"
               icon={<Wind size={24} color="#FFFFFF" />}
@@ -291,44 +278,12 @@ export default function ProgressScreen() {
               earned={journalKeeperProgress >= 100}
             />
             <BadgeItem 
-              title="Streak Warrior" 
-              description="Maintain a streak of 7 days"
-              icon={<Flame size={24} color="#FFFFFF" />}
-              color="#66BB6A" // Green
-              progress={streakWarriorProgress}
-              earned={streakWarriorProgress >= 100}
-            />
-            <BadgeItem 
               title="Cravings Conqueror" 
               description="Overcome 4 cravings"
               icon={<Shield size={24} color="#FFFFFF" />}
               color="#FFA726" // Orange
               progress={craveConquerorProgress}
               earned={craveConquerorProgress >= 100}
-            />
-            <BadgeItem 
-              title="Level Up" 
-              description="Reach level 4"
-              icon={<TrendingUp size={24} color="#FFFFFF" />}
-              color="#5E72E4" // Indigo
-              progress={levelUpProgress}
-              earned={levelUpProgress >= 100}
-            />
-            <BadgeItem 
-              title="XP Collector" 
-              description="Collect 500 XP"
-              icon={<Zap size={24} color="#FFFFFF" />}
-              color="#E91E63" // Pink
-              progress={xpCollectorProgress}
-              earned={xpCollectorProgress >= 100}
-            />
-            <BadgeItem 
-              title="Consistency Champion" 
-              description="Stay consistent for 30 days"
-              icon={<Target size={24} color="#FFFFFF" />}
-              color="#8E24AA" // Purple
-              progress={consistencyProgress}
-              earned={consistencyProgress >= 100}
             />
             
             {/* Recovery Milestone Badges */}

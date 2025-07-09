@@ -28,7 +28,7 @@ export const populateDemoData = () => {
   
   // Clear mood entries
   const moodStoreForClearing = useMoodStore.getState();
-  useMoodStore.setState({ entries: [], hasLoggedToday: false });
+  useMoodStore.setState({ entries: [] });
   
   // Clear activity stats
   const activityStoreForClearing = useActivityStore.getState();
@@ -128,7 +128,7 @@ export const populateDemoData = () => {
   const moodStore = useMoodStore.getState();
   
   // Clear existing mood entries first
-  useMoodStore.setState({ entries: [], hasLoggedToday: false });
+  useMoodStore.setState({ entries: [] });
   
   // Generate mood entries for the past 30 days with proper dates
   for (let i = 29; i >= 0; i--) { // Start from 29 days ago, work forward

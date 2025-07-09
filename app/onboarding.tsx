@@ -698,7 +698,7 @@ export default function OnboardingScreen() {
 
   const renderSobrietyDateStep = () => (
     <View style={styles.stepContainer}>
-      <Text style={styles.onboardingTitle}>When did your sobriety begin?</Text>
+      <Text style={styles.onboardingTitle}>When was your sober start date?</Text>
 
       <View style={styles.datePickerContainer}>
         <DateTimePicker

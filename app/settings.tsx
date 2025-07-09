@@ -52,6 +52,7 @@ export default function SettingsScreen() {
 
         // Get initial subscription status
         Superwall.shared.getSubscriptionStatus().then((status) => {
+          console.log('Subscription status:', status);
           if (status.status === 'ACTIVE') {
             setSubscriptionStatus('active');
           } else if (status.status === 'INACTIVE') {
@@ -60,6 +61,7 @@ export default function SettingsScreen() {
             setSubscriptionStatus('unknown');
           }
         }).catch(() => {
+          console.log('Error getting subscription status');
           setSubscriptionStatus('inactive'); // Default to inactive if unable to get status
         });
 
@@ -102,6 +104,11 @@ export default function SettingsScreen() {
   };
 
   const handleUpgradePress = () => {
+    // Track upgrade to pro button click
+    posthog.capture('upgrade_to_pro_clicked', {
+      source: 'settings_screen'
+    });
+    
     // Navigate to promo code screen
     router.push('/promo-code' as any);
   };

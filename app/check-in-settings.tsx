@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Alert, TouchableOpacity, ScrollView } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { usePostHog } from 'posthog-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { scheduleStruggleTimeNotifications, cancelStruggleTimeNotifications } from '@/services/NotificationService';
 import { calculateDaysSober } from '@/utils/dateUtils';
@@ -10,6 +11,7 @@ import colors from '@/constants/colors';
 
 export default function CheckInSettingsScreen() {
   const router = useRouter();
+  const posthog = usePostHog();
   const { struggleTimes: currentStruggleTimes, setStruggleTimes, startDate, name } = useSobrietyStore();
   const [selectedTimes, setSelectedTimes] = useState<string[]>(currentStruggleTimes || []);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,6 +54,9 @@ export default function CheckInSettingsScreen() {
         name: name || '',
         daysSober
       });
+
+      // Track notification settings update
+      posthog.capture('notification_settings_updated');
 
       Alert.alert(
         "Check-in Times Updated",

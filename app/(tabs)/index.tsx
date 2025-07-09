@@ -13,7 +13,9 @@ import { MoodButton } from '@/components/MoodButton';
 import { DailyQuote } from '@/components/DailyQuote';
 import { MilestoneCard } from '@/components/MilestoneCard';
 import { MoneySavedCard } from '@/components/MoneySavedCard';
+import { BadgeAchievementModal } from '@/components/BadgeAchievementModal';
 import { useMoodStore } from '@/store/moodStore';
+import { useBadgeAchievements } from '@/hooks/useBadgeAchievements';
 import * as Haptics from 'expo-haptics';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { DemoDataButton } from '@/components/DemoDataButton';
@@ -21,7 +23,8 @@ import { DemoDataButton } from '@/components/DemoDataButton';
 export default function HomeScreen() {
   const router = useRouter();
   const { addXP, xpToNextLevel, checkAndAwardMilestones } = useSobrietyStore();
-  const { checkHasLoggedToday } = useMoodStore();
+  const { getTodaysMood } = useMoodStore();
+  const { newAchievements, markAchievementAsShown } = useBadgeAchievements();
   const [showMoodTracker, setShowMoodTracker] = useState(false);
   const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
   const [triggerCompanionAnimation, setTriggerCompanionAnimation] = useState(0);
@@ -30,7 +33,8 @@ export default function HomeScreen() {
 
   // Check mood status immediately on mount to prevent flickering
   useEffect(() => {
-    const hasLogged = checkHasLoggedToday();
+    const todaysMood = getTodaysMood();
+    const hasLogged = !!todaysMood;
     setHasLoggedMoodToday(hasLogged);
   }, []);
 
@@ -48,7 +52,8 @@ export default function HomeScreen() {
       const delayTime = 5000; // 5 seconds delay to allow other modals to dismiss
       
       const timer = setTimeout(() => {
-        const hasLogged = checkHasLoggedToday();
+        const todaysMood = getTodaysMood();
+        const hasLogged = !!todaysMood;
         
         if (!hasLogged) {
           setShowMoodTracker(true);
@@ -71,7 +76,8 @@ export default function HomeScreen() {
   const handleMoodTrackerClose = () => {
     setShowMoodTracker(false);
     // Update the logged status after closing the modal
-    const hasLogged = checkHasLoggedToday();
+    const todaysMood = getTodaysMood();
+    const hasLogged = !!todaysMood;
     setHasLoggedMoodToday(hasLogged);
   };
 
@@ -83,6 +89,26 @@ export default function HomeScreen() {
   const handleSharePress = () => {
     router.push('/share-progress');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleBadgeAchievementDismiss = () => {
+    if (newAchievements.length > 0) {
+      const currentAchievement = newAchievements[0]; // Always dismiss the first achievement
+      if (currentAchievement) {
+        markAchievementAsShown(currentAchievement.key);
+        // The markAchievementAsShown function will filter out the current achievement
+        // If there are more achievements, they will be shown automatically
+      }
+    }
+  };
+
+  const getCurrentAchievement = () => {
+    // Always show the first achievement in the array
+    return newAchievements[0] || null;
+  };
+
+  const shouldShowBadgeModal = () => {
+    return isScreenFocused && newAchievements.length > 0 && !showMoodTracker;
   };
 
   return (
@@ -114,7 +140,7 @@ export default function HomeScreen() {
         </View> */}
         
         {/* Temporary Demo Data Button - Remove after demo */}
-        <DemoDataButton />
+        {/* <DemoDataButton /> */}
         
         {/* Share Button */}
         <TouchableOpacity
@@ -135,6 +161,12 @@ export default function HomeScreen() {
       <MoodTracker 
         visible={showMoodTracker}
         onClose={handleMoodTrackerClose}
+      />
+      
+      <BadgeAchievementModal
+        isVisible={shouldShowBadgeModal()}
+        achievement={getCurrentAchievement()}
+        onDismiss={handleBadgeAchievementDismiss}
       />
     </SafeAreaView>
   );

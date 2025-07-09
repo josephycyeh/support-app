@@ -98,7 +98,6 @@ export default function JournalEntryScreen() {
           type: 'journal',
           word_count: wordCount,
           character_count: characterCount,
-          has_title: !!(title.trim()),
         });
         
         // Award XP for journaling (only for new entries)
@@ -126,9 +125,7 @@ export default function JournalEntryScreen() {
       contentInputRef.current.focus();
     }
   };
-  
-  const { height: screenHeight } = Dimensions.get('window');
-  
+    
   return (
     <View style={styles.container}>
       <Stack.Screen 

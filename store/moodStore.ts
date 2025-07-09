@@ -14,10 +14,8 @@ export interface MoodEntry {
 
 interface MoodStore {
   entries: MoodEntry[];
-  hasLoggedToday: boolean;
   addMoodEntry: (mood: number) => void;
   getTodaysMood: () => MoodEntry | null;
-  checkHasLoggedToday: () => boolean;
   getMoodStreak: () => number;
   getAverageMood: (days?: number) => number;
   clearAll: () => void;
@@ -27,7 +25,6 @@ export const useMoodStore = create<MoodStore>()(
   persist(
     (set, get) => ({
       entries: [],
-      hasLoggedToday: false,
 
       addMoodEntry: (mood: number) => {
         const now = new Date();
@@ -48,7 +45,6 @@ export const useMoodStore = create<MoodStore>()(
           
           return {
             entries: [newEntry, ...filteredEntries],
-            hasLoggedToday: true,
           };
         });
       },
@@ -56,13 +52,6 @@ export const useMoodStore = create<MoodStore>()(
       getTodaysMood: () => {
         const today = getTodayDateStr();
         return get().entries.find(entry => entry.date === today) || null;
-      },
-
-      checkHasLoggedToday: () => {
-        const today = getTodayDateStr();
-        const hasLogged = get().entries.some(entry => entry.date === today);
-        set({ hasLoggedToday: hasLogged });
-        return hasLogged;
       },
 
       getMoodStreak: () => {
@@ -100,7 +89,6 @@ export const useMoodStore = create<MoodStore>()(
       clearAll: () => 
         set(() => ({
           entries: [],
-          hasLoggedToday: false,
         })),
     }),
     {

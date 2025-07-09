@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { usePostHog } from 'posthog-react-native';
 
 import colors from '@/constants/colors';
 import typography from '@/constants/typography';
@@ -10,6 +11,7 @@ import Superwall from 'expo-superwall/compat';
 
 export default function PromoCodeScreen() {
   const router = useRouter();
+  const posthog = usePostHog();
   const [promoCode, setPromoCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -28,16 +30,34 @@ export default function PromoCodeScreen() {
         await Superwall.shared.setUserAttributes({
           referral_code: promoCode.trim().toUpperCase()
         });
+        
+        // Track referral code usage
+        posthog.capture('referral_code_used', {
+          referral_code: promoCode.trim().toUpperCase()
+        });
       }
 
       // Determine which placement to use
       const placement = promoCode.trim() ? 'referral' : 'upgrade_to_pro';
+      
+      // Track upgrade attempt
+      posthog.capture('upgrade_to_pro_attempted', {
+        has_referral_code: !!promoCode.trim(),
+        placement: placement
+      });
       
       // Register and launch Superwall paywall
       Superwall.shared.register({
         placement: placement,
         feature: () => {
           // This runs when user has access (after successful payment)
+          
+          // Track successful upgrade
+          posthog.capture('upgrade_to_pro_completed', {
+            has_referral_code: !!promoCode.trim(),
+            placement: placement
+          });
+          
           Alert.alert(
             "Welcome to Pro!",
             "Thank you for upgrading! You now have access to all premium features.",

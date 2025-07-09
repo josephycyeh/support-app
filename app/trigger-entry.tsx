@@ -128,10 +128,8 @@ export default function TriggerEntryScreen() {
           type: 'trigger',
           word_count: totalWordCount,
           character_count: content.length,
-          has_title: !!(title.trim()),
           intensity_level: parseInt(intensity),
           outcome: outcome,
-          has_coping_strategy: !!copingStrategy.trim(),
         });
         
         // Award XP for logging trigger (only for new entries)

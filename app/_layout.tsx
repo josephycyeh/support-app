@@ -103,7 +103,10 @@ export default function RootLayout() {
         host: 'https://us.i.posthog.com',
         enableSessionReplay: true,
       }}
-      autocapture
+      autocapture={{
+        captureTouches: true, // Keep touch/tap tracking
+        captureScreens: false, // Disable screen tracking that causes navigation errors
+      }}
     >
       <ErrorBoundary>
         <RootLayoutNav />
