@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { MessageSquare, Wind, BookOpen } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import colors from '@/constants/colors';
@@ -7,7 +7,6 @@ import typography from '@/constants/typography';
 import { Button } from '@/components/ui/Button';
 import * as Haptics from 'expo-haptics';
 import LottieView from 'lottie-react-native';
-import { useSobrietyStore } from '@/store/sobrietyStore';
 import { usePostHog } from 'posthog-react-native';
 import Superwall from 'expo-superwall/compat';
 
@@ -18,44 +17,18 @@ interface CompanionProps {
 
 export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showLevelUpMessage, setShowLevelUpMessage] = useState(false);
   const lottieRef = useRef<LottieView>(null);
-  const modalWalkingRef = useRef<LottieView>(null);
   const animationTimeoutRef = useRef<number | null>(null);
-  const levelUpTimeoutRef = useRef<number | null>(null);
   const router = useRouter();
-  const { levelUp, level, setLevelUpComplete } = useSobrietyStore();
   const posthog = usePostHog();
 
-  // Check for level up and show level up modal
-  useEffect(() => {
-    if (levelUp) {
-      // Show level up animation
-      setShowLevelUpMessage(true);
-      
-      // Provide haptic feedback
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      // Play walking animation in the modal
-      if (modalWalkingRef.current) {
-        modalWalkingRef.current.reset();
-        modalWalkingRef.current.play();
-      }
-      
-      // When animation is done, reset flags
-      levelUpTimeoutRef.current = setTimeout(() => {
-        setShowLevelUpMessage(false);
-        setLevelUpComplete();
-        levelUpTimeoutRef.current = null;
-      }, 2000); // Shortened to 2 seconds total
-    }
-  }, [levelUp, setLevelUpComplete]);
 
   // Trigger petting animation when a task is completed
   useEffect(() => {
     if (animationTrigger && animationTrigger > 0) {
-      // Don't trigger animation if level up modal is showing or already animating
-      if (showLevelUpMessage || isAnimating) return;
+      // Don't trigger animation if already animating
+      if (isAnimating) return;
       
       // Provide haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -73,7 +46,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
         }, 1800); // Animation is 43 frames at 24fps ≈ 1800ms
       }
     }
-  }, [animationTrigger, showLevelUpMessage]);
+  }, [animationTrigger]);
 
   // Stop animations when component should stop (e.g. screen loses focus)
   useEffect(() => {
@@ -83,22 +56,14 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
         clearTimeout(animationTimeoutRef.current);
         animationTimeoutRef.current = null;
       }
-      if (levelUpTimeoutRef.current) {
-        clearTimeout(levelUpTimeoutRef.current);
-        levelUpTimeoutRef.current = null;
-      }
 
       // Stop Lottie animations
       if (lottieRef.current) {
         lottieRef.current.reset();
       }
-      if (modalWalkingRef.current) {
-        modalWalkingRef.current.reset();
-      }
 
       // Reset states
       setIsAnimating(false);
-      setShowLevelUpMessage(false);
     }
   }, [stopAnimations]);
 
@@ -107,9 +72,6 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
     return () => {
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
-      }
-      if (levelUpTimeoutRef.current) {
-        clearTimeout(levelUpTimeoutRef.current);
       }
     };
   }, []);
@@ -151,8 +113,8 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
   };
 
   const handleCompanionPress = () => {
-    // Don't trigger pet animation if level up modal is showing or already animating
-    if (showLevelUpMessage || isAnimating) return;
+    // Don't trigger pet animation if already animating
+    if (isAnimating) return;
     
     // Provide haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -251,37 +213,7 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
         Talk with Sobi
       </Button>
 
-      {/* Level Up Modal */}
-      <Modal
-        visible={showLevelUpMessage}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={styles.levelUpOverlay}>
-          <View style={styles.levelUpContainer}>
-            <View style={styles.levelUpContent}>
-              <Text style={styles.levelUpTitle}>Level Up! 🎉</Text>
-              <Text style={styles.levelUpDescription}>
-                Congratulations! You've reached level {level}!
-              </Text>
-              <View style={styles.levelUpImageContainer}>
-                {/* Walking animation only appears in the modal */}
-                <LottieView
-                  ref={modalWalkingRef}
-                  source={require('@/assets/images/walking_opt.json')}
-                  style={styles.levelUpAnimation}
-                  autoPlay
-                  loop
-                  resizeMode="contain"
-                />
-              </View>
-              <Text style={styles.adventureText}>
-                You're getting stronger every day!
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
+
     </View>
   );
 };
@@ -386,59 +318,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
-  // Level Up Modal Styles
-  levelUpOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  levelUpContainer: {
-    width: '85%',
-    maxWidth: 300,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  levelUpContent: {
-    backgroundColor: colors.primary,
-    padding: 24,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  levelUpTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFF',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  levelUpDescription: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#FFF',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  levelUpImageContainer: {
-    width: 150,
-    height: 150,
-    marginVertical: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 75,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  levelUpAnimation: {
-    width: '100%',
-    height: '100%',
-  },
-  adventureText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFF',
-    marginTop: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+
 });

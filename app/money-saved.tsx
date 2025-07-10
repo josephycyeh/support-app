@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { ArrowLeft, DollarSign, Edit3, Calendar, Clock, Target } from 'lucide-react-native';
@@ -20,11 +20,7 @@ export default function MoneySavedScreen() {
 
   const totalSaved = calculateTotalSaved(daysSober);
 
-  useEffect(() => {
-    if (!isConfigured) {
-      router.replace('/edit-money-spending');
-    }
-  }, [isConfigured, router]);
+
 
   const handleBack = () => {
     router.back();

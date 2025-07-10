@@ -149,6 +149,10 @@ export const MOTIVATION_PACKS: MotivationPack[] = [
         id: 'sl8',
         text: 'You have permission to forgive yourself and move forward.',
       },
+      {
+        id: 'sl9',
+        text: 'Sobriety isn’t about denying yourself, it’s about finally giving yourself what you need.',
+      },
     ]
   },
   {
@@ -189,6 +193,10 @@ export const MOTIVATION_PACKS: MotivationPack[] = [
       {
         id: 'hf8',
         text: 'Your future is being written with every healthy choice you make.',
+      },
+      {
+        id: 'hf9',
+        text: 'You can’t go back and change the beginning, but you can start where you are and change the ending.',
       },
     ]
   },
@@ -236,6 +244,14 @@ export const MOTIVATION_PACKS: MotivationPack[] = [
       {
         id: 'rw8',
         text: 'Your addiction was a chapter, not your whole story.',
+      },
+      {
+        id: 'rw9',
+        text: 'Addiction is giving up everything for one thing. Sobriety is giving up one thing for everything',
+      },
+      {
+        id: 'rw10',
+        text: 'Healing doesn’t mean you’ll never crave the old escape. It just means you no longer mistake it for home.',
       },
     ]
   }

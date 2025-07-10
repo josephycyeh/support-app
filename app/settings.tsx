@@ -16,6 +16,7 @@ import { useActivityStore } from '@/store/activityStore';
 import { useChecklistStore } from '@/store/checklistStore';
 import { useMotivationStore } from '@/store/motivationStore';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
+import { useBadgeAchievementStore } from '@/store/badgeAchievementStore';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
@@ -33,6 +34,7 @@ export default function SettingsScreen() {
   const { clearAll: clearChecklist } = useChecklistStore();
   const { clearAll: clearMotivation } = useMotivationStore();
   const { resetConfiguration: resetMoney } = useMoneySavedStore();
+  const { clearAll: clearBadges } = useBadgeAchievementStore();
   const [subscriptionStatus, setSubscriptionStatus] = useState<'unknown' | 'active' | 'inactive'>('unknown');
 
   // Check subscription status
@@ -154,6 +156,7 @@ export default function SettingsScreen() {
               clearMotivation();
               clearHistory();
               resetMoney();
+              clearBadges();
               
               // Clear all AsyncStorage data (persisted data)
               await AsyncStorage.clear();

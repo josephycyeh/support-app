@@ -27,7 +27,13 @@ export const MoneySavedCard = () => {
       placement: 'money_tracker',
       feature: () => {
         // This runs when user has access (premium user or after payment)
-        router.push('/money-saved');
+        if (!isConfigured) {
+          // Navigate directly to edit spending if not configured
+          router.push('/edit-money-spending');
+        } else {
+          // Navigate to money saved screen if already configured
+          router.push('/money-saved');
+        }
       }
     });
   };

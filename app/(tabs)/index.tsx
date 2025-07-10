@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, StatusBar, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, View, Text, ScrollView, StatusBar, SafeAreaView, TouchableOpacity, Modal } from 'react-native';
 import { Share } from 'lucide-react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import colors from '@/constants/colors';
@@ -17,26 +17,58 @@ import { BadgeAchievementModal } from '@/components/BadgeAchievementModal';
 import { useMoodStore } from '@/store/moodStore';
 import { useBadgeAchievements } from '@/hooks/useBadgeAchievements';
 import * as Haptics from 'expo-haptics';
+import LottieView from 'lottie-react-native';
 import { useSobrietyStore } from '@/store/sobrietyStore';
 import { DemoDataButton } from '@/components/DemoDataButton';
 
+type ModalType = 'level-up' | 'badge' | 'mood-tracker';
+
 export default function HomeScreen() {
   const router = useRouter();
-  const { addXP, xpToNextLevel, checkAndAwardMilestones } = useSobrietyStore();
+  const { addXP, xpToNextLevel, checkAndAwardMilestones, levelUp, level, setLevelUpComplete } = useSobrietyStore();
   const { getTodaysMood } = useMoodStore();
   const { newAchievements, markAchievementAsShown } = useBadgeAchievements();
-  const [showMoodTracker, setShowMoodTracker] = useState(false);
+  
+  const [modalQueue, setModalQueue] = useState<ModalType[]>([]);
+  const [activeModal, setActiveModal] = useState<ModalType | null>(null);
+
   const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
   const [triggerCompanionAnimation, setTriggerCompanionAnimation] = useState(0);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
+  
+  // REMOVED: Level up modal state is now managed by the queue
+  // const [showLevelUpMessage, setShowLevelUpMessage] = useState(false);
+  const modalWalkingRef = useRef<LottieView>(null);
 
-
-  // Check mood status immediately on mount to prevent flickering
+  // Check mood status immediately on mount
   useEffect(() => {
     const todaysMood = getTodaysMood();
     const hasLogged = !!todaysMood;
     setHasLoggedMoodToday(hasLogged);
   }, []);
+
+  // --- Modal Queue Management ---
+
+  // Add modals to the queue when their conditions are met
+  useEffect(() => {
+    if (levelUp && !modalQueue.includes('level-up') && activeModal !== 'level-up') {
+      setModalQueue(prev => [...prev, 'level-up']);
+    }
+  }, [levelUp, modalQueue, activeModal]);
+
+  useEffect(() => {
+    if (newAchievements.length > 0 && !modalQueue.includes('badge') && activeModal !== 'badge') {
+      setModalQueue(prev => [...prev, 'badge']);
+    }
+  }, [newAchievements, modalQueue, activeModal]);
+
+  // Show the next modal in the queue
+  useEffect(() => {
+    if (!activeModal && modalQueue.length > 0) {
+      setActiveModal(modalQueue[0]);
+    }
+  }, [modalQueue, activeModal]);
+
 
   // Check if mood tracker should be shown on app open
   useFocusEffect(
@@ -46,40 +78,44 @@ export default function HomeScreen() {
       
       // Check for milestone achievements immediately
       checkAndAwardMilestones();
+    
+      const todaysMood = getTodaysMood();
+      const hasLogged = !!todaysMood;
       
-      // Add a longer delay for users coming from onboarding to avoid modal conflicts
-      // Check if user just completed onboarding by looking at app state
-      const delayTime = 5000; // 5 seconds delay to allow other modals to dismiss
-      
-      const timer = setTimeout(() => {
-        const todaysMood = getTodaysMood();
-        const hasLogged = !!todaysMood;
-        
-        if (!hasLogged) {
-          setShowMoodTracker(true);
-        }
-      }, delayTime);
+      if (!hasLogged && !modalQueue.includes('mood-tracker') && activeModal !== 'mood-tracker') {
+        setModalQueue(prev => [...prev, 'mood-tracker']);
+      }
 
       return () => {
         // Set screen as not focused when leaving
         setIsScreenFocused(false);
-        clearTimeout(timer);
       };
-    }, [])
+    }, [activeModal, modalQueue, checkAndAwardMilestones, getTodaysMood])
   );
 
-  const handleMoodTrackerOpen = () => {
-    setShowMoodTracker(true);
+  const handleModalDismiss = () => {
+    if (!activeModal) return;
+
+    const dismissedModal = activeModal;
+
+    // Perform cleanup for the specific modal
+    if (dismissedModal === 'level-up') {
+      setLevelUpComplete();
+    } else if (dismissedModal === 'badge') {
+      if (newAchievements.length > 0) {
+        markAchievementAsShown(newAchievements[0].key);
+      }
+    } else if (dismissedModal === 'mood-tracker') {
+      const todaysMood = getTodaysMood();
+      setHasLoggedMoodToday(!!todaysMood);
+    }
+
+    // Set active modal to null and remove it from queue
+    setActiveModal(null);
+    setModalQueue(prev => prev.slice(1));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleMoodTrackerClose = () => {
-    setShowMoodTracker(false);
-    // Update the logged status after closing the modal
-    const todaysMood = getTodaysMood();
-    const hasLogged = !!todaysMood;
-    setHasLoggedMoodToday(hasLogged);
-  };
 
   const handleTaskCompleted = () => {
     // Trigger companion animation by incrementing the trigger value
@@ -91,24 +127,9 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleBadgeAchievementDismiss = () => {
-    if (newAchievements.length > 0) {
-      const currentAchievement = newAchievements[0]; // Always dismiss the first achievement
-      if (currentAchievement) {
-        markAchievementAsShown(currentAchievement.key);
-        // The markAchievementAsShown function will filter out the current achievement
-        // If there are more achievements, they will be shown automatically
-      }
-    }
-  };
-
   const getCurrentAchievement = () => {
     // Always show the first achievement in the array
     return newAchievements[0] || null;
-  };
-
-  const shouldShowBadgeModal = () => {
-    return isScreenFocused && newAchievements.length > 0 && !showMoodTracker;
   };
 
   return (
@@ -130,7 +151,7 @@ export default function HomeScreen() {
         </View>
         
         {!hasLoggedMoodToday && (
-          <MoodButton onPress={handleMoodTrackerOpen} />
+          <MoodButton onPress={handleModalDismiss} />
         )}
         
         <DailyQuote />
@@ -140,7 +161,7 @@ export default function HomeScreen() {
         </View> */}
         
         {/* Temporary Demo Data Button - Remove after demo */}
-        {/* <DemoDataButton /> */}
+        <DemoDataButton />
         
         {/* Share Button */}
         <TouchableOpacity
@@ -159,15 +180,53 @@ export default function HomeScreen() {
       <SOSButton />
       
       <MoodTracker 
-        visible={showMoodTracker}
-        onClose={handleMoodTrackerClose}
+        visible={activeModal === 'mood-tracker'}
+        onClose={handleModalDismiss}
       />
       
       <BadgeAchievementModal
-        isVisible={shouldShowBadgeModal()}
+        isVisible={activeModal === 'badge'}
         achievement={getCurrentAchievement()}
-        onDismiss={handleBadgeAchievementDismiss}
+        onDismiss={handleModalDismiss}
       />
+      
+      {/* Level Up Modal */}
+      <Modal
+        visible={activeModal === 'level-up'}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.levelUpOverlay}>
+          <View style={styles.levelUpContainer}>
+            <View style={styles.levelUpContent}>
+              <Text style={styles.levelUpTitle}>Level Up! 🎉</Text>
+              <Text style={styles.levelUpDescription}>
+                Congratulations! You've reached level {level}!
+              </Text>
+              <View style={styles.levelUpImageContainer}>
+                {/* Walking animation only appears in the modal */}
+                <LottieView
+                  ref={modalWalkingRef}
+                  source={require('@/assets/images/walking_opt.json')}
+                  style={styles.levelUpAnimation}
+                  autoPlay
+                  loop
+                  resizeMode="contain"
+                />
+              </View>
+              <Text style={styles.adventureText}>
+                You're getting stronger every day!
+              </Text>
+              <TouchableOpacity
+                style={styles.levelUpButton}
+                onPress={handleModalDismiss}
+              >
+                <Text style={styles.levelUpButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -210,6 +269,73 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   shareButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Level Up Modal Styles
+  levelUpOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  levelUpContainer: {
+    width: '85%',
+    maxWidth: 300,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  levelUpContent: {
+    backgroundColor: colors.primary,
+    padding: 24,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  levelUpTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  levelUpDescription: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#FFF',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  levelUpImageContainer: {
+    width: 150,
+    height: 150,
+    marginVertical: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 75,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  levelUpAnimation: {
+    width: '100%',
+    height: '100%',
+  },
+  adventureText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFF',
+    marginTop: 12,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  levelUpButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    marginTop: 20,
+  },
+  levelUpButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',

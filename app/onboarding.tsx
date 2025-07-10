@@ -706,8 +706,16 @@ export default function OnboardingScreen() {
         mode="date"
         display="spinner"
         onChange={(event, selectedDate) => {
+          
           if (selectedDate) {
-            setSobrietyDate(selectedDate);
+            // Preserve the original time, only update the date components
+            const newDate = new Date(sobrietyDate);
+            console.log('old', newDate);
+            newDate.setFullYear(selectedDate.getFullYear());
+            newDate.setMonth(selectedDate.getMonth());
+            newDate.setDate(selectedDate.getDate());
+            console.log('newDate', newDate);
+            setSobrietyDate(newDate);
           }
         }}
         maximumDate={new Date()}
