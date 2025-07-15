@@ -325,7 +325,7 @@ export default function ProfileScreen() {
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>Your Profile</Text>
+          <Text style={styles.headerTitle}>Profile</Text>
           <Text style={styles.headerSubtitle}>Level {level} • {daysSober} days sober</Text>
             </View>
             <TouchableOpacity
@@ -370,7 +370,7 @@ export default function ProfileScreen() {
             />
             <PersonalInfoItem 
               icon={<Calendar size={20} color={colors.primary} />}
-              label="Sobriety Date"
+              label="Sober Date"
               value={new Date(startDate).toLocaleDateString()}
               isEditable
               onEdit={handleEditSobrietyDate}

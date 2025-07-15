@@ -6,10 +6,12 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "development"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "channel": "preview"
     },
     "production": {
       "autoIncrement": true,
@@ -19,7 +21,8 @@
         "EXPO_PUBLIC_SUPERWALL_API_KEY": "pk_4466f136753fc81464d39d37803e9adefacc3123519e55fd",
         "EXPO_UNSTABLE_DEPLOY_SERVER": "1",
         "EXPO_PUBLIC_POSTHOG_API_KEY": "phc_n1UkJyY4B1jsucmCC5FG2DywiKnixcWdyl2xZscAYmv"
-      }
+      },
+      "channel": "production"
     }
   },
   "submit": {

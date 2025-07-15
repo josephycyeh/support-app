@@ -130,13 +130,6 @@ export const MoodTracker = ({ visible, onClose }: MoodTrackerProps) => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={onClose}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.skipButtonText}>Skip for now</Text>
-            </TouchableOpacity>
           </View>
         </Animated.View>
       </View>
@@ -235,14 +228,5 @@ const styles = StyleSheet.create({
   },
   logButtonTextDisabled: {
     color: colors.textMuted,
-  },
-  skipButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    color: colors.textLight,
-    fontSize: 16,
-    fontWeight: '500',
   },
 }); 

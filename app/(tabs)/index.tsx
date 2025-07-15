@@ -78,17 +78,23 @@ export default function HomeScreen() {
       
       // Check for milestone achievements immediately
       checkAndAwardMilestones();
-    
-      const todaysMood = getTodaysMood();
-      const hasLogged = !!todaysMood;
       
-      if (!hasLogged && !modalQueue.includes('mood-tracker') && activeModal !== 'mood-tracker') {
-        setModalQueue(prev => [...prev, 'mood-tracker']);
-      }
+
+      const delayTime = 5000;
+
+      const timer = setTimeout(() => {
+        const todaysMood = getTodaysMood();
+        const hasLogged = !!todaysMood;
+        
+        if (!hasLogged && !modalQueue.includes('mood-tracker') && activeModal !== 'mood-tracker') {
+          setModalQueue(prev => [...prev, 'mood-tracker']);
+        }
+      }, delayTime);
 
       return () => {
         // Set screen as not focused when leaving
         setIsScreenFocused(false);
+        clearTimeout(timer); // Clear the timeout if the screen loses focus
       };
     }, [activeModal, modalQueue, checkAndAwardMilestones, getTodaysMood])
   );
@@ -113,7 +119,6 @@ export default function HomeScreen() {
     // Set active modal to null and remove it from queue
     setActiveModal(null);
     setModalQueue(prev => prev.slice(1));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
 
@@ -161,7 +166,7 @@ export default function HomeScreen() {
         </View> */}
         
         {/* Temporary Demo Data Button - Remove after demo */}
-        <DemoDataButton />
+        {/* <DemoDataButton /> */}
         
         {/* Share Button */}
         <TouchableOpacity

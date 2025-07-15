@@ -9,6 +9,17 @@ import { useActivityStore } from '@/store/activityStore';
 import { useMoneySavedStore } from '@/store/moneySavedStore';
 
 // TypeScript interfaces for better type safety
+export interface OnboardingInfo {
+  substance?: string;
+  substanceFrequency?: string;
+  triggers?: string[];
+  recoveryGoals?: string[];
+  hardestChallenge?: string;
+  sobrietyImportance?: string;
+  struggleTimes?: string[];
+  acquisitionSource?: string;
+}
+
 export interface PersonalInfo {
   name?: string;
   age?: number;
@@ -63,6 +74,7 @@ export interface MoneyInfo {
 export interface SobrietyContext {
   personal: PersonalInfo;
   progress: ProgressInfo;
+  onboarding: OnboardingInfo;
   recentActivity: RecentActivity;
   mood: MoodInfo;
   journal: JournalInfo;
@@ -77,7 +89,9 @@ export interface SobrietyContext {
  */
 export function useSobrietyContext(): SobrietyContext {
   // Get data from all stores
-  const { startDate, level, xp, xpToNextLevel, firstAppUseDate, sobrietyBreaks, dailyXP, name, age } = useSobrietyStore();
+  const { startDate, level, xp, xpToNextLevel, firstAppUseDate, sobrietyBreaks, dailyXP, name, age,
+    substance, substanceFrequency, triggers, recoveryGoals, hardestChallenge, sobrietyImportance, struggleTimes, acquisitionSource
+   } = useSobrietyStore();
   const { reasons } = useReasonsStore();
   const { entries: journalEntries } = useJournalStore();
   const { entries: moodEntries, getAverageMood, getMoodStreak } = useMoodStore();
@@ -103,6 +117,10 @@ export function useSobrietyContext(): SobrietyContext {
         xp,
         xpToNextLevel,
         sobrietyBreaks,
+      },
+      onboarding: {
+        substance,
+        triggers,
       },
       recentActivity: {
         breathingExercises,
@@ -151,6 +169,7 @@ export function useSobrietyContext(): SobrietyContext {
   }, [
     name, age, daysSober, startDate, firstAppUseDate,
     level, xp, xpToNextLevel, sobrietyBreaks,
+    substance, substanceFrequency, triggers, recoveryGoals, hardestChallenge, sobrietyImportance, struggleTimes, acquisitionSource,
     breathingExercises, journalCount, cravingsOvercome, dailyXP,
     getAverageMood, getMoodStreak, moodEntries,
     journalEntries, checklistItems, reasons,

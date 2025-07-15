@@ -106,8 +106,8 @@ export const MoneyProjectionChart = () => {
             noOfSections={4}
             yAxisThickness={0}
             xAxisThickness={0}
-            isAnimated
-            animationDuration={800}
+            // isAnimated - Removing this to prevent conflict with screen transition animation
+            // animationDuration={800}
             frontColor={colors.success}
             backgroundColor="transparent"
             barBorderRadius={6}

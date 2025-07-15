@@ -113,17 +113,8 @@ If you want to give a tip, use this format with a dash: - Go for a short walk af
       if (sobrietyContext.onboarding.substance) {
         systemPrompt += `- What they're working on: ${sobrietyContext.onboarding.substance}\n`;
       }
-      if (sobrietyContext.onboarding.substanceFrequency) {
-        systemPrompt += `- Previous usage frequency: ${sobrietyContext.onboarding.substanceFrequency}\n`;
-      }
       if (sobrietyContext.onboarding.triggers && sobrietyContext.onboarding.triggers.length > 0) {
         systemPrompt += `- Main triggers: ${sobrietyContext.onboarding.triggers.join(', ')}\n`;
-      }
-      if (sobrietyContext.onboarding.recoveryGoals && sobrietyContext.onboarding.recoveryGoals.length > 0) {
-        systemPrompt += `- Recovery goals: ${sobrietyContext.onboarding.recoveryGoals.join(', ')}\n`;
-      }
-      if (sobrietyContext.onboarding.hardestChallenge) {
-        systemPrompt += `- Hardest challenge: ${sobrietyContext.onboarding.hardestChallenge}\n`;
       }
     }
     

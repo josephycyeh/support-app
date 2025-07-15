@@ -102,19 +102,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   content: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -144,33 +131,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 28,
   },
-  amountLabel: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontWeight: '600',
-    letterSpacing: 0.1,
-    textAlign: 'center',
-  },
-  bottomSection: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
-  },
-  // Setup card styles
-  setupCard: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flex: 1,
-    height: 120,
-    maxWidth: '48%',
-  },
   setupBackground: {
     backgroundColor: colors.cardBackground,
     borderRadius: 16,
@@ -191,18 +151,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
     width: '100%',
-  },
-  setupIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.progressBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  setupTextContainer: {
-    alignItems: 'center',
   },
   setupLabel: {
     fontSize: 10,
@@ -227,22 +175,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
   },
-  setupArrow: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.progressBackground,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-  },
   subtitle: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.95)',
     fontWeight: '500',
     textAlign: 'center',
-  },
-  spacer: {
-    height: 12,
   },
 }); 
