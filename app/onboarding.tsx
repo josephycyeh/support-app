@@ -642,6 +642,7 @@ export default function OnboardingScreen() {
       { name: 'Facebook', icon: 'facebook', color: '#1877F2' },
       { name: 'Reddit', icon: 'reddit', color: '#FF4500' },
       { name: 'TikTok', icon: 'tiktok', color: '#000000' },
+      { name: 'AppAdvice', icon: 'newspaper', color: '#0059FF' },
       { name: 'Discord', icon: 'discord', color: '#5865F2' },
       { name: 'Instagram', icon: 'instagram', color: '#E4405F' },
       { name: 'Twitter/X', icon: 'x-twitter', color: '#000000' },
@@ -699,6 +700,7 @@ export default function OnboardingScreen() {
   const renderSobrietyDateStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.onboardingTitle}>When was your sober start date?</Text>
+      <Text style={styles.onboardingSubtitle}>Don't worry if it's not exact. An estimate works just fine. You can change it later in settings.</Text>
 
       <View style={styles.datePickerContainer}>
         <DateTimePicker
@@ -851,7 +853,7 @@ export default function OnboardingScreen() {
     return (
       <OnboardingStepComponent 
         title="What are your main triggers?"
-        subtitle="Select all situations that apply"
+        subtitle="If you're unsure, just select 'I don't know yet'. Sobi can help you figure them out over time."
       >
         <MultiSelectOptions
           options={triggers}

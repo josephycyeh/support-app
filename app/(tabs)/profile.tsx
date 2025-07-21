@@ -351,6 +351,16 @@ export default function ProfileScreen() {
           </View>
         </View>
         
+        <Button
+          onPress={handleResetSobriety}
+          variant="outline"
+          style={styles.resetButton}
+          icon={<Calendar size={18} color="#6B7280" />}
+          textStyle={styles.resetButtonText}
+        >
+          Reset My Journey        
+        </Button>
+
         <View style={styles.sectionContainer}>
           <SectionHeader title="Personal Information" />
           <Card style={styles.personalInfoContainer}>
@@ -476,15 +486,6 @@ export default function ProfileScreen() {
         </View> */}
 
         
-        <Button
-          onPress={handleResetSobriety}
-          variant="outline"
-          style={styles.resetButton}
-          icon={<Calendar size={18} color="#6B7280" />}
-          textStyle={styles.resetButtonText}
-        >
-Reset My Journey        
-</Button>
         
       </ScrollView>
       
@@ -722,7 +723,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resetButton: {
-    marginTop: 20,
+    marginBottom: 24,
     backgroundColor: '#F3F4F6',
     borderColor: '#D1D5DB',
   },

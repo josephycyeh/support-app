@@ -70,7 +70,7 @@ export default function MoneySavedScreen() {
         
         <View style={styles.statCard}>
           <View style={styles.statIconContainer}>
-            <Clock size={20} color={colors.success} />
+            <Clock size={20} color={'#6B9B77'} />
           </View>
           <Text style={styles.statValue}>{formatCurrency(dailySpending)}</Text>
           <Text style={styles.statLabel}>Daily Savings</Text>
@@ -193,10 +193,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   totalCard: {
-    backgroundColor: colors.success,
+    backgroundColor: '#6B9B77',
     borderRadius: 24,
     padding: 28,
-    shadowColor: colors.success,
+    shadowColor: '#6B9B77',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   breakdownValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.success,
+    color: '#6B9B77',
   },
   editButton: {
     backgroundColor: colors.cardBackground,

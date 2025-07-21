@@ -52,8 +52,8 @@ export const MoneyProjectionChart = () => {
       const dataPoint: ChartDataPoint = {
         value: Math.max(1, amount),
         label: timeframe.label,
-        frontColor: timeframe.isFuture ? 'rgba(76, 175, 80, 0.3)' : colors.success,
-        gradientColor: timeframe.isFuture ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.8)',
+        frontColor: timeframe.isFuture ? 'rgba(107, 155, 119, 0.3)' : '#6B9B77',
+        gradientColor: timeframe.isFuture ? 'rgba(107, 155, 119, 0.15)' : 'rgba(107, 155, 119, 0.8)',
         spacing: Math.max(8, (chartWidth - (barWidth * 5)) / 6), // Responsive spacing
         labelTextStyle: {
           fontSize: 10,
@@ -64,7 +64,7 @@ export const MoneyProjectionChart = () => {
       
       if (timeframe.isFuture) {
         dataPoint.borderWidth = 1.5;
-        dataPoint.borderColor = 'rgba(76, 175, 80, 0.4)';
+        dataPoint.borderColor = 'rgba(107, 155, 119, 0.4)';
       }
       
       data.push(dataPoint);
@@ -88,7 +88,7 @@ export const MoneyProjectionChart = () => {
         <View style={styles.chartHeader}>
           <View style={styles.headerLeft}>
             <View style={styles.iconContainer}>
-              <DollarSign size={20} color={colors.success} />
+              <DollarSign size={20} color={'#6B9B77'} />
             </View>
             <Text style={styles.chartTitle}>Savings Projection</Text>
           </View>
@@ -108,7 +108,7 @@ export const MoneyProjectionChart = () => {
             xAxisThickness={0}
             // isAnimated - Removing this to prevent conflict with screen transition animation
             // animationDuration={800}
-            frontColor={colors.success}
+            frontColor={'#6B9B77'}
             backgroundColor="transparent"
             barBorderRadius={6}
             yAxisTextStyle={{
@@ -147,11 +147,11 @@ export const MoneyProjectionChart = () => {
         
         <View style={styles.legend}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+            <View style={[styles.legendDot, { backgroundColor: '#6B9B77' }]} />
             <Text style={styles.legendText}>Current savings</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: 'rgba(76, 175, 80, 0.4)' }]} />
+            <View style={[styles.legendDot, { backgroundColor: 'rgba(107, 155, 119, 0.4)' }]} />
             <Text style={styles.legendText}>Projected</Text>
           </View>
         </View>
@@ -190,12 +190,12 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 42,
     height: 42,
-    backgroundColor: 'rgba(76, 175, 80, 0.12)',
+    backgroundColor: 'rgba(107, 155, 119, 0.12)',
     borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
-    shadowColor: 'rgba(76, 175, 80, 0.3)',
+    shadowColor: 'rgba(107, 155, 119, 0.3)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
