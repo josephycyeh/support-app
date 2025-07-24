@@ -10,6 +10,12 @@ import LottieView from 'lottie-react-native';
 import { usePostHog } from 'posthog-react-native';
 import Superwall from 'expo-superwall/compat';
 
+const animations = {
+  petting: require('@/assets/images/getting petted_opt.json'),
+  celebrating: require('@/assets/images/idle_celebration.json'),
+  idleBlink: require('@/assets/images/idle_blink.json'),
+};
+
 interface CompanionProps {
   animationTrigger?: number;
   stopAnimations?: boolean;
@@ -17,64 +23,43 @@ interface CompanionProps {
 
 export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [animationSource, setAnimationSource] = useState(animations.idleBlink);
+  const [loopAnimation, setLoopAnimation] = useState(true);
+  const [animationKey, setAnimationKey] = useState(0);
   const lottieRef = useRef<LottieView>(null);
-  const animationTimeoutRef = useRef<number | null>(null);
   const router = useRouter();
   const posthog = usePostHog();
-
-
 
   // Trigger petting animation when a task is completed
   useEffect(() => {
     if (animationTrigger && animationTrigger > 0) {
-      // Don't trigger animation if already animating
       if (isAnimating) return;
-      
-      // Provide haptic feedback
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      
-      // Play the petting animation
+
+      setAnimationSource(animations.petting);
+      setLoopAnimation(false);
       setIsAnimating(true);
-      if (lottieRef.current) {
-        lottieRef.current.reset();
-        lottieRef.current.play();
-        
-        // Reset animation state after it completes
-        animationTimeoutRef.current = setTimeout(() => {
-          setIsAnimating(false);
-          animationTimeoutRef.current = null;
-        }, 1800); // Animation is 43 frames at 24fps ≈ 1800ms
-      }
+      setAnimationKey((prevKey) => prevKey + 1);
     }
   }, [animationTrigger]);
 
   // Stop animations when component should stop (e.g. screen loses focus)
   useEffect(() => {
     if (stopAnimations) {
-      // Clear any running timeouts
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-        animationTimeoutRef.current = null;
-      }
-
-      // Stop Lottie animations
       if (lottieRef.current) {
         lottieRef.current.reset();
       }
-
-      // Reset states
       setIsAnimating(false);
     }
   }, [stopAnimations]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-    };
-  }, []);
+  const handleAnimationFinish = () => {
+    setIsAnimating(false);
+    setAnimationSource(animations.idleBlink);
+    setLoopAnimation(true);
+    setAnimationKey((prevKey) => prevKey + 1);
+  };
 
   const handleChatPress = () => {
     // Track chat button click
@@ -113,24 +98,15 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
   };
 
   const handleCompanionPress = () => {
-    // Don't trigger pet animation if already animating
     if (isAnimating) return;
-    
-    // Provide haptic feedback
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    // Play the petting animation
+
+    const randomAnimation = Math.random() < 0.5 ? animations.petting : animations.celebrating;
+    setAnimationSource(randomAnimation);
+    setLoopAnimation(false);
     setIsAnimating(true);
-    if (lottieRef.current) {
-      lottieRef.current.reset();
-      lottieRef.current.play();
-      
-      // Reset animation state after it completes
-      animationTimeoutRef.current = setTimeout(() => {
-        setIsAnimating(false);
-        animationTimeoutRef.current = null;
-      }, 1800); // Animation is 43 frames at 24fps ≈ 1800ms
-    }
+    setAnimationKey((prevKey) => prevKey + 1);
   };
 
   const handleJournalPress = () => {
@@ -167,25 +143,17 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
             style={styles.companionTouchable}
           >
             <View style={styles.companionImageContainer}>
-           
-              <Image 
-                source={require('@/assets/images/Character_PNG.png')}
-                style={[
-                  styles.companionImage,
-                  isAnimating && { opacity: 0 } 
-                ]}
-                resizeMode="cover"
-              />
               <View style={styles.lottieContainer}>
-         
                 <LottieView
+                  key={animationKey}
                   ref={lottieRef}
-                  source={require('@/assets/images/getting petted_opt.json')}
+                  source={animationSource}
                   style={styles.lottieAnimation}
-                  loop={false}
-                  autoPlay={false}
+                  loop={loopAnimation}
+                  autoPlay={true}
                   resizeMode="cover"
-              />
+                  onAnimationFinish={isAnimating ? handleAnimationFinish : undefined}
+                />
               </View>
             </View>
           </TouchableOpacity>
@@ -244,7 +212,6 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     width: 125,
     height: 125,
-    overflow: 'hidden',
     backgroundColor: 'transparent',
     position: 'relative',
   },

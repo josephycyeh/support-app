@@ -174,7 +174,7 @@ export default function HomeScreen() {
           onPress={handleSharePress}
           activeOpacity={0.8}
         >
-          <Share size={20} color="#FFFFFF" />
+          <Share size={20} color="#FFFFFF" /> 
           <Text style={styles.shareButtonText}>Share My Progress</Text>
         </TouchableOpacity>
         
