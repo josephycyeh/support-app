@@ -166,7 +166,7 @@ export default function HomeScreen() {
         </View> */}
         
         {/* Temporary Demo Data Button - Remove after demo */}
-        <DemoDataButton />
+        {/* <DemoDataButton /> */}
         
         {/* Share Button */}
         <TouchableOpacity
