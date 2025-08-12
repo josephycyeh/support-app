@@ -51,6 +51,9 @@ export const Companion = ({ animationTrigger, stopAnimations }: CompanionProps) 
         lottieRef.current.reset();
       }
       setIsAnimating(false);
+      setAnimationSource(animations.idleBlink);
+      setLoopAnimation(true);
+      setAnimationKey((prevKey) => prevKey + 1);
     }
   }, [stopAnimations]);
 
@@ -215,11 +218,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     position: 'relative',
   },
-  companionImage: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
+
   lottieContainer: {
     position: 'absolute',
     width: '100%',

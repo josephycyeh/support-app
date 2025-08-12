@@ -15,6 +15,7 @@ interface SobrietyStore extends SobrietyState {
   setStartDate: (date: string) => void; // Set sobriety start date
   completeOnboarding: () => void; // Mark onboarding as complete
   clearAll: () => void; // Complete reset for account deletion
+  resetLevel: (newLevel: number) => void; // Reset level, XP, and xpToNextLevel
   
   // Onboarding data setters
   setSubstance: (substance: string) => void;
@@ -92,6 +93,18 @@ export const useSobrietyStore = create<SobrietyStore>()(
         set(() => ({
           levelUp: false,
         })),
+      
+      resetLevel: (newLevel: number) =>
+        set((state) => {
+          const xpForNextLevel = calculateXpForNextLevel(newLevel);
+          return {
+            ...state,
+            level: newLevel,
+            xp: 0,
+            xpToNextLevel: xpForNextLevel,
+            levelUp: false,
+          };
+        }),
       
       recordSobrietyBreak: (date?: string) => 
         set((state) => {

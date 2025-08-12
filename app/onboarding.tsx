@@ -607,9 +607,11 @@ export default function OnboardingScreen() {
             colors={[colors.primary + '15', colors.secondary + '10', 'transparent']}
             style={styles.welcomeCharacterGradient}
           />
-          <Image
-            source={require('@/assets/images/Character_PNG.png')}
+          <LottieView
+            source={require('@/assets/images/idle_blink.json')}
             style={styles.welcomeCharacterImage}
+            autoPlay={true}
+            loop={true}
             resizeMode="contain"
           />
         </View>
@@ -619,10 +621,33 @@ export default function OnboardingScreen() {
           <Text style={styles.welcomeSubtitle}>Your Recovery Companion</Text>
         </View>
 
-        {/* Encouragement moved here */}
+        {/* Rating Section with Laurels on Welcome Screen */}
+        <View style={styles.welcomeRatingSection}>
+          <View style={styles.welcomeRatingContainer}>
+            <Image 
+              source={require('@/assets/images/laurel-left.png')}
+              style={styles.welcomeLaurelLeft}
+              resizeMode="contain"
+            />
+            <View style={styles.welcomeRatingContent}>
+              <View style={styles.welcomeStarsContainer}>
+                <Text style={styles.welcomeStarsText}>⭐⭐⭐⭐⭐</Text>
+              </View>
+              <Text style={styles.welcomeRatingText}>4.9</Text>
+              <Text style={styles.welcomeRatingSubtext}>App Store Rating</Text>
+            </View>
+            <Image 
+              source={require('@/assets/images/laurel-right.png')}
+              style={styles.welcomeLaurelRight}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+
+        {/* Community stats */}
         <View style={styles.welcomeEncouragementInline}>
           <Text style={styles.welcomeEncouragementText}>
-            You're not alone in this.
+            Trusted by 30,000+ people in recovery
           </Text>
         </View>
       </View>
@@ -942,6 +967,27 @@ export default function OnboardingScreen() {
         <Text style={styles.engagementSubtitle}>Join thousands transforming their lives with Sobi</Text>
       </View>
 
+      {/* Rating Section with Laurels */}
+      <View style={styles.ratingSection}>
+        <View style={styles.ratingContainer}>
+          <Image 
+            source={require('@/assets/images/laurel-left.png')}
+            style={styles.laurelLeft}
+            resizeMode="contain"
+          />
+          <View style={styles.ratingContent}>
+            <Text style={styles.ratingText}>1 Million+</Text>
+            <Text style={styles.ratingSubtext}>Days Sober</Text>
+            <Text style={styles.ratingDescription}>Achieved With Sobi</Text>
+          </View>
+          <Image 
+            source={require('@/assets/images/laurel-right.png')}
+            style={styles.laurelRight}
+            resizeMode="contain"
+          />
+        </View>
+      </View>
+
       <View style={styles.engagementContent}>
         <View style={styles.testimonialsSection}>
           <Animated.View style={[styles.testimonialCard, {
@@ -969,7 +1015,7 @@ export default function OnboardingScreen() {
             opacity: testimonial3Opacity
           }]}>
             <Text style={styles.testimonialText}>
-              "I thought I had to do this alone. Having Sobi as my companion changed everything. So helpful!"
+              "I thought I had to do this alone. Having Sobi as my companion changed everything. It's like having a sponsor in my pocket!"
             </Text>
             <Text style={styles.testimonialAuthor}>— Hugo, 3 months sober</Text>
           </Animated.View>
@@ -1380,10 +1426,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 16,
-    paddingBottom: 40,
+    paddingTop: 12,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    gap: 30,
+    gap: 20,
   },
   onboardingTitle: {
     fontSize: 28,
@@ -1502,29 +1548,29 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   engagementTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '800',
     color: colors.text,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
     letterSpacing: -0.5,
   },
   engagementSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textLight,
     textAlign: 'center',
     fontWeight: '500',
   },
   testimonialsSection: {
     width: '100%',
-    marginTop: 12,
+    marginTop: 8,
   },
   testimonialCard: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: 12,
+    padding: 14,
     width: '100%',
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -1537,8 +1583,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.text,
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 8,
+    lineHeight: 19,
+    marginBottom: 7,
     fontWeight: '500',
     fontStyle: 'italic',
   },
@@ -1712,6 +1758,51 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     paddingHorizontal: 16,
   },
+  welcomeRatingSection: {
+    alignItems: 'center',
+    marginVertical: 16,
+    width: '100%',
+  },
+  welcomeRatingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  welcomeRatingContent: {
+    alignItems: 'center',
+    marginHorizontal: 16,
+  },
+  welcomeStarsContainer: {
+    marginBottom: 4,
+  },
+  welcomeStarsText: {
+    fontSize: 16,
+    letterSpacing: 1,
+  },
+  welcomeRatingText: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: colors.primary,
+    marginBottom: 2,
+    letterSpacing: -0.5,
+  },
+  welcomeRatingSubtext: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  welcomeLaurelLeft: {
+    width: 32,
+    height: 48,
+    tintColor: colors.primary,
+  },
+  welcomeLaurelRight: {
+    width: 32,
+    height: 48,
+    tintColor: colors.primary,
+  },
   reviewHeader: {
     alignItems: 'center',
     maxWidth: 380,
@@ -1870,17 +1961,7 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     lineHeight: 20,
   },
-  xpMotivationSection: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  xpMotivationText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
+
   xpNoteSection: {
     marginTop: 20,
     paddingHorizontal: 20,
@@ -1890,5 +1971,50 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  ratingSection: {
+    alignItems: 'center',
+    marginVertical: 20,
+    width: '100%',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  ratingContent: {
+    alignItems: 'center',
+    marginHorizontal: 18,
+  },
+  ratingText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.primary,
+    marginBottom: 3,
+    letterSpacing: -0.5,
+  },
+  ratingSubtext: {
+    fontSize: 16,
+    color: colors.textMuted,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  ratingDescription: {
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  laurelLeft: {
+    width: 36,
+    height: 54,
+    tintColor: colors.primary,
+  },
+  laurelRight: {
+    width: 36,
+    height: 54,
+    tintColor: colors.primary,
   },
 }); 

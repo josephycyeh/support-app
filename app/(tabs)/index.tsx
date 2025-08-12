@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, ScrollView, StatusBar, SafeAreaView, TouchableOpacity, Modal } from 'react-native';
-import { Share } from 'lucide-react-native';
+import { Share, X, Sparkles } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
 import colors from '@/constants/colors';
 import { XPProgressBar } from '@/components/XPProgressBar';
@@ -35,6 +36,7 @@ export default function HomeScreen() {
   const [hasLoggedMoodToday, setHasLoggedMoodToday] = useState(false);
   const [triggerCompanionAnimation, setTriggerCompanionAnimation] = useState(0);
   const [isScreenFocused, setIsScreenFocused] = useState(true);
+  const [showAnimationBanner, setShowAnimationBanner] = useState(true);
   
   // REMOVED: Level up modal state is now managed by the queue
   // const [showLevelUpMessage, setShowLevelUpMessage] = useState(false);
@@ -45,6 +47,21 @@ export default function HomeScreen() {
     const todaysMood = getTodaysMood();
     const hasLogged = !!todaysMood;
     setHasLoggedMoodToday(hasLogged);
+  }, []);
+
+  // Check if animation banner was dismissed
+  useEffect(() => {
+    const checkBannerStatus = async () => {
+      try {
+        const dismissed = await AsyncStorage.getItem('animation_banner_dismissed');
+        if (dismissed === 'true') {
+          setShowAnimationBanner(false);
+        }
+      } catch (error) {
+        console.error('Error checking banner status:', error);
+      }
+    };
+    checkBannerStatus();
   }, []);
 
   // --- Modal Queue Management ---
@@ -137,6 +154,16 @@ export default function HomeScreen() {
     return newAchievements[0] || null;
   };
 
+  const handleDismissAnimationBanner = async () => {
+    try {
+      await AsyncStorage.setItem('animation_banner_dismissed', 'true');
+      setShowAnimationBanner(false);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.error('Error dismissing banner:', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
@@ -147,6 +174,26 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <XPProgressBar />
+        
+        {/* Animation Banner */}
+        {showAnimationBanner && (
+          <View style={styles.animationBanner}>
+            <View style={styles.bannerContent}>
+              <Sparkles size={16} color={colors.primary} style={styles.bannerIcon} />
+              <Text style={styles.bannerText}>
+                Coming soon: Unlock new animations and accessories by leveling up!
+              </Text>
+              <TouchableOpacity 
+                style={styles.dismissButton}
+                onPress={handleDismissAnimationBanner}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <X size={14} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        
         <Companion animationTrigger={triggerCompanionAnimation} stopAnimations={!isScreenFocused} />
         <SobrietyTimer />
         
@@ -256,8 +303,7 @@ const styles = StyleSheet.create({
     height: 140,
     gap: 20,
   },
-  checklistContainer: {
-  },
+
   shareButton: {
     backgroundColor: colors.primary,
     borderRadius: 16,
@@ -344,5 +390,37 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  animationBanner: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  bannerContent: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.primary + '20',
+  },
+  bannerIcon: {
+    marginRight: 8,
+  },
+  bannerText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  dismissButton: {
+    padding: 4,
+    marginLeft: 8,
   },
 });

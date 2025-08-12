@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Linking, Share as ShareAPI } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail, Share, Lightbulb, Clock, Crown } from 'lucide-react-native';
+import { MessageSquare, Shield, FileText, Trash2, ChevronRight, Mail, Share, Lightbulb, Clock, Crown, Zap } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Superwall from 'expo-superwall/compat';
 import { usePostHog } from 'posthog-react-native';
@@ -26,7 +26,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const posthog = usePostHog();
   const { clearHistory } = useChatStore();
-  const { clearAll: clearSobriety } = useSobrietyStore();
+  const { clearAll: clearSobriety, resetLevel } = useSobrietyStore();
   const { clearAll: clearReasons } = useReasonsStore();
   const { clearAll: clearMood } = useMoodStore();
   const { clearAll: clearJournal } = useJournalStore();
@@ -39,7 +39,9 @@ export default function SettingsScreen() {
 
   // Check subscription status
   useEffect(() => {
-    const checkSubscriptionStatus = () => {
+
+    
+    const checkSubscriptionStatus = async () => {
       try {
         // Listen to subscription status changes
         const subscription = Superwall.shared.subscriptionStatusEmitter.addListener('change', (status) => {
@@ -52,6 +54,7 @@ export default function SettingsScreen() {
           }
         });
 
+      
         // Get initial subscription status
         Superwall.shared.getSubscriptionStatus().then((status) => {
           console.log('Subscription status:', status);
@@ -175,7 +178,55 @@ export default function SettingsScreen() {
       ]
     );
   };
-  
+
+  const handleResetLevel = () => {
+    Alert.alert(
+      'Reset Level',
+      'Are you sure you want to reset your level? This is intended for users who have had their levels skewed by the demo data button. Your current XP progress will be reset.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Reset',
+          onPress: () => {
+            Alert.prompt(
+              'Enter New Level',
+              'Please enter the level you would like to reset to.',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
+                },
+                {
+                  text: 'OK',
+                  onPress: (level) => {
+                    if (level && !isNaN(parseInt(level, 10))) {
+                      const newLevel = parseInt(level, 10);
+                      if (newLevel > 0) {
+                        resetLevel(newLevel);
+                        Alert.alert('Success', 'Your level has been reset.');
+                      } else {
+                        Alert.alert('Error', 'Please enter a level greater than 0.');
+                      }
+                    } else {
+                      Alert.alert('Error', 'Please enter a valid number.');
+                    }
+                  },
+                },
+              ],
+              'plain-text',
+              '',
+              'numeric'
+            );
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Stack.Screen 
@@ -248,6 +299,21 @@ export default function SettingsScreen() {
               <ChevronRight size={18} color={colors.textMuted} />
             </TouchableOpacity>
             
+            <View style={styles.settingsItemSeparator} />
+            
+            <TouchableOpacity 
+              style={styles.settingsItem}
+              onPress={handleResetLevel}
+            >
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconContainer}>
+                  <Zap size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.settingsItemText}>Reset Level</Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
             <View style={styles.settingsItemSeparator} />
             
             <TouchableOpacity 
