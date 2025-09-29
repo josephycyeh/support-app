@@ -20,6 +20,7 @@ import { SingleSelectOptions, MultiSelectOptions } from '@/components/onboarding
 import { requestNotificationPermissions } from '@/services/NotificationService';
 import Superwall from 'expo-superwall/compat';
 import { usePostHog } from 'posthog-react-native';
+import { logFacebookEvent } from '@/services/FacebookEventService';
 
 enum OnboardingStep {
   WELCOME = 0,
@@ -281,6 +282,14 @@ export default function OnboardingScreen() {
         step_number: currentStep,
       });
     }
+
+    logFacebookEvent({
+      eventName: 'onboarding_step_completed',
+      parameters: {
+        step_name: stepNames[currentStep],
+        step_number: currentStep,
+      }
+    });
 
     // Save data immediately when moving to next step
     switch (currentStep) {

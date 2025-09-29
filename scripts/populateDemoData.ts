@@ -62,12 +62,17 @@ export const populateDemoData = () => {
   sobrietyStore.setName('Alex');
   sobrietyStore.setAge(28);
   
-  // Set sobriety start date to 45 days ago for impressive streak
-  const sobrietyStartDate = getTimestampDaysAgo(45);
+  // Set sobriety start date to 210 days ago (7 months) for impressive streak
+  const daysAgo = 210;
+  // Add realistic hours and minutes to make it look authentic
+  const sobrietyStartDate = new Date();
+  sobrietyStartDate.setDate(sobrietyStartDate.getDate() - daysAgo);
+  sobrietyStartDate.setHours(14, 23, 0, 0); // 2:23 PM - realistic time
+  const sobrietyStartDateString = sobrietyStartDate.toISOString();
   
-  // Generate daily XP data for the past 45 days with reasonable amounts
+  // Generate daily XP data for the past 210 days with reasonable amounts
   const dailyXP: Record<string, number> = {};
-  for (let i = 0; i < 45; i++) {
+  for (let i = 0; i < daysAgo; i++) {
     const dateStr = getDaysAgoStr(i);
     // XP amounts in multiples of 5 with LOTS of darkest blue days (need >60 XP for intensity 1.0)
     let xpAmount = 0;
@@ -115,8 +120,8 @@ export const populateDemoData = () => {
   
   // Update sobriety store directly with corrected XP values
   useSobrietyStore.setState({
-    startDate: sobrietyStartDate,
-    firstAppUseDate: sobrietyStartDate,
+    startDate: sobrietyStartDateString,
+    firstAppUseDate: sobrietyStartDateString,
     xp: currentXP, // Current XP within the level (should be less than xpToNextLevel)
     level: currentLevel,
     xpToNextLevel: xpToNextLevel,
@@ -132,7 +137,7 @@ export const populateDemoData = () => {
   
   // Generate mood entries for the past 30 days with proper dates
   for (let i = 29; i >= 0; i--) { // Start from 29 days ago, work forward
-    const mood = Math.floor(Math.random() * 3) + 3; // Mostly good moods (3-5)
+    const mood = Math.floor(Math.random() * 2) + 4; // Only 4s or 5s
     const timestamp = getTimestampDaysAgo(i);
     const date = getDaysAgoStr(i);
     
@@ -244,7 +249,7 @@ Maybe I need to just be honest with him. Or find new friends who don't revolve e
     {
       id: 'demo-msg-4',
       role: 'assistant' as const,
-      content: 'That sounds really challenging, especially dealing with both work pressure and social pressure at the same time. It\'s completely normal to feel tired of having to say no all the time.\n\nFirst, I want to acknowledge how strong you\'ve been - 45 days is amazing! Every "no" you\'ve said has brought you to this point.\n\nFor the friends situation, have you thought about suggesting alternative activities? Maybe coffee, hiking, or seeing a movie? Sometimes people just want to spend time with you, not necessarily drink.',
+      content: 'That sounds really challenging, especially dealing with both work pressure and social pressure at the same time. It\'s completely normal to feel tired of having to say no all the time.\n\nFirst, I want to acknowledge how strong you\'ve been - 7 months is amazing! Every "no" you\'ve said has brought you to this point.\n\nFor the friends situation, have you thought about suggesting alternative activities? Maybe coffee, hiking, or seeing a movie? Sometimes people just want to spend time with you, not necessarily drink.',
     },
     {
       id: 'demo-msg-5',
@@ -300,7 +305,7 @@ Maybe I need to just be honest with him. Or find new friends who don't revolve e
   activityStore.setCravingsOvercome(3); // 3 cravings successfully overcome
   
   console.log('✅ Demo data populated successfully!');
-  console.log(`📊 Stats: ${currentLevel} level, 45-day streak, ${Object.keys(dailyXP).length} active days`);
+  console.log(`📊 Stats: ${currentLevel} level, ${daysAgo}-day streak, ${Object.keys(dailyXP).length} active days`);
   console.log(`📝 Added ${sampleEntries.length} journal entries`);
   console.log(`💬 Added ${sampleMessages.length} chat messages`);
   console.log(`😊 Added 30 days of mood tracking`);

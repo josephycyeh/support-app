@@ -15,7 +15,8 @@ import { ErrorBoundary } from "./error-boundary";
 import { Platform } from "react-native";
 import { PostHogProvider } from 'posthog-react-native';
 // Register LiveKit globals
-
+import { Settings } from 'react-native-fbsdk-next';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: "index",
@@ -46,6 +47,19 @@ export default function RootLayout() {
     };
 
     initializeSuperwall();
+
+    const requestTracking = async () => {
+      if (Platform.OS !== 'web') {
+      const { Settings } = await import('react-native-fbsdk-next');
+      const { status } = await requestTrackingPermissionsAsync();
+      if (status === 'granted') {
+        console.log('✅ Tracking permissions granted');
+        await Settings.setAdvertiserTrackingEnabled(true);
+      }
+    }
+
+    }
+    requestTracking();
   }, [])
 
   // Schedule notifications when onboarding is completed or data changes

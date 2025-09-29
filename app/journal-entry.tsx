@@ -127,7 +127,11 @@ export default function JournalEntryScreen() {
   };
     
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       <Stack.Screen 
         options={{
           title: "New Journal Entry",
@@ -194,28 +198,39 @@ export default function JournalEntryScreen() {
         </ScrollView>
       </View>
       
-      <View style={styles.contentArea}>
-        <TextInput
-          style={styles.titleInput}
-          placeholder="Title"
-          placeholderTextColor={colors.textMuted}
-          value={title}
-          onChangeText={setTitle}
-          maxLength={50}
-        />
-        
-        <TextInput
-          ref={contentInputRef}
-          style={styles.contentInput}
-          placeholder="What's on your mind today?"
-          placeholderTextColor={colors.textMuted}
-          value={content}
-          onChangeText={setContent}
-          multiline
-          textAlignVertical="top"
-          autoFocus
-        />
-      </View>
+      <ScrollView 
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contentArea}>
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Title"
+            placeholderTextColor={colors.textMuted}
+            value={title}
+            onChangeText={setTitle}
+            maxLength={50}
+          />
+          
+          <TextInput
+            ref={contentInputRef}
+            style={[
+              styles.contentInput,
+              { minHeight: Dimensions.get('window').height - 300 } // Ensure enough space
+            ]}
+            placeholder="What's on your mind today?"
+            placeholderTextColor={colors.textMuted}
+            value={content}
+            onChangeText={setContent}
+            multiline
+            textAlignVertical="top"
+            autoFocus
+            scrollEnabled={false} // Let the parent ScrollView handle scrolling
+          />
+        </View>
+      </ScrollView>
       
       {keyboardHeight > 0 && (
         <TouchableOpacity 
@@ -231,7 +246,7 @@ export default function JournalEntryScreen() {
           </Text>
         </TouchableOpacity>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -285,6 +300,13 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '500',
   },
+  scrollContainer: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 100, // Extra padding for keyboard
+  },
   contentArea: {
     flex: 1,
     paddingHorizontal: 16,
@@ -301,11 +323,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   contentInput: {
-    flex: 1,
     fontSize: 16,
     color: colors.text,
     lineHeight: 24,
-    paddingBottom: 100,
+    paddingTop: 0,
+    paddingBottom: 20,
   },
   saveButton: {
     position: 'absolute',
