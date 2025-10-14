@@ -15,8 +15,8 @@ import { ErrorBoundary } from "./error-boundary";
 import { Platform } from "react-native";
 import { PostHogProvider } from 'posthog-react-native';
 // Register LiveKit globals
-import { Settings } from 'react-native-fbsdk-next';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: "index",
@@ -26,7 +26,8 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { onboardingCompleted, struggleTimes, name, startDate } = useSobrietyStore();
+  const { onboardingCompleted, struggleTimes, name, startDate } = useSobrietyStore(); 
+  
 
   useEffect(() => {
     // Initialize Superwall only on native platforms
@@ -58,8 +59,9 @@ export default function RootLayout() {
       }
     }
 
-    }
+    };
     requestTracking();
+
   }, [])
 
   // Schedule notifications when onboarding is completed or data changes

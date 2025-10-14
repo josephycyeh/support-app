@@ -20,7 +20,12 @@
       "appleTeamId": "FJ8TN5K3MB",
       "associatedDomains": [
         "applinks:sushi-support-app.expo.app"
-      ]
+      ],
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.caladanapps.myro"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {

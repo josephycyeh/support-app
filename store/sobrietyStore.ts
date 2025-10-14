@@ -3,6 +3,21 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SobrietyState } from '@/types';
 import { getTodayDateStr, formatDateToISOString, calculateDaysSober } from '@/utils/dateUtils';
+import { Platform } from 'react-native';
+
+// Widget synchronization helper
+const updateWidgetData = (startDate: string) => {
+  if (Platform.OS === 'ios') {
+    try {
+      const { ExtensionStorage } = require('@bacons/apple-targets');
+      const widgetStorage = new ExtensionStorage("group.com.caladanapps.myro");
+      widgetStorage.set("startDate", startDate);
+      ExtensionStorage.reloadWidget();
+    } catch (error) {
+      console.warn('Failed to update widget data:', error);
+    }
+  }
+};
 
 interface SobrietyStore extends SobrietyState {
   addXP: (amount: number) => void;
@@ -113,6 +128,10 @@ export const useSobrietyStore = create<SobrietyStore>()(
           // Only add the date if it's not already recorded
           if (!state.sobrietyBreaks.includes(breakDate)) {
             const newStartDate = formatDateToISOString(new Date());
+            
+            // Update widget data
+            updateWidgetData(newStartDate);
+            
             return {
               ...state, // Preserve all existing state including firstAppUseDate
               sobrietyBreaks: [...state.sobrietyBreaks, breakDate],
@@ -134,6 +153,9 @@ export const useSobrietyStore = create<SobrietyStore>()(
           
           // Reset to current timestamp for immediate 0:0:0:0
           const newStartDate = formatDateToISOString(new Date());
+          
+          // Update widget data
+          updateWidgetData(newStartDate);
           
           return {
             ...state, // Preserve XP, level, dailyXP, firstAppUseDate, and other data
@@ -228,6 +250,9 @@ export const useSobrietyStore = create<SobrietyStore>()(
           const today = getTodayDateStr();
           const resetDailyXP: Record<string, number> = {};
           resetDailyXP[today] = 0; // Initialize today with 0 XP
+          
+          // Update widget data
+          updateWidgetData(newStartDate);
           
           return {
             ...state, // Preserve personal info (name, age, onboarding status)
