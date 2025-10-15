@@ -49,14 +49,13 @@ struct widgetEntryView : View {
         return formatter.date(from: startDateString)
     }
     
-    func getSoberTime() -> (years: Int, months: Int, days: Int, hours: Int, minutes: Int) {
+    func getSoberTime(for date: Date) -> (years: Int, months: Int, days: Int, hours: Int, minutes: Int) {
         guard let startDate = getSobrietyStartDate() else {
             return (years: 0, months: 0, days: 0, hours: 0, minutes: 0)
         }
         
-        let now = Date()
         let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: startDate, to: now)
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: startDate, to: date)
         
         return (
             years: components.year ?? 0,
@@ -70,7 +69,7 @@ struct widgetEntryView : View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                let soberTime = getSoberTime()
+                let soberTime = getSoberTime(for: entry.date)
                 
                 // Main display - show the most significant time unit
                 VStack(spacing: 6) {
