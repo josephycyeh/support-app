@@ -16,6 +16,7 @@ import { Platform } from "react-native";
 import { PostHogProvider } from 'posthog-react-native';
 // Register LiveKit globals
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+import { ExtensionStorage } from "@bacons/apple-targets";
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -28,6 +29,24 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { onboardingCompleted, struggleTimes, name, startDate } = useSobrietyStore(); 
   
+  // Initialize widget data for existing users (one-time setup)
+  useEffect(() => {
+    if (Platform.OS === 'ios' && startDate) {
+      try {
+        const widgetStorage = new ExtensionStorage("group.com.caladanapps.myro");
+        const existingStartDate = widgetStorage.get("startDate");
+        
+        // Only set if not already set (for existing users upgrading)
+        if (!existingStartDate) {
+          widgetStorage.set("startDate", startDate);
+          ExtensionStorage.reloadWidget();
+          console.log('✅ Widget data initialized for existing user');
+        }
+      } catch (error) {
+        console.warn('Failed to initialize widget data:', error);
+      }
+    }
+  }, [startDate]);
 
   useEffect(() => {
     // Initialize Superwall only on native platforms
