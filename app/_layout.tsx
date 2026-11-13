@@ -15,7 +15,6 @@ import { ErrorBoundary } from "./error-boundary";
 import { Platform } from "react-native";
 import { PostHogProvider } from 'posthog-react-native';
 // Register LiveKit globals
-import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { ExtensionStorage } from "@bacons/apple-targets";
 
 export const unstable_settings = {
@@ -67,19 +66,6 @@ export default function RootLayout() {
     };
 
     initializeSuperwall();
-
-    const requestTracking = async () => {
-      if (Platform.OS !== 'web') {
-      const { Settings } = await import('react-native-fbsdk-next');
-      const { status } = await requestTrackingPermissionsAsync();
-      if (status === 'granted') {
-        console.log('✅ Tracking permissions granted');
-        await Settings.setAdvertiserTrackingEnabled(true);
-      }
-    }
-
-    };
-    requestTracking();
 
   }, [])
 
